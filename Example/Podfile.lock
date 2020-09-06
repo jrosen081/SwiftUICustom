@@ -1,0 +1,16 @@
+PODS:
+  - SwiftUICustom (0.1.0)
+
+DEPENDENCIES:
+  - SwiftUICustom (from `../`)
+
+EXTERNAL SOURCES:
+  SwiftUICustom:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  SwiftUICustom: d7823d34edbfc4956d39ed9ea5f0fb710835535e
+
+PODFILE CHECKSUM: eabce768c1825a7f545fd3fe40fda93f6e8a772e
+
+COCOAPODS: 1.8.4

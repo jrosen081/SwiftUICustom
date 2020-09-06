@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftUICustom
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -15,7 +16,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+		self.window = UIWindow(frame: UIScreen.main.bounds)
         // Override point for customization after application launch.
+		if #available(iOS 13, *) {
+			window?.rootViewController = SwiftUIController(swiftUIView: SampleView())
+		} else {
+			// Fallback on earlier versions
+		}
+		window?.makeKeyAndVisible()
         return true
     }
 
