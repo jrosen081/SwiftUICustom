@@ -22,9 +22,9 @@ public struct HStack<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator()
-		let uiView = view.toUIView(enclosingController: enclosingController)
+		let uiView = view.toUIView(enclosingController: enclosingController, environment: environment)
 		(uiView as? InternalLazyCollatedView)?.expand()
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .horizontal)
 		stackView.alignment = self.alignment.stackViewAlignment
@@ -33,6 +33,25 @@ public struct HStack<Content: View>: View {
 		stackView.distribution = .fill
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		return stackView
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		let viewProtocol = viewCreator()
+		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
+		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
+			$1.redraw(view: $0, controller: controller, environment: environment)
+		}
+	}
+}
+
+extension Array where Element == BuildingBlock {
+	func expanded() -> [Element] {
+		return self.flatMap( { (val) -> [Element] in
+			if let expandable = val as? Expandable {
+				return expandable.expanded()
+			}
+			return [val]
+		})
 	}
 }
 
@@ -63,17 +82,6 @@ class SwiftUIStackView: UIStackView {
 	
 	required init(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
-	}
-	
-	override var tintColor: UIColor! {
-		didSet {
-			self.subviews.forEach {
-				$0.tintColor = self.tintColor
-				if let label = $0 as? UILabel {
-					label.textColor = self.tintColor
-				}
-			}
-		}
 	}
 	
 	static func == (lhs: SwiftUIStackView, rhs: SwiftUIStackView) -> Bool {

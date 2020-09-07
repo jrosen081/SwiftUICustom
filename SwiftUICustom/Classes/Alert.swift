@@ -73,16 +73,19 @@ public struct AlertView<Content: View>: View {
 		return self.content
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if binding.wrappedValue {
 			enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
 		
 		binding.addListener(UpdateDelegateImpl {
-			enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
+			if self.binding.wrappedValue {
+				enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
+
+			}
 		})
 		
-		return content.toUIView(enclosingController: enclosingController)
+		return content.toUIView(enclosingController: enclosingController, environment: environment)
 	}
 }
 

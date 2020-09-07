@@ -20,32 +20,43 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let buttonControl = NavigationButtonLink(view: self.content().toUIView(enclosingController: enclosingController)) {
-			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination), animated: true)
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		var newEnvironment = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+		let buttonControl = NavigationButtonLink(view: self.content().toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
 		}
-		buttonControl.tintColor = .blue
 		return buttonControl
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		var newEnvironment = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
+		self.content().redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 }
 
 class NavigationButtonLink: ButtonView {
+	let environment: EnvironmentValues
+	
+	init(view: UIView, environment: EnvironmentValues, onClick: @escaping () -> ()) {
+		self.environment = environment
+		super.init(view: view, onClick: onClick)
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
 	override func insideList() -> (() -> ())? {
 		guard !self.inList else { return self.onClick }
 		self.inList = true
-		self.view.tintColor = UIColor.black
 		setupView(HStack {
 			UIViewWrapper(view: self.view)
 			Spacer()
 			Text("->")
-			}.padding().toUIView(enclosingController: UIViewController()))
+		}.padding().toUIView(enclosingController: UIViewController(), environment: self.environment))
 		self.isUserInteractionEnabled = false
 		return self.onClick
-	}
-	
-	override var tintColor: UIColor! {
-		didSet {
-			self.view.tintColor = self.tintColor
-		}
 	}
 }

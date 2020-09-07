@@ -18,21 +18,39 @@ public struct Text: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let label = UILabel(frame: .zero)
-		label.translatesAutoresizingMaskIntoConstraints = false
-		label.text = text
-		label.textAlignment = .center
+		setupData(label: label, environment: environment)
 		return SwiftUILabel(label: label)
 	}
+	
+	func setupData(label: UILabel, environment: EnvironmentValues) {
+		label.translatesAutoresizingMaskIntoConstraints = false
+		label.text = text
+		label.textAlignment = environment.multilineTextAlignment
+		label.textColor = environment.foregroundColor
+		label.adjustsFontSizeToFitWidth = true
+		label.minimumScaleFactor = environment.minimumScaleFactor
+		label.font = environment.font
+		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		guard let swiftUILabel = view as? SwiftUILabel else { return }
+		setupData(label: swiftUILabel.label, environment: environment)
+	}
+	
+	
 }
 
 internal class SwiftUILabel: SwiftUIView {
+	let label: UILabel
 	override var intrinsicContentSize: CGSize {
 		return self.subviews[0].intrinsicContentSize
 	}
 	
 	init(label view: UILabel) {
+		self.label = view
 		super.init(frame: .zero)
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.isUserInteractionEnabled = false
@@ -43,6 +61,7 @@ internal class SwiftUILabel: SwiftUIView {
 			view.trailingAnchor.constraint(equalTo: self.trailingAnchor),
 			view.topAnchor.constraint(equalTo: self.topAnchor)
 		])
+		view.setContentCompressionResistancePriority(.init(749), for: .horizontal)
 	}
 	
 	required init(coder: NSCoder) {

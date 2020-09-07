@@ -11,7 +11,7 @@ public class SwiftUIController: UINavigationController {
 	
 	public init<Content: View>(swiftUIView: Content) {
 		super.init(nibName: nil, bundle: nil)
-		self.viewControllers = [SwiftUIInternalController(swiftUIView: swiftUIView)]
+		self.viewControllers = [SwiftUIInternalController(swiftUIView: swiftUIView, environment: EnvironmentValues())]
 		self.isNavigationBarHidden = true
 		self.navigationBar.prefersLargeTitles = true
 	}
@@ -23,9 +23,22 @@ public class SwiftUIController: UINavigationController {
 
 internal class SwiftUIInternalController<Content: View>: UIViewController, UpdateDelegate {
 	let swiftUIView: Content
+	let environment: EnvironmentValues
 	
-	public init(swiftUIView: Content) {
+	var actualEnvironment: EnvironmentValues {
+		var newEnvironment = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = nil
+		if #available(iOS 12.0, *) {
+			newEnvironment.colorScheme = self.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+		} else {
+			newEnvironment.colorScheme = .light
+		}
+		return newEnvironment
+	}
+	
+	public init(swiftUIView: Content, environment: EnvironmentValues) {
 		self.swiftUIView = swiftUIView
+		self.environment = environment
 		super.init(nibName: nil, bundle: nil)
 	}
 	
@@ -35,12 +48,12 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 	
 	public override func viewDidLoad() {
         super.viewDidLoad()
-		let underlyingView = self.swiftUIView.toUIView(enclosingController: self)
+		let underlyingView = self.swiftUIView.toUIView(enclosingController: self, environment: self.actualEnvironment)
 		showView(underlyingView.asTopLevelView())
     }
 	
 	func updateData() {
-		showView(self.swiftUIView.toUIView(enclosingController: self).asTopLevelView())
+		self.swiftUIView.redraw(view: self.view.subviews[0], controller: self, environment: self.actualEnvironment)
 	}
 	
 	func showView(_ underlyingView: UIView) {
@@ -52,8 +65,7 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 			underlyingView.trailingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.trailingAnchor),
 			underlyingView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor)
 		])
-		self.view.backgroundColor = .white
-
+		self.view.backgroundColor = self.actualEnvironment.colorScheme == .dark ? .black : .white
 	}
 
 }

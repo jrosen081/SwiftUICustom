@@ -14,8 +14,12 @@ public struct Spacer: View {
 	
 	public init() { }
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ExpandingView()
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		// Do nothing
 	}
 }
 

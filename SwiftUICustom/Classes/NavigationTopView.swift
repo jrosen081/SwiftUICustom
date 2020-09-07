@@ -12,16 +12,16 @@ public struct NavigationTopView<Content: View>: View {
 	let title: String
 	let prefersLarge: Bool
 	
-	public var body: Self {
-		return self
+	public var body: Content {
+		return self.content
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationItem.title = self.title
 		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
 			enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
 		}
-		return self.content.toUIView(enclosingController: enclosingController)
+		return self.content.toUIView(enclosingController: enclosingController, environment: environment)
 	}
 }
 

@@ -7,7 +7,8 @@
 
 import Foundation
 
-public struct ForEach<Element, StorageType: Equatable, Content: View>: View {
+public struct ForEach<Element, StorageType: Equatable, Content: View>: View, Expandable {
+	
 	let elements: [Element]
 	let mapper: (Element) -> StorageType
 	let contentMapper: (StorageType) -> Content
@@ -18,14 +19,25 @@ public struct ForEach<Element, StorageType: Equatable, Content: View>: View {
 		self.contentMapper = contentMapper
 	}
 	
+	func expanded() -> [BuildingBlock] {
+		return elements.map(mapper).map(contentMapper)
+	}
 	
 	public var body: Self {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return InternalLazyCollatedView(arrayValues: self.elements.map(mapper)) {
-			self.contentMapper($0).toUIView(enclosingController: enclosingController)
+			self.contentMapper($0).toUIView(enclosingController: enclosingController, environment: environment)
+		}
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		guard let collated = view as? InternalCollatedView else { return }
+		zip(elements, collated.underlyingViews).forEach { element, uiview in
+			contentMapper(mapper(element)).redraw(view: uiview, controller: controller, environment: environment)
+			
 		}
 	}
 }

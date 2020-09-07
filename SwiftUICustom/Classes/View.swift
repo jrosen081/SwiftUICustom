@@ -13,18 +13,27 @@ public protocol View: BuildingBlock {
 }
 
 public protocol BuildingBlock {
-	func toUIView(enclosingController: UIViewController) -> UIView
+	func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
+	func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
 }
 
 extension View {
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.body.redraw(view: view, controller: controller, environment: environment)
+	}
+	
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if let controller = enclosingController as? UpdateDelegate {
 			let mirror = Mirror(reflecting: self)
 			mirror.children.map { $0.value }
 				.compactMap { $0 as? Redrawable }
 				.forEach { $0.addListener(controller) }
+			mirror.children.map { $0.value }
+				.compactMap { $0 as? EnvironmentNeeded }
+				.forEach { $0.environment = environment }
+			
 		}
-		return self.body.toUIView(enclosingController: enclosingController)
+		return self.body.toUIView(enclosingController: enclosingController, environment: environment)
 	}
 	
 	func modifier<T>(_ modifier: T) -> ModifiedContent<Self, T> {

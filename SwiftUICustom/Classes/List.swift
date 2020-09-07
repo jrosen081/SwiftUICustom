@@ -10,6 +10,8 @@ import Foundation
 public struct List<Content: View>: View {
 	let viewCreator: () -> Content
 	
+	@State var tableView: UITableView? = nil
+	
 	public var body: Self {
 		return self
 	}
@@ -18,15 +20,29 @@ public struct List<Content: View>: View {
 		self.viewCreator = viewCreator
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let view = self.viewCreator().toUIView(enclosingController: enclosingController)
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
+		let view = self.viewCreator().toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		(view as? InternalLazyCollatedView)?.expand()
-		return SwiftUITableView(lazyView: view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 }))
+		let tableView = SwiftUITableView(lazyView: view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 }))
+		return tableView
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		if let tableView = view as? SwiftUITableView {
+			var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
+			let view = self.viewCreator().toUIView(enclosingController: controller, environment: newEnvironment)
+			(view as? InternalLazyCollatedView)?.expand()
+			tableView.lazyView = view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 })
+			tableView.reloadData()
+		}
 	}
 }
 
 class SwiftUITableView: UITableView {
-	let lazyView: InternalLazyCollatedView
+	var lazyView: InternalLazyCollatedView
 	
 	var tableViewClickedResponses: [IndexPath: () -> ()] = [:]
 	
@@ -50,7 +66,7 @@ struct UIViewWrapper: View {
 		return self
 	}
 	
-	func toUIView(enclosingController: UIViewController) -> UIView {
+	func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return self.view
 	}
 }
@@ -63,15 +79,13 @@ extension SwiftUITableView: UITableViewDataSource {
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let view = self.lazyView[indexPath.row]
 		if let onClick = view.insideList() {
-			view.tintColor = self.tintColor
 			self.tableViewClickedResponses[indexPath] = onClick
 			return SwiftUITableViewCell(view: view)
 		}
-		view.tintColor = self.tintColor
 		return SwiftUITableViewCell(view: HStack {
 			UIViewWrapper(view: view)
 			Spacer()
-			}.toUIView(enclosingController: UIViewController())
+			}.toUIView(enclosingController: UIViewController(), environment: EnvironmentValues())
 		)
 	}
 }

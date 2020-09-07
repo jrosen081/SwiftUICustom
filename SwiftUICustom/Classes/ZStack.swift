@@ -20,10 +20,10 @@ public struct ZStack<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let enclosingView = SwiftUIView(frame: .zero)
 		enclosingView.translatesAutoresizingMaskIntoConstraints = false
-		let view = contentBuilder().toUIView(enclosingController: enclosingController)
+		let view = contentBuilder().toUIView(enclosingController: enclosingController, environment: environment)
 		((view as? InternalCollatedView)?.underlyingViews ?? [view]).enumerated().forEach { (index, underlyingView) in
 			if index == 0 {
 				enclosingView.addSubview(underlyingView)
@@ -44,5 +44,13 @@ public struct ZStack<Content: View>: View {
 			])
 		}
 		return enclosingView
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		let viewProtocol = contentBuilder()
+		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
+		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
+			$1.redraw(view: $0, controller: controller, environment: environment)
+		}
 	}
 }

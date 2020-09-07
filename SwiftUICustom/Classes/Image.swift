@@ -22,10 +22,22 @@ public struct Image: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let imageView = UIImageView(image: self.image.withRenderingMode(.alwaysTemplate))
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let imageView = UIImageView(frame: .zero)
+		updateView(imageView, environment: environment)
+		return imageView
+	}
+	
+	func updateView(_ imageView: UIImageView, environment: EnvironmentValues) {
+		imageView.image = self.image.withRenderingMode(.alwaysTemplate)
 		imageView.translatesAutoresizingMaskIntoConstraints = false
 		imageView.contentMode = .scaleAspectFit
-		return imageView
+		imageView.tintColor = environment.foregroundColor
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		if let imageView = view as? UIImageView {
+			updateView(imageView, environment: environment)
+		}
 	}
 }

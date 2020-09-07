@@ -65,29 +65,3 @@ class InternalLazyCollatedView: InternalCollatedView {
 		return self
 	}
 }
-
-public struct SingleView<Content: View>: BuildingBlock {
-	let content: () -> Content
-	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		return InternalCollatedView(underlyingViews: [content().toUIView(enclosingController: enclosingController)])
-	}
-}
-
-public struct DoubleView<C1: View, C2: View>: BuildingBlock {
-	let cAll: () -> (C1, C2)
-	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let all = cAll()
-		return InternalCollatedView(underlyingViews: [all.0.toUIView(enclosingController: enclosingController), all.1.toUIView(enclosingController: enclosingController)])
-	}
-}
-
-public struct TripleView<C1: View, C2: View, C3: View>: BuildingBlock {
-	let cAll: () -> (C1, C2, C3)
-	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let all = cAll()
-		return InternalCollatedView(underlyingViews: [all.0.toUIView(enclosingController: enclosingController), all.1.toUIView(enclosingController: enclosingController), all.2.toUIView(enclosingController: enclosingController)])
-	}
-}

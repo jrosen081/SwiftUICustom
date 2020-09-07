@@ -15,8 +15,8 @@ public struct FixedSizeView<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let view = content.toUIView(enclosingController: enclosingController)
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = content.toUIView(enclosingController: enclosingController, environment: environment)
 		let horizontal = view.widthAnchor.constraint(equalToConstant: size.width)
 		horizontal.priority = .required
 		horizontal.isActive = true
@@ -24,6 +24,10 @@ public struct FixedSizeView<Content: View>: View {
 		vertical.priority = .required
 		vertical.isActive = true
 		return view
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.content.redraw(view: view, controller: controller, environment: environment)
 	}
 }
 

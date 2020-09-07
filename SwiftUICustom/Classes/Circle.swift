@@ -14,4 +14,8 @@ public struct Circle: Shape {
 	public func path(in rect: CGRect) -> Path {
 		Path(arcCenter: CGPoint(x: rect.midX, y: rect.midY), radius: min(rect.width, rect.height) / 2, startAngle: 0, endAngle: .pi * 2, clockwise: true)
 	}
+	
+	public func redraw(controller: UIViewController, environment: EnvironmentValues) {
+		// Do nothing rn
+	}
 }

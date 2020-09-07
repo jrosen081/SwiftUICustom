@@ -18,9 +18,9 @@ extension UIView {
 			return self.updateViewHierarchy(other: view, actualView: actualView.body, enclosingController: enclosingController)
 		}
 		
-		if !self.isKind(of: view.classForCoder) || !view.isKind(of: self.classForCoder) {
-			return actualView.toUIView(enclosingController: enclosingController)
-		}
+//		if !self.isKind(of: view.classForCoder) || !view.isKind(of: self.classForCoder) {
+//			return actualView.toUIView(enclosingController: enclosingController)
+//		}
 		
 		
 		 

@@ -34,10 +34,10 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = false
-		view.tintColor = .black
+		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		view.shapeLayer.lineWidth = self.width
 		view.shapeLayer.fillColor = nil
 		return view
@@ -51,10 +51,10 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = true
-		view.tintColor = .black
+		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		view.shapeLayer.strokeColor = nil
 		return view
 	}
@@ -77,7 +77,11 @@ internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	lazy var shapeLayer: CAShapeLayer = {
 		let layer = CAShapeLayer()
 		layer.lineWidth = 5
-		layer.strokeColor = UIColor.black.cgColor
+		if #available(iOS 13.0, *) {
+			layer.strokeColor = UIColor.systemBackground.cgColor
+		} else {
+			layer.strokeColor = UIColor.black.cgColor
+		}
 		return layer
 	}()
 	

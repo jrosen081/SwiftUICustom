@@ -19,15 +19,19 @@ public struct Button<ButtonContent: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let view = self.content().toUIView(enclosingController: enclosingController)
-		view.tintColor = UIColor.blue
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		var newEnvironment = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
+		let view = self.content().toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
-		if let label = view as? UILabel {
-			label.textColor = .blue
-		}
 		return ButtonView(view: view, onClick: self.onClick)
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		var newEnvironment = EnvironmentValues(environment)
+		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
+		self.content().redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 	
 }
@@ -42,6 +46,7 @@ class ButtonView: SwiftUIView {
 		self.onClick = onClick
 		super.init(frame: .zero)
 		self.translatesAutoresizingMaskIntoConstraints = false
+		view.isUserInteractionEnabled = false
 		setupView(view)
 	}
 	
@@ -62,7 +67,6 @@ class ButtonView: SwiftUIView {
 	}
 	
 	override func insideList() -> (() -> ())? {
-		self.view.tintColor = .black
 		self.isUserInteractionEnabled = false
 		self.inList = true
 		return self.onClick

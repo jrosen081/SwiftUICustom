@@ -16,17 +16,6 @@ internal class SwiftUIView: UIControl {
 		}
 	}
 	
-	override var tintColor: UIColor! {
-		didSet {
-			self.subviews.forEach {
-				$0.tintColor = self.tintColor
-				if let label = $0 as? UILabel {
-					label.textColor = self.tintColor
-				}
-			}
-		}
-	}
-	
 	static func == (lhs: SwiftUIView, rhs: SwiftUIView) -> Bool {
 		return lhs.subviews == rhs.subviews
 	}

@@ -11,6 +11,7 @@ import SwiftUICustom
 
 @available(iOS 13,  *)
 struct SampleView: View {
+	@Environment(\.colorScheme) var colorScheme
 	@State var currentCount = 0
 	var values = ["HI", "BYE"]
 	
@@ -22,9 +23,9 @@ struct SampleView: View {
 						.padding(corners: [.trailing])
 					NavigationLink(destination: SecondScreen(count: self.$currentCount)) {
 						Text("Bye")
-					}
+						}.padding().background(.systemGreen)
 				}.padding()
-					.foregroundColor(.green)
+					.foregroundColor(self.colorScheme == .dark ? .yellow : .green)
 				Spacer()
 				 Button(content: {
 					Text("The current count is \(self.currentCount)")

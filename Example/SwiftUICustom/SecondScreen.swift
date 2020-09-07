@@ -24,6 +24,7 @@ public struct SecondScreen: View {
 					.onAppear {
 						print("Achieved")
 					}.padding()
+					.font(.systemFont(ofSize: 15))
 				Spacer()
 				Button(content: { Text("Nope") }) { self.count += 1 }.padding()
 				Spacer()

@@ -11,15 +11,13 @@ public struct OnAppearView<Content: View>: View {
 	let view: Content
 	let onAppear: () -> ()
 	
-	public var body: Self {
-		return self
+	public var body: Content {
+		return self.view
 	}
 	
-	public func toUIView(enclosingController: UIViewController) -> UIView {
-		let view = self.view.toUIView(enclosingController: enclosingController)
-		if let swiftView = view as? SwiftUIView {
-			swiftView.onAppear = self.onAppear
-		}
+	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.view.toUIView(enclosingController: enclosingController, environment: environment)
+		onAppear()
 		return view
 	}
 }
