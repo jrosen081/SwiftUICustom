@@ -42,6 +42,37 @@ public struct EnvironmentValues {
 		updates(&value)
 		return value
 	}
+	
+	var keyLookers: [KeyLooker] = []
+	
+	subscript<K>(key: K.Type) -> K.Value where K : EnvironmentKey {
+		get {
+			(self.keyLookers.first(where: { $0.classValue is K.Type })?.actualValue as? K.Value) ?? K.defaultValue
+		}
+		set {
+			if var looker = self.keyLookers.first(where: { $0.classValue is K.Type }) {
+				looker.actualValue = newValue
+			} else {
+				self.keyLookers.append(KeyLooker(actualValue: newValue, classValue: K.self))
+			}
+		}
+	}
+}
+
+struct EnvironmentObjectGetter<Object>: EnvironmentKey {
+	static var defaultValue: Object {
+		fatalError("No object was found in the environment of type: \(Object.self)")
+	}
+}
+
+struct KeyLooker {
+	var actualValue: Any
+	var classValue: Any
+	
+	init(actualValue: Any, classValue: Any) {
+		self.actualValue = actualValue
+		self.classValue = classValue
+	}
 }
 
 extension EnvironmentValues {
@@ -54,5 +85,11 @@ extension EnvironmentValues {
 		self.foregroundColor = values.foregroundColor
 		self.allowsTightening = values.allowsTightening
 		self.textContentType = values.textContentType
+		self.keyLookers = values.keyLookers
 	}
+}
+
+public protocol EnvironmentKey {
+	associatedtype Value
+	static var defaultValue: Self.Value { get }
 }

@@ -14,17 +14,19 @@ public struct SecondScreen: View {
 	
 	@Binding var count: Int
 	
+	@EnvironmentObject var object: ExampleModel
+	
 	@State var currentValues: [Values] = [Values(int: 5), Values(int: 3)]
 	
 	public var body: some View {
 		VStack {
 			HStack {
-				Text("The count here is: \(self.count)")
+				Text("The count here is: \(self.count). Inside the object is \(self.object.value)")
 					.navigationTitle("Second Page")
 					.onAppear {
 						print("Achieved")
 					}.padding()
-					.font(.systemFont(ofSize: 15))
+					.font(.systemFont(ofSize: 7))
 				Spacer()
 				Button(content: { Text("Nope") }) { self.count += 1 }.padding()
 				Spacer()

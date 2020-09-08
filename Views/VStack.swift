@@ -29,7 +29,6 @@ public struct VStack<Content: View>: View {
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .vertical)
 		stackView.alignment = self.alignment.stackViewAlignment
 		stackView.axis = .vertical
-		stackView.distribution = .fill
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.spacing = self.spacing
 		return stackView

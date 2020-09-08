@@ -67,4 +67,15 @@ public extension View {
 		})
 	}
 
+	func environmentObject<Object: ObservableObject>(_ object: Object) -> EnvironmentUpdatingView<Self> {
+		return EnvironmentUpdatingView(content: self, updates: {
+			$0[EnvironmentObjectGetter<Object>.self] = object
+		})
+	}
+	
+	func environment<Object>(_ keyPath: WritableKeyPath<EnvironmentValues, Object>, _ object: Object) -> EnvironmentUpdatingView<Self> {
+		return EnvironmentUpdatingView(content: self, updates: { (environment: inout EnvironmentValues) in
+			environment[keyPath: keyPath] = object
+		})
+	}
 }

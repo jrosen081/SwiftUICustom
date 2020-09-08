@@ -13,6 +13,7 @@ import SwiftUICustom
 struct SampleView: View {
 	@Environment(\.colorScheme) var colorScheme
 	@State var currentCount = 0
+	@ObservedObject var model = ExampleModel()
 	var values = ["HI", "BYE"]
 	
 	var body: some View {
@@ -41,7 +42,12 @@ struct SampleView: View {
 				Text("Spaced at the bottom")
 					.padding(corners: [.bottom])
 				Spacer()
+				HStack {
+					Text("The observed value is \(self.model.value)")
+					Spacer()
+				}.padding()
 			}.navigationTitle("My name")
+				.environmentObject(self.model)
 		}
 	}
 }

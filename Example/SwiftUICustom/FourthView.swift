@@ -32,7 +32,7 @@ struct FourthView: View {
 				}
 			}.navigationTitle("Horizontal And Vertical Scroll View")
 			.padding()
-				.foregroundColor(.link)
+			.foregroundColor(.link)
 		}.alert(self.$showingAlert) {
 			Alert(title: Text("Button"), primaryButton: .default(Text("Hi"), action: nil), secondaryButton: .default(Text("Bye"), action: nil))
 		}

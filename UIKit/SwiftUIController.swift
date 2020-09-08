@@ -56,6 +56,14 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 		self.swiftUIView.redraw(view: self.view.subviews[0], controller: self, environment: self.actualEnvironment)
 	}
 	
+	override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+		super.traitCollectionDidChange(previousTraitCollection)
+		UIView.animate(withDuration: 0.33) {
+			self.view.backgroundColor = self.actualEnvironment.colorScheme == .dark ? .black : .white
+			self.updateData()
+		}
+	}
+	
 	func showView(_ underlyingView: UIView) {
 		self.view.subviews.forEach { $0.removeFromSuperview() }
 		self.view.addSubview(underlyingView)

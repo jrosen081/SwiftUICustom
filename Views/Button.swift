@@ -41,6 +41,10 @@ class ButtonView: SwiftUIView {
 	let onClick: () -> ()
 	var inList: Bool = false
 	
+	override var willExpand: Bool {
+		return view.willExpand
+	}
+	
 	init(view: UIView, onClick: @escaping () -> ()) {
 		self.view = view
 		self.onClick = onClick
@@ -57,12 +61,7 @@ class ButtonView: SwiftUIView {
 		}
 		self.addSubview(view)
 		self.view = view
-		NSLayoutConstraint.activate([
-			self.view.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-			self.view.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-			self.view.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-			self.view.topAnchor.constraint(equalTo: self.topAnchor)
-		])
+		self.setupFullConstraints(self.view, self)
 
 	}
 	

@@ -42,6 +42,14 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		view.shapeLayer.fillColor = nil
 		return view
 	}
+	
+	public func redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		guard let view = internalView as? ShapeSwiftUIView<ShapeGeneric> else { return }
+		view.isFilled = false
+		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
+		view.shapeLayer.lineWidth = self.width
+		view.shapeLayer.fillColor = nil
+	}
 }
 
 public struct FilledView<ShapeGeneric: Shape>: View {
@@ -58,10 +66,21 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		view.shapeLayer.strokeColor = nil
 		return view
 	}
+	
+	public func redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		guard let view = internalView as? ShapeSwiftUIView<ShapeGeneric> else { return }
+		view.isFilled = true
+		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
+		view.shapeLayer.strokeColor = nil
+	}
 }
 
 internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	var isFilled: Bool = false
+	
+	override var willExpand: Bool {
+		return false
+	}
 	
 	override var tintColor: UIColor! {
 		didSet {

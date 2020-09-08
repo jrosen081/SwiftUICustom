@@ -16,7 +16,7 @@ internal class SwiftUIView: UIControl {
 		}
 	}
 	
-	static func == (lhs: SwiftUIView, rhs: SwiftUIView) -> Bool {
-		return lhs.subviews == rhs.subviews
+	override var willExpand: Bool {
+		return self.subviews[0].willExpand
 	}
 }

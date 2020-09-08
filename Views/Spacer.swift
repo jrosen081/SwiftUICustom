@@ -33,6 +33,10 @@ internal enum ExpandingContext{
 
 internal class ExpandingView: SwiftUIView {
 	
+	override var willExpand: Bool {
+		return true
+	}
+	
 	init() {
 		super.init(frame: .zero)
 		self.translatesAutoresizingMaskIntoConstraints = false
@@ -53,7 +57,7 @@ internal class ExpandingView: SwiftUIView {
 	}
 	
 	override var intrinsicContentSize: CGSize {
-		let expanded = UILayoutFittingExpandedSize
+		let expanded = UIView.layoutFittingExpandedSize
 		var size = CGSize.zero
 		if context.contains(.horizontal) {
 			size = CGSize(width: expanded.width, height: 0)

@@ -8,10 +8,10 @@
 import Foundation
 
 public struct NavigationLink<Content: View, Destination: View>: View {
-	let destination: Destination
+	let destination: () -> Destination
 	let content: () -> Content
 	
-	public init(destination: Destination, content: @escaping () -> Content) {
+	public init(destination: @autoclosure @escaping () -> Destination, content: @escaping () -> Content) {
 		self.destination = destination
 		self.content = content
 	}
@@ -24,7 +24,7 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
 		let buttonControl = NavigationButtonLink(view: self.content().toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
-			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
+			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination(), environment: newEnvironment), animated: true)
 		}
 		return buttonControl
 	}

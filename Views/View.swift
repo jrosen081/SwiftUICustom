@@ -23,19 +23,20 @@ extension View {
 	}
 	
 	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let mirror = Mirror(reflecting: self)
+		mirror.children.map { $0.value }
+			.compactMap { $0 as? EnvironmentNeeded }
+			.forEach { $0.environment = environment }
 		if let controller = enclosingController as? UpdateDelegate {
-			let mirror = Mirror(reflecting: self)
 			mirror.children.map { $0.value }
 				.compactMap { $0 as? Redrawable }
 				.forEach { $0.addListener(controller) }
-			mirror.children.map { $0.value }
-				.compactMap { $0 as? EnvironmentNeeded }
-				.forEach { $0.environment = environment }
-			
 		}
 		return self.body.toUIView(enclosingController: enclosingController, environment: environment)
 	}
-	
+}
+
+public extension View {
 	func modifier<T>(_ modifier: T) -> ModifiedContent<Self, T> {
 		return ModifiedContent(content: self, modification: modifier)
 	}

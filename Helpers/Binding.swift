@@ -39,6 +39,10 @@ public class Binding<T>: Redrawable {
 	public var projectedValue: Binding<T> {
 		return self
 	}
+	
+	func reset() {
+		// Do nothing
+	}
 }
 
 class WeakHolder {

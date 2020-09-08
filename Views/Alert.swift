@@ -38,7 +38,7 @@ public struct Alert {
 	public struct Button {
 		let text: String
 		let onClick: (() -> ())?
-		let style: UIAlertActionStyle
+		let style: UIAlertAction.Style
 		
 		func toAlert(_ callback: (() -> ())?) ->  UIAlertAction {
 			return UIAlertAction(title: self.text, style: self.style) {_ in
@@ -78,14 +78,14 @@ public struct AlertView<Content: View>: View {
 			enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
 		
-		binding.addListener(UpdateDelegateImpl {
-			if self.binding.wrappedValue {
-				enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
-
-			}
-		})
-		
 		return content.toUIView(enclosingController: enclosingController, environment: environment)
+	}
+	
+	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.body.redraw(view: view, controller: controller, environment: environment)
+		if binding.wrappedValue {
+			controller.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
+		}
 	}
 }
 

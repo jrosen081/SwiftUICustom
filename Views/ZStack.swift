@@ -48,8 +48,8 @@ public struct ZStack<Content: View>: View {
 	
 	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		let viewProtocol = contentBuilder()
-		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
-		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
+		guard let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
+		zip(view.subviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
 			$1.redraw(view: $0, controller: controller, environment: environment)
 		}
 	}

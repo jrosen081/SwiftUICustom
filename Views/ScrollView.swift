@@ -39,6 +39,10 @@ public struct ScrollView<Content: View>: View {
 
 class SwiftUIScrollView: UIScrollView {
 	override var intrinsicContentSize: CGSize {
-		UILayoutFittingExpandedSize
+		UIView.layoutFittingExpandedSize
+	}
+	
+	override var willExpand: Bool {
+		return true
 	}
 }

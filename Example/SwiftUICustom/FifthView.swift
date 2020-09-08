@@ -12,6 +12,8 @@ import SwiftUICustom
 @available(iOS 13.0.0, *)
 struct FifthView: View {
 	
+	@EnvironmentObject var value: ExampleModel
+	
 	var body: some View {
 		ZStack(alignment: .topLeading) {
 			ZStack(alignment: .bottomTrailing) {
@@ -25,7 +27,11 @@ struct FifthView: View {
 				}
 				Text("Bottom Trailing")
 			}
-			Text("Top Leading")
+			Button(content: {
+				Text("The count inside value is \(self.value.value). Click to update")
+			}, onClick: {
+				self.value.value += 1
+			})
 		}.padding(paddingSpace: 10).border(.black, lineWidth: 10).padding()
 	}
 }
@@ -35,10 +41,22 @@ struct SixthView: View {
 	@State var number: Int = 0
 	
 	var body: some View {
-		Button(content: {
-			Text("The number is \(self.number)")
-		}, onClick: {
-			self.number += 1
-		})
+		VStack {
+			if self.number <= 5 {
+				Button(content: {
+					Text("The number is \(self.number)")
+				}, onClick: {
+					self.number += 1
+				})
+			} else {
+				Text("This is a big number")
+				.padding()
+					.foregroundColor(.systemTeal)
+			}
+			
+			if self.number != 2 {
+				Text("The number doesn't equal 2")
+			}
+		}
 	}
 }

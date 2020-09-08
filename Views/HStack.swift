@@ -30,7 +30,6 @@ public struct HStack<Content: View>: View {
 		stackView.alignment = self.alignment.stackViewAlignment
 		stackView.spacing = self.spacing
 		stackView.axis = .horizontal
-		stackView.distribution = .fill
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		return stackView
 	}
@@ -57,6 +56,10 @@ extension Array where Element == BuildingBlock {
 
 class SwiftUIStackView: UIStackView {
 	
+	override var willExpand: Bool {
+		return self.arrangedSubviews.contains(where: \.willExpand)
+	}
+	
 	init(arrangedSubviews: [UIView], context: ExpandingContext) {
 		super.init(frame: .zero)
 		let actualViews = arrangedSubviews.flatMap {
@@ -78,6 +81,11 @@ class SwiftUIStackView: UIStackView {
 				}
 				return expandingView
 			})
+		
+		// If there is no expanding views, fill proportionally, else fill
+		if !self.willExpand {
+			self.distribution = .fillProportionally
+		}
 	}
 	
 	required init(coder: NSCoder) {

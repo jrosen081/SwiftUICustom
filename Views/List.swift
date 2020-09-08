@@ -42,6 +42,14 @@ public struct List<Content: View>: View {
 }
 
 class SwiftUITableView: UITableView {
+	
+	override var intrinsicContentSize: CGSize {
+		return UIView.layoutFittingExpandedSize
+	}
+	
+	override var willExpand: Bool {
+		return true
+	}
 	var lazyView: InternalLazyCollatedView
 	
 	var tableViewClickedResponses: [IndexPath: () -> ()] = [:]
