@@ -27,3 +27,7 @@ jrosen081, jrosen081@gmail.com
 ## License
 
 SwiftUICustom is available under the MIT license. See the LICENSE file for more info.
+
+## What is This
+
+SwiftUICustom is a reverse-engineering of SwiftUI. It uses very similar names, with almost the exact same structure, and converts its views into UIKit. This can be used for anyone who doesn't want to wait until iOS 13 to use SwiftUI.
