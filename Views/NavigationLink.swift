@@ -20,19 +20,19 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-		let buttonControl = NavigationButtonLink(view: self.content().toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+		let buttonControl = NavigationButtonLink(view: self.content()._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
 			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination(), environment: newEnvironment), animated: true)
 		}
 		return buttonControl
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content().redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+		self.content()._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 }
 
@@ -48,14 +48,16 @@ class NavigationButtonLink: ButtonView {
 		fatalError("init(coder:) has not been implemented")
 	}
 	
-	override func insideList() -> (() -> ())? {
+	override func insideList(width: CGFloat) -> (() -> ())? {
 		guard !self.inList else { return self.onClick }
 		self.inList = true
-		setupView(HStack {
-			UIViewWrapper(view: self.view)
-			Spacer()
-			Text("->")
-		}.padding().toUIView(enclosingController: UIViewController(), environment: self.environment))
+		let shapeView = RightArrow().stroke(lineWidth: 1)._toUIView(enclosingController: UIViewController(), environment: self.environment) as! ShapeSwiftUIView<RightArrow>
+		let fullSize = self.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+		shapeView.givenIntrinsicContentSize = CGSize(width: 10, height: fullSize.height)
+		let paddingView = UIViewWrapper(view: shapeView).padding(paddingSpace: 5)._toUIView(enclosingController: UIViewController(), environment: self.environment)
+		let stackView = SwiftUIStackView(arrangedSubviews: [self.view, ExpandingView(), paddingView], context: .horizontal)
+		stackView.translatesAutoresizingMaskIntoConstraints = false
+		setupView(UIViewWrapper(view: stackView).padding()._toUIView(enclosingController: UIViewController(), environment: self.environment))
 		self.isUserInteractionEnabled = false
 		return self.onClick
 	}

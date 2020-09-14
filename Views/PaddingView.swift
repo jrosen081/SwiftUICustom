@@ -7,15 +7,22 @@
 
 import Foundation
 
-public enum Corner {
-	case leading
-	case trailing
-	case top
-	case bottom
+public struct Corner: OptionSet {
+	public let rawValue: Int
+	
+	public init(rawValue: Int) {
+		self.rawValue = rawValue
+	}
+	
+	public static let leading = Corner(rawValue: 1)
+	public static let trailing = Corner(rawValue: 2)
+	public static let top = Corner(rawValue: 4)
+	public static let bottom = Corner(rawValue: 8)
+	public static let all: Corner = [.leading, .trailing, .top, .bottom]
 }
 
 public struct PaddingView<Content: View>: View {
-	let paddingCorners: [Corner]
+	let paddingCorners: Corner
 	let paddingSpace: CGFloat
 	let underlyingView: Content
 	
@@ -24,9 +31,9 @@ public struct PaddingView<Content: View>: View {
 		return self.underlyingView
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let paddingView = SwiftUIView()
-		let underlyingUIView = self.underlyingView.toUIView(enclosingController: enclosingController, environment: environment)
+		let underlyingUIView = self.underlyingView._toUIView(enclosingController: enclosingController, environment: environment)
 		paddingView.addSubview(underlyingUIView)
 		paddingView.translatesAutoresizingMaskIntoConstraints = false
 		paddingView.bottomAnchor.constraint(equalTo: underlyingUIView.bottomAnchor, constant: paddingCorners.contains(.bottom) ? self.paddingSpace : 0).isActive = true
@@ -36,13 +43,13 @@ public struct PaddingView<Content: View>: View {
 		return paddingView
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.underlyingView.redraw(view: view.subviews[0], controller: controller, environment: environment)
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.underlyingView._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
 }
 
 public extension View {
-	func padding(corners: [Corner] = [.leading, .trailing, .top, .bottom], paddingSpace: CGFloat = 10) -> PaddingView<Self>{
+	func padding(corners: Corner = .all, paddingSpace: CGFloat = 10) -> PaddingView<Self>{
 		return PaddingView(paddingCorners: corners, paddingSpace: paddingSpace, underlyingView: self)
 	}
 }

@@ -19,3 +19,14 @@ public struct Circle: Shape {
 		// Do nothing rn
 	}
 }
+
+struct RightArrow: Shape {
+	
+	func path(in rect: CGRect) -> Path {
+		Path { path in
+			path.move(to: rect.origin)
+			path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+			path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+		}
+	}
+}

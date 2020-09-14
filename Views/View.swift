@@ -7,22 +7,22 @@
 
 import UIKit
 
-public protocol View: BuildingBlock {
+public protocol View: _BuildingBlock {
 	associatedtype Content: View
 	var body: Content { get }
 }
 
-public protocol BuildingBlock {
-	func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
-	func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
+public protocol _BuildingBlock {
+	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
+	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
 }
 
 extension View {
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.body.redraw(view: view, controller: controller, environment: environment)
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.body._redraw(view: view, controller: controller, environment: environment)
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let mirror = Mirror(reflecting: self)
 		mirror.children.map { $0.value }
 			.compactMap { $0 as? EnvironmentNeeded }
@@ -32,26 +32,55 @@ extension View {
 				.compactMap { $0 as? Redrawable }
 				.forEach { $0.addListener(controller) }
 		}
-		return self.body.toUIView(enclosingController: enclosingController, environment: environment)
+		return self.body._toUIView(enclosingController: enclosingController, environment: environment)
 	}
 }
 
 public extension View {
-	func modifier<T>(_ modifier: T) -> ModifiedContent<Self, T> {
+	func modifier<T: ViewModifier>(_ modifier: T) -> ModifiedContent<Self, T> {
 		return ModifiedContent(content: self, modification: modifier)
+	}
+	
+	func withAnimation<Result>(animation: Animation = .default, operations: () throws -> Result) rethrows -> Result {
+		let mirror = Mirror(reflecting: self)
+		let drawables = mirror.children.map { $0.value }
+			.compactMap { $0 as? Redrawable }
+		drawables.forEach { $0.stopRedrawing() }
+		let value = try operations()
+		drawables.forEach { $0.startRedrawing() }
+		drawables.first?.performAnimation(animation: animation)
+		return value
 	}
 }
 
-public struct ModifiedContent<Content: View, Modification: ViewModifier> {
+public struct ModifiedContent<Content: View, Modification: ViewModifier>: View {
 	let content: Content
 	let modification: Modification
 	
-	var body: Modification.Body {
-		self.modification.body(content: self.content)
+	public var body: Modification.Body {
+		self.modification.body(content: _ViewModifier_Content(createView: self.content._toUIView(enclosingController:environment:), updateView: self.content._redraw(view:controller:environment:)))
 	}
 }
 
 public protocol ViewModifier {
-	associatedtype Body
-	func body<Content: View>(content: Content) -> Self.Body
+	associatedtype Body: View
+	typealias Content = _ViewModifier_Content<Self>
+	func body(content: Self.Content) -> Self.Body
+}
+
+public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
+	var createView: (UIViewController, EnvironmentValues) -> UIView
+	var updateView: (UIView, UIViewController, EnvironmentValues) -> ()
+	
+	public var body: Self {
+		return self
+	}
+	
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		return self.createView(enclosingController, environment)
+	}
+	
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.updateView(view, controller, environment)
+	}
 }

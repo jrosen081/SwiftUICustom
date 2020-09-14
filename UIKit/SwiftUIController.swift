@@ -7,13 +7,115 @@
 
 import UIKit
 
+internal class TransitionDelegate: NSObject, UIViewControllerTransitioningDelegate {
+	var isDismissingSwiping: Bool = false
+	let dismissor: Dismissor
+	
+	init(dismissor: Dismissor) {
+		self.dismissor = dismissor
+	}
+	
+	func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+		return Presenter()
+	}
+	
+	func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+		return self.dismissor
+	}
+	
+	func interactionControllerForDismissal(using animator: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
+		guard isDismissingSwiping else { return nil }
+		return animator as? UIViewControllerInteractiveTransitioning
+	}
+}
+
+class Dismissor: UIPercentDrivenInteractiveTransition, UIViewControllerAnimatedTransitioning {
+	func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
+		return 0.35
+	}
+	func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+		guard let backView = transitionContext.view(forKey: .from), let toViewController = transitionContext.viewController(forKey: .to), let toView = toViewController.view else { return }
+		UIView.animate(withDuration: self.transitionDuration(using: transitionContext), animations: {
+			backView.transform = CGAffineTransform(translationX: 0, y: transitionContext.containerView.frame.height)
+			toView.transform = .identity
+		}, completion: {_ in
+			transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+		})
+	}
+}
+
+class Presenter: NSObject, UIViewControllerAnimatedTransitioning {
+	func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
+		return 0.35
+	}
+	
+	func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+		guard let forwardView = transitionContext.view(forKey: .to), let fromView = transitionContext.viewController(forKey: .from)?.view else { return }
+		forwardView.translatesAutoresizingMaskIntoConstraints = false
+		let containerView = transitionContext.containerView
+		containerView.addSubview(forwardView)
+		
+		NSLayoutConstraint.activate([
+			forwardView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+			forwardView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+			forwardView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+			forwardView.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.95)
+		])
+		
+		forwardView.transform = CGAffineTransform(translationX: 0, y: containerView.frame.height)
+		
+		UIView.animate(withDuration: self.transitionDuration(using: transitionContext), animations: {
+			forwardView.transform = .identity
+			fromView.transform = CGAffineTransform(translationX: 0, y: fromView.frame.height * 0.01).concatenating(CGAffineTransform(scaleX: 1, y: 0.95))
+		}) {_ in
+			transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
+		}
+	}
+	
+	
+}
+
 public class SwiftUIController: UINavigationController {
+	
+	lazy var panGesture: UIPanGestureRecognizer = {
+		let panGesture = UIPanGestureRecognizer(target: self, action: #selector(self.swipeDown(pan:)))
+		self.view.addGestureRecognizer(panGesture)
+		return panGesture
+	}()
+	
+	@objc func swipeDown(pan: UIPanGestureRecognizer) {
+		guard self.presentingViewController != nil else { return }
+		self.transitionDelegate.isDismissingSwiping = true
+		let percent = pan.translation(in: self.view).y / self.view.frame.height
+		if pan.state == .ended || pan.state == .cancelled {
+			if percent > 0.5 {
+				self.dismisser.finish()
+				self.isShowing?.wrappedValue = false
+			} else {
+				self.dismisser.cancel()
+			}
+			self.transitionDelegate.isDismissingSwiping = false
+		} else if pan.state == .changed {
+			self.dismisser.update(percent)
+		} else if pan.state == .began {
+			self.dismiss(animated: true, completion: nil)
+		}
+	}
+	
+	let dismisser = Dismissor()
+	
+	lazy var transitionDelegate = TransitionDelegate(dismissor: self.dismisser)
+	
+	var isShowing: Binding<Bool>? = nil
 	
 	public init<Content: View>(swiftUIView: Content) {
 		super.init(nibName: nil, bundle: nil)
-		self.viewControllers = [SwiftUIInternalController(swiftUIView: swiftUIView, environment: EnvironmentValues())]
+		self.viewControllers = [SwiftUIInternalController(swiftUIView: swiftUIView, environment: EnvironmentValues(self))]
 		self.isNavigationBarHidden = true
 		self.navigationBar.prefersLargeTitles = true
+		self.transitioningDelegate = self.transitionDelegate
+		self.modalPresentationStyle = .custom
+		self.panGesture.minimumNumberOfTouches = 1
 	}
 	
 	required init?(coder: NSCoder) {
@@ -28,11 +130,6 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 	var actualEnvironment: EnvironmentValues {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = nil
-		if #available(iOS 12.0, *) {
-			newEnvironment.colorScheme = self.traitCollection.userInterfaceStyle == .dark ? .dark : .light
-		} else {
-			newEnvironment.colorScheme = .light
-		}
 		return newEnvironment
 	}
 	
@@ -48,19 +145,22 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 	
 	public override func viewDidLoad() {
         super.viewDidLoad()
-		let underlyingView = self.swiftUIView.toUIView(enclosingController: self, environment: self.actualEnvironment)
+		let underlyingView = self.swiftUIView._toUIView(enclosingController: self, environment: self.actualEnvironment)
 		showView(underlyingView.asTopLevelView())
     }
 	
-	func updateData() {
-		self.swiftUIView.redraw(view: self.view.subviews[0], controller: self, environment: self.actualEnvironment)
+	func updateData(with animation: Animation?) {
+		guard !self.view.subviews.isEmpty else { return }
+		var environment = self.actualEnvironment
+		environment.currentAnimation = animation
+		self.swiftUIView._redraw(view: self.view.subviews[0], controller: self, environment: environment)
 	}
 	
 	override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
 		super.traitCollectionDidChange(previousTraitCollection)
 		UIView.animate(withDuration: 0.33) {
 			self.view.backgroundColor = self.actualEnvironment.colorScheme == .dark ? .black : .white
-			self.updateData()
+			self.updateData(with: nil)
 		}
 	}
 	

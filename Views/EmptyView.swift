@@ -14,11 +14,11 @@ public struct EmptyView: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ShrinkingView()
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		// Do nothing
 	}
 }

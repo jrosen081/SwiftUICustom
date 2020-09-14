@@ -22,9 +22,9 @@ public struct HStack<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator()
-		let uiView = view.toUIView(enclosingController: enclosingController, environment: environment)
+		let uiView = view._toUIView(enclosingController: enclosingController, environment: environment)
 		(uiView as? InternalLazyCollatedView)?.expand()
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .horizontal)
 		stackView.alignment = self.alignment.stackViewAlignment
@@ -34,16 +34,16 @@ public struct HStack<Content: View>: View {
 		return stackView
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		let viewProtocol = viewCreator()
 		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
 		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
-			$1.redraw(view: $0, controller: controller, environment: environment)
+			$1._redraw(view: $0, controller: controller, environment: environment)
 		}
 	}
 }
 
-extension Array where Element == BuildingBlock {
+extension Array where Element == _BuildingBlock {
 	func expanded() -> [Element] {
 		return self.flatMap( { (val) -> [Element] in
 			if let expandable = val as? Expandable {
@@ -55,9 +55,15 @@ extension Array where Element == BuildingBlock {
 }
 
 class SwiftUIStackView: UIStackView {
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return self.arrangedSubviews.contains(where: { $0.willExpand(in: context)} )
+	}
 	
-	override var willExpand: Bool {
-		return self.arrangedSubviews.contains(where: \.willExpand)
+	override var intrinsicContentSize: CGSize {
+		return self.arrangedSubviews.map(\.intrinsicContentSize)
+			.reduce(CGSize.zero, {
+				CGSize(width: $0.width + $1.width, height: $0.height + $1.height)
+			})
 	}
 	
 	init(arrangedSubviews: [UIView], context: ExpandingContext) {
@@ -83,7 +89,7 @@ class SwiftUIStackView: UIStackView {
 			})
 		
 		// If there is no expanding views, fill proportionally, else fill
-		if !self.willExpand {
+		if !self.willExpand(in: context) {
 			self.distribution = .fillProportionally
 		}
 	}

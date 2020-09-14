@@ -18,15 +18,15 @@ public struct BorderedView<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = self.content.toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
 		view.layer.borderWidth = self.width
 		view.layer.borderColor = self.color.cgColor
 		return view
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		content.redraw(view: view, controller: controller, environment: environment)
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		content._redraw(view: view, controller: controller, environment: environment)
 	}
 }
 

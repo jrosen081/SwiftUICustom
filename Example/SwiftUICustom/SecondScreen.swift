@@ -18,6 +18,8 @@ public struct SecondScreen: View {
 	
 	@State var currentValues: [Values] = [Values(int: 5), Values(int: 3)]
 	
+	@State var isShowing: Bool = false
+	
 	public var body: some View {
 		VStack {
 			HStack {
@@ -28,7 +30,10 @@ public struct SecondScreen: View {
 					}.padding()
 					.font(.systemFont(ofSize: 7))
 				Spacer()
-				Button(content: { Text("Nope") }) { self.count += 1 }.padding()
+				Button(content: { Text("Nope") }) {
+					self.count += 1
+					self.isShowing = true
+				}.padding()
 				Spacer()
 				NavigationLink(destination: ThirdView()) {
 					Text("On to the next one")
@@ -38,10 +43,13 @@ public struct SecondScreen: View {
 				Button(content: {
 					Image("arrow")
 					.padding()
+					.clipShape(Triangle())
 				}, onClick: {
 					(0..<value).forEach { print($0) }
 				})
 			}
+		}.popover(isShowing: self.$isShowing) {
+			Text("Showing")
 		}
 	}
 }

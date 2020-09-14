@@ -15,12 +15,17 @@ public struct EnvironmentUpdatingView<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		return self.content.toUIView(enclosingController: enclosingController, environment: environment.withUpdates(self.updates))
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let updates = environment.withUpdates(self.updates)
+		if #available(iOS 13.0, *) {
+			enclosingController.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
+			enclosingController.navigationController?.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
+		}
+		return self.content._toUIView(enclosingController: enclosingController, environment: updates)
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.content.redraw(view: view, controller: controller, environment: environment.withUpdates(self.updates))
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.content._redraw(view: view, controller: controller, environment: environment.withUpdates(self.updates))
 	}
 }
 
@@ -76,6 +81,12 @@ public extension View {
 	func environment<Object>(_ keyPath: WritableKeyPath<EnvironmentValues, Object>, _ object: Object) -> EnvironmentUpdatingView<Self> {
 		return EnvironmentUpdatingView(content: self, updates: { (environment: inout EnvironmentValues) in
 			environment[keyPath: keyPath] = object
+		})
+	}
+	
+	func animation(_ animation: Animation) -> EnvironmentUpdatingView<Self> {
+		return EnvironmentUpdatingView(content: self, updates: {
+			$0.currentAnimation = animation
 		})
 	}
 }

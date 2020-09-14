@@ -71,75 +71,75 @@ public struct ViewBuilder {
 	}
 }
 
-extension TupleView : View, BuildingBlock{
+extension TupleView : View, _BuildingBlock{
 	public var body: Self {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		if let val = self.value as? BuildingBlock {
-			return val.toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		if let val = self.value as? _BuildingBlock {
+			return val._toUIView(enclosingController: enclosingController, environment: environment)
 		}
 		
-		let buildingBlocks: [BuildingBlock]
+		let buildingBlocks: [_BuildingBlock]
 		
-		if let (c1, c2) = self.value as? (BuildingBlock, BuildingBlock) {
+		if let (c1, c2) = self.value as? (_BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2]
-		} else if let (c1, c2, c3) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3]
-		} else if let (c1, c2, c3, c4) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4]
-		} else if let (c1, c2, c3, c4, c5) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5]
-		} else if let (c1, c2, c3, c4, c5, c6) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6]
-		} else if let (c1, c2, c3, c4, c5, c6, c7) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10]
 		} else {
 			buildingBlocks = []
 		}
 		
 		return InternalLazyCollatedView(arrayValues: Array(0..<buildingBlocks.count)) {
-			buildingBlocks[$0].toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+			buildingBlocks[$0]._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
 		}
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		if let val = self.value as? BuildingBlock {
-			val.redraw(view: view, controller: controller, environment: environment)
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		if let val = self.value as? _BuildingBlock {
+			val._redraw(view: view, controller: controller, environment: environment)
 		}
 		
-		let buildingBlocks: [BuildingBlock]
+		let buildingBlocks: [_BuildingBlock]
 		
-		if let (c1, c2) = self.value as? (BuildingBlock, BuildingBlock) {
+		if let (c1, c2) = self.value as? (_BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2]
-		} else if let (c1, c2, c3) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3]
-		} else if let (c1, c2, c3, c4) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4]
-		} else if let (c1, c2, c3, c4, c5) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5]
-		} else if let (c1, c2, c3, c4, c5, c6) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6]
-		} else if let (c1, c2, c3, c4, c5, c6, c7) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
-		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock, BuildingBlock) {
+		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10]
 		} else {
 			buildingBlocks = []
 		}
 		
-		zip(view.subviews, buildingBlocks).forEach { $1.redraw(view: $0, controller: controller, environment: environment) }
+		zip(view.subviews, buildingBlocks).forEach { $1._redraw(view: $0, controller: controller, environment: environment) }
 	}
 }
 

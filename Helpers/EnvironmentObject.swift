@@ -9,9 +9,20 @@ import Foundation
 
 @propertyWrapper
 public class EnvironmentObject<Value: ObservableObject>: Environment<Value>, Redrawable {
-	
 	func addListener(_ listener: UpdateDelegate) {
 		self.wrappedValue.addListener(listener)
+	}
+	
+	func startRedrawing() {
+		self.wrappedValue.startRedrawing()
+	}
+	
+	func stopRedrawing() {
+		self.wrappedValue.stopRedrawing()
+	}
+	
+	func performAnimation(animation: Animation) {
+		self.wrappedValue.performAnimation(animation: animation)
 	}
 	
 	public init() {

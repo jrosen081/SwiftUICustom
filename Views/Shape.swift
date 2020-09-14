@@ -7,8 +7,10 @@
 
 import Foundation
 
+
+public typealias Path = UIBezierPath
+
 public protocol Shape: View {
-	typealias Path = UIBezierPath
 	func path(in rect: CGRect) -> Path
 }
 
@@ -26,6 +28,12 @@ public extension Shape {
 	}
 }
 
+extension Path: Shape {
+	public func path(in rect: CGRect) -> Path {
+		return self
+	}
+}
+
 public struct StrokedView<ShapeGeneric: Shape>: View {
 	let shape: ShapeGeneric
 	let width: CGFloat
@@ -34,7 +42,7 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = false
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -43,7 +51,7 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		return view
 	}
 	
-	public func redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let view = internalView as? ShapeSwiftUIView<ShapeGeneric> else { return }
 		view.isFilled = false
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -59,7 +67,7 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = true
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -67,7 +75,7 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		return view
 	}
 	
-	public func redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let view = internalView as? ShapeSwiftUIView<ShapeGeneric> else { return }
 		view.isFilled = true
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -77,9 +85,18 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 
 internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	var isFilled: Bool = false
+	var givenIntrinsicContentSize: CGSize? = nil {
+		didSet {
+			invalidateIntrinsicContentSize()
+		}
+	}
 	
-	override var willExpand: Bool {
-		return false
+	override var intrinsicContentSize: CGSize {
+		givenIntrinsicContentSize ?? UIView.layoutFittingExpandedSize
+	}
+	
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return self.givenIntrinsicContentSize == nil || self.givenIntrinsicContentSize == UIView.layoutFittingExpandedSize
 	}
 	
 	override var tintColor: UIColor! {
@@ -126,5 +143,11 @@ extension UIBezierPath {
 		var path = UIBezierPath()
 		creator(&path)
 		self.init(cgPath: path.cgPath)
+	}
+}
+
+extension Shape {
+	func takingUpSuperclassSize() {
+		
 	}
 }

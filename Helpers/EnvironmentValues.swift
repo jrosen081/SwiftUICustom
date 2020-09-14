@@ -34,6 +34,9 @@ public struct EnvironmentValues {
 	
 	var textContentType: UITextContentType? = nil
 	
+	var currentTransition: AnyTransitionn? = nil
+	
+	var currentAnimation: Animation? = nil
 	
 	public var colorScheme: ColorScheme = .dark
 	
@@ -86,6 +89,17 @@ extension EnvironmentValues {
 		self.allowsTightening = values.allowsTightening
 		self.textContentType = values.textContentType
 		self.keyLookers = values.keyLookers
+		self.currentTransition = values.currentTransition
+		self.currentAnimation = values.currentAnimation
+	}
+	
+	init(_ controller: UIViewController) {
+		self = EnvironmentValues()
+		if #available(iOS 12.0, *) {
+			self.colorScheme = controller.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+		} else {
+			self.colorScheme = .light
+		}
 	}
 }
 

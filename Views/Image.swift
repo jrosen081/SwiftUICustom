@@ -22,7 +22,7 @@ public struct Image: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let imageView = UIImageView(frame: .zero)
 		updateView(imageView, environment: environment)
 		return imageView
@@ -35,9 +35,15 @@ public struct Image: View {
 		imageView.tintColor = environment.foregroundColor
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		if let imageView = view as? UIImageView {
 			updateView(imageView, environment: environment)
 		}
+	}
+}
+
+extension UIImageView {
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return true
 	}
 }

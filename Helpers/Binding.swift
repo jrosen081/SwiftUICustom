@@ -10,12 +10,25 @@ import Foundation
 @propertyWrapper
 public class Binding<T>: Redrawable {
 	var listeners: [WeakHolder] = []
+	var drawing: Bool = true
 	
 	func addListener(_ listener: UpdateDelegate) {
 		if !listeners.contains(where: { $0 === listener }) {
 			self.listeners.append(WeakHolder(object: listener))
 		}
-		
+	}
+	
+	func performAnimation(animation: Animation) {
+		self.drawing = true
+		self.listeners.forEach { $0.object?.updateData(with: animation) }
+	}
+	
+	func startRedrawing() {
+		self.drawing = true
+	}
+	
+	func stopRedrawing() {
+		self.drawing = false
 	}
 	
 	var get: () -> T
@@ -32,7 +45,8 @@ public class Binding<T>: Redrawable {
 		}
 		set {
 			self.set(newValue)
-			self.listeners.forEach { $0.object?.updateData() }
+			guard self.drawing else { return }
+			self.listeners.forEach { $0.object?.updateData(with: nil) }
 		}
 	}
 	
@@ -43,6 +57,8 @@ public class Binding<T>: Redrawable {
 	func reset() {
 		// Do nothing
 	}
+	
+	
 }
 
 class WeakHolder {
@@ -54,5 +70,5 @@ class WeakHolder {
 }
 
 protocol UpdateDelegate: AnyObject {
-	func updateData()
+	func updateData(with animation: Animation?)
 }

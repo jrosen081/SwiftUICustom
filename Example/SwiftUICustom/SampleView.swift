@@ -14,6 +14,7 @@ struct SampleView: View {
 	@Environment(\.colorScheme) var colorScheme
 	@State var currentCount = 0
 	@ObservedObject var model = ExampleModel()
+	@State var textCount = 1
 	var values = ["HI", "BYE"]
 	
 	var body: some View {
@@ -46,8 +47,10 @@ struct SampleView: View {
 					Text("The observed value is \(self.model.value)")
 					Spacer()
 				}.padding()
+					.navigationItems(trailing: Text("Trailing"))
 			}.navigationTitle("My name")
 				.environmentObject(self.model)
+				.environment(\.colorScheme, .dark)
 		}
 	}
 }

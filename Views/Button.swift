@@ -19,19 +19,19 @@ public struct Button<ButtonContent: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		let view = self.content().toUIView(enclosingController: enclosingController, environment: newEnvironment)
+		let view = self.content()._toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
 		return ButtonView(view: view, onClick: self.onClick)
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content().redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+		self.content()._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 	
 }
@@ -41,8 +41,8 @@ class ButtonView: SwiftUIView {
 	let onClick: () -> ()
 	var inList: Bool = false
 	
-	override var willExpand: Bool {
-		return view.willExpand
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return view.willExpand(in: context)
 	}
 	
 	init(view: UIView, onClick: @escaping () -> ()) {
@@ -59,13 +59,14 @@ class ButtonView: SwiftUIView {
 			$0.constraints.forEach({ $0.isActive = false })
 			$0.removeFromSuperview()
 		}
+		view.translatesAutoresizingMaskIntoConstraints = false
 		self.addSubview(view)
 		self.view = view
 		self.setupFullConstraints(self.view, self)
 
 	}
 	
-	override func insideList() -> (() -> ())? {
+	override func insideList(width: CGFloat) -> (() -> ())? {
 		self.isUserInteractionEnabled = false
 		self.inList = true
 		return self.onClick

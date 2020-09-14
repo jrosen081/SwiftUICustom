@@ -22,9 +22,9 @@ public struct VStack<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator()
-		let uiView = view.toUIView(enclosingController: enclosingController, environment: environment)
+		let uiView = view._toUIView(enclosingController: enclosingController, environment: environment)
 		(uiView as? InternalLazyCollatedView)?.expand()
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .vertical)
 		stackView.alignment = self.alignment.stackViewAlignment
@@ -34,11 +34,11 @@ public struct VStack<Content: View>: View {
 		return stackView
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		let viewProtocol = viewCreator()
 		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
 		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
-			$1.redraw(view: $0, controller: controller, environment: environment)
+			$1._redraw(view: $0, controller: controller, environment: environment)
 		}
 	}
 }

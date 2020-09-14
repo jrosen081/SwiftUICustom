@@ -16,7 +16,7 @@ internal class SwiftUIView: UIControl {
 		}
 	}
 	
-	override var willExpand: Bool {
-		return self.subviews[0].willExpand
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return self.subviews[0].willExpand(in: context)
 	}
 }

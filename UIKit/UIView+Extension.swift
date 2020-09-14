@@ -22,13 +22,13 @@ extension UIView {
 	}
 	
 	@discardableResult
-	@objc func insideList() -> (() -> ())? {
-		let values = self.subviews.map { $0.insideList() }
+	@objc func insideList(width: CGFloat) -> (() -> ())? {
+		let values = self.subviews.map { $0.insideList(width: width) }
 		self.isUserInteractionEnabled = false
 		return values.first(where: { $0 != nil}) ?? nil
 	}
 	
-	@objc var willExpand: Bool {
+	@objc func willExpand(in context: ExpandingContext) -> Bool {
 		return false
 	}
 }

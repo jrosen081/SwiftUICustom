@@ -18,7 +18,7 @@ public struct Text: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let label = UILabel(frame: .zero)
 		setupData(label: label, environment: environment)
 		return SwiftUILabel(label: label)
@@ -28,14 +28,14 @@ public struct Text: View {
 		label.translatesAutoresizingMaskIntoConstraints = false
 		label.text = text
 		label.textAlignment = environment.multilineTextAlignment
-		label.textColor = environment.foregroundColor
+		label.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		label.adjustsFontSizeToFitWidth = true
 		label.minimumScaleFactor = environment.minimumScaleFactor
 		label.font = environment.font
 		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let swiftUILabel = view as? SwiftUILabel else { return }
 		setupData(label: swiftUILabel.label, environment: environment)
 	}

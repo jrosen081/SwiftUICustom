@@ -14,17 +14,17 @@ public struct Spacer: View {
 	
 	public init() { }
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ExpandingView()
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		// Do nothing
 	}
 }
 
-internal enum ExpandingContext{
-	case horizontal, vertical
+@objc internal enum ExpandingContext: Int {
+	case horizontal = 0, vertical = 1
 	
 	var toStackDistribution: NSLayoutConstraint.Axis {
 		self == .horizontal ? .horizontal : .vertical
@@ -33,8 +33,8 @@ internal enum ExpandingContext{
 
 internal class ExpandingView: SwiftUIView {
 	
-	override var willExpand: Bool {
-		return true
+	override func willExpand(in context: ExpandingContext) -> Bool {
+		return self.context.contains(context)
 	}
 	
 	init() {

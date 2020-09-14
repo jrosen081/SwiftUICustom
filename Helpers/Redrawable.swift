@@ -9,4 +9,7 @@ import Foundation
 
 protocol Redrawable {
 	func addListener(_ listener: UpdateDelegate)
+	func stopRedrawing()
+	func startRedrawing()
+	func performAnimation(animation: Animation)
 }

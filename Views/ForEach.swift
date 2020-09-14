@@ -19,7 +19,7 @@ public struct ForEach<Element, StorageType: Equatable, Content: View>: View, Exp
 		self.contentMapper = contentMapper
 	}
 	
-	func expanded() -> [BuildingBlock] {
+	func expanded() -> [_BuildingBlock] {
 		return elements.map(mapper).map(contentMapper)
 	}
 	
@@ -27,16 +27,16 @@ public struct ForEach<Element, StorageType: Equatable, Content: View>: View, Exp
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return InternalLazyCollatedView(arrayValues: self.elements.map(mapper)) {
-			self.contentMapper($0).toUIView(enclosingController: enclosingController, environment: environment)
+			self.contentMapper($0)._toUIView(enclosingController: enclosingController, environment: environment)
 		}
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let collated = view as? InternalCollatedView else { return }
 		zip(elements, collated.underlyingViews).forEach { element, uiview in
-			contentMapper(mapper(element)).redraw(view: uiview, controller: controller, environment: environment)
+			contentMapper(mapper(element))._redraw(view: uiview, controller: controller, environment: environment)
 			
 		}
 	}

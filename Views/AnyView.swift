@@ -10,34 +10,33 @@ import Foundation
 public struct AnyView: View {
 	let viewCreator: (UIViewController, EnvironmentValues) -> UIView
 	
-	@State var view: UIView = UIView()
-	
 	public init<S: View>(_ view: S) {
-		viewCreator = view.toUIView(enclosingController:environment:)
+		viewCreator = view._toUIView(enclosingController:environment:)
 	}
 	
 	public var body: Self {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator(enclosingController, environment)
-		insertView(view)
+		insertView(from: SwiftUIView(), view)
 		return view
 	}
 	
-	func insertView(_ view: UIView) {
-		view.subviews.forEach { $0.removeFromSuperview() }
+	func insertView(from normalView: UIView, _ view: UIView) {
+		normalView.subviews.forEach { $0.removeFromSuperview() }
 		view.translatesAutoresizingMaskIntoConstraints = false
+		normalView.addSubview(view)
 		NSLayoutConstraint.activate([
-			view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-			view.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-			view.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-			view.topAnchor.constraint(equalTo: self.view.topAnchor)
+			view.bottomAnchor.constraint(equalTo: normalView.bottomAnchor),
+			view.leadingAnchor.constraint(equalTo: normalView.leadingAnchor),
+			view.trailingAnchor.constraint(equalTo: normalView.trailingAnchor),
+			view.topAnchor.constraint(equalTo: normalView.topAnchor)
 		])
 	}
 	
-	public func redraw(controller: UIViewController, environment: EnvironmentValues) {
-		insertView(viewCreator(controller, environment))
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		insertView(from: view, viewCreator(controller, environment))
 	}
 }

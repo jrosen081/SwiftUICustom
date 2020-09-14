@@ -18,12 +18,12 @@ public struct NavigationView<Content: View>: View {
 		return self
 	}
 	
-	public func toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationController?.isNavigationBarHidden = false
-		return self.viewBuilder().toUIView(enclosingController: enclosingController, environment: environment)
+		return self.viewBuilder()._toUIView(enclosingController: enclosingController, environment: environment)
 	}
 	
-	public func redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.viewBuilder().redraw(view: view, controller: controller, environment: environment)
+	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		self.viewBuilder()._redraw(view: view, controller: controller, environment: environment)
 	}
 }
