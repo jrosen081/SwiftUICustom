@@ -89,4 +89,11 @@ public extension View {
 			$0.currentAnimation = animation
 		})
 	}
+	
+	func transition(_ transition: AnyTransition) -> EnvironmentUpdatingView<Self> {
+		return EnvironmentUpdatingView(content: self, updates: {
+			// Only override it if there is an animation
+			$0.currentTransition = transition
+		})
+	}
 }

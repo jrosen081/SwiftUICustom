@@ -8,12 +8,12 @@
 import Foundation
 
 public struct NavigationLink<Content: View, Destination: View>: View {
-	let destination: () -> Destination
-	let content: () -> Content
+	let destination: Destination
+	let content: Content
 	
-	public init(destination: @autoclosure @escaping () -> Destination, content: @escaping () -> Content) {
+	public init(destination: Destination, content:  () -> Content) {
 		self.destination = destination
-		self.content = content
+		self.content = content()
 	}
 	
 	public var body: Self {
@@ -23,8 +23,8 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-		let buttonControl = NavigationButtonLink(view: self.content()._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
-			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination(), environment: newEnvironment), animated: true)
+		let buttonControl = NavigationButtonLink(view: self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
 		}
 		return buttonControl
 	}
@@ -32,7 +32,11 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content()._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+		self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+		guard let navigationButton = view as? NavigationButtonLink else { return }
+		navigationButton.onClick = {
+			controller.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
+		}
 	}
 }
 

@@ -11,20 +11,20 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 	let binding: Binding<Float>
 	let range: ClosedRange<Float>
 	let stride: Float
-	let labelCreator: () -> Label
+	let labelCreator: Label
 	
-	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, label: @escaping () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
+	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, label: () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
 		self.range = ClosedRange(uncheckedBounds: (lower: Float(bounds.lowerBound), upper: Float(bounds.upperBound)))
 		self.stride = 1
 		self.binding = Binding<Float>.createBinding(value: value, step: 1, closedRange: bounds)
-		self.labelCreator = label
+		self.labelCreator = label()
 	}
 	
-	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, step: V.Stride, label: @escaping () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
+	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, step: V.Stride, label: () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
 		self.range = ClosedRange(uncheckedBounds: (lower: Float(bounds.lowerBound), upper: Float(bounds.upperBound)))
 		self.stride = Float(step)
 		self.binding = Binding<Float>.createBinding(value: value, step: step, closedRange: bounds)
-		self.labelCreator = label
+		self.labelCreator = label()
 	}
 	
 	public var body: Self {
@@ -34,7 +34,7 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let slider = SwiftUISlider(binding: self.binding, closedRange: self.range)
 		slider.tintColor = environment.foregroundColor
-		let label = self.labelCreator()._toUIView(enclosingController: enclosingController, environment: environment)
+		let label = self.labelCreator._toUIView(enclosingController: enclosingController, environment: environment)
 		let horizontalStack = SwiftUIStackView(arrangedSubviews: [label, slider], context: .horizontal)
 		horizontalStack.axis = .horizontal
 		horizontalStack.translatesAutoresizingMaskIntoConstraints = false
@@ -43,7 +43,7 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.labelCreator()._redraw(view: view.subviews[0], controller: controller, environment: environment)
+		self.labelCreator._redraw(view: view.subviews[0], controller: controller, environment: environment)
 		guard let slider = view.subviews[1] as? UISlider else { return }
 		slider.tintColor = environment.foregroundColor
 	}

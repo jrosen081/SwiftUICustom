@@ -66,7 +66,7 @@ public struct Alert {
 
 public struct AlertView<Content: View>: View {
 	let binding: Binding<Bool>
-	let alert: () -> Alert
+	let alert: Alert
 	let content: Content
 	
 	public var body: Content {
@@ -75,7 +75,7 @@ public struct AlertView<Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if binding.wrappedValue {
-			enclosingController.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
+			enclosingController.present(self.alert.toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
 		
 		return content._toUIView(enclosingController: enclosingController, environment: environment)
@@ -84,14 +84,14 @@ public struct AlertView<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.body._redraw(view: view, controller: controller, environment: environment)
 		if binding.wrappedValue {
-			controller.present(self.alert().toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
+			controller.present(self.alert.toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
 	}
 }
 
 public extension View {
-	func alert(_ binding: Binding<Bool>, alertBuilder: @escaping () -> Alert) -> AlertView<Self> {
-		return AlertView(binding: binding, alert: alertBuilder, content: self)
+	func alert(_ binding: Binding<Bool>, alertBuilder: () -> Alert) -> AlertView<Self> {
+		return AlertView(binding: binding, alert: alertBuilder(), content: self)
 	}
 }
 

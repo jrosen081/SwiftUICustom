@@ -33,52 +33,89 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			conditionalContainer.isTrue = false
 		}
 		conditionalContainer.addSubview(underlyingView)
-		conditionalContainer.setupFullConstraints(conditionalContainer, underlyingView)
+		conditionalContainer.setupFullConstraints(conditionalContainer, underlyingView, usingGreaterThan: true)
 		return conditionalContainer
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let conditional = view as? ConditionalContainer else { return }
 		
-		let animations: () -> ()
+		let whenFinished: () -> ()
+		let transitions: (AnyTransition) -> ()
 		
 		switch (self.actualContent, conditional.isTrue) {
 		case (.first(let first), true):
 			first._redraw(view: conditional.subviews[0], controller: controller, environment: environment)
-			animations = {}
+			return
 		case (.first(let first), false):
 			conditional.isTrue = true
-			let newValue = first._toUIView(enclosingController: controller, environment: environment)
-			animations = {
-				conditional.subviews[0].removeFromSuperview()
-				conditional.addSubview(newValue)
-				conditional.setupFullConstraints(conditional, newValue)
+			var newValue = first._toUIView(enclosingController: controller, environment: environment)
+			var applyTransition = true
+			if conditional.subviews.count == 2 {
+				applyTransition = false
+				newValue = conditional.subviews[0]
+				first._redraw(view: newValue, controller: controller, environment: environment)
+			}
+			whenFinished = {
+				conditional.subviews.filter { $0 != newValue }.forEach { $0.removeFromSuperview() }
+			}
+			conditional.addSubview(newValue)
+			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: true)
+			conditional.bringSubviewToFront(newValue)
+			if let transition = environment.currentTransition, environment.currentAnimation != nil, applyTransition {
+				transition.performTransition(newValue, controller.view.bounds.size, true)
+			}
+			transitions = { transition in
+				transition.performTransition(conditional.subviews[0], controller.view.bounds.size, false)
+				newValue.alpha = 1
+				newValue.transform = .identity
 			}
 		case(.second(let second), true):
 			conditional.isTrue = false
-			let newValue = second._toUIView(enclosingController: controller, environment: environment)
-			animations = {
-				conditional.subviews[0].removeFromSuperview()
-				conditional.addSubview(newValue)
-				conditional.setupFullConstraints(conditional, newValue)
+			var newValue = second._toUIView(enclosingController: controller, environment: environment)
+			var applyTransition = true
+			if conditional.subviews.count == 2 {
+				applyTransition = false
+				newValue = conditional.subviews[0]
+				second._redraw(view: newValue, controller: controller, environment: environment)
+			}
+			whenFinished = {
+				conditional.subviews.filter { $0 != newValue }.forEach { $0.removeFromSuperview() }
+			}
+			conditional.addSubview(newValue)
+			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: true)
+			conditional.bringSubviewToFront(newValue)
+			if let transition = environment.currentTransition, environment.currentAnimation != nil, applyTransition {
+				transition.performTransition(newValue, controller.view.bounds.size, true)
+			}
+			transitions = { transition in
+				transition.performTransition(conditional.subviews[0], controller.view.bounds.size, false)
+				newValue.alpha = 1
+				newValue.transform = .identity
 			}
 		case (.second(let second), false):
 			second._redraw(view: conditional.subviews[0], controller: controller, environment: environment)
-			animations = {}
+			return
 		}
 		
+		conditional.animator?.stopAnimation(true)
 		if let animation = environment.currentAnimation {
-			UIView.animate(withDuration: animation.duration, delay: animation.delay, options: animation.animationOptions, animations: animations)
+			conditional.animator = UIViewPropertyAnimator.runningPropertyAnimator(withDuration: animation.duration, delay: animation.delay, options: animation.animationOptions, animations: {
+				if let transition = environment.currentTransition {
+					transitions(transition)
+				}
+			}) { done in
+				if done == .end {
+					whenFinished()
+				}
+			}
 		} else {
-			animations()
+			whenFinished()
 		}
 	}
 }
 
 class ConditionalContainer: SwiftUIView {
 	var isTrue: Bool = false
-	
-	override var intrinsicContentSize: CGSize {
-		return self.subviews[0].intrinsicContentSize
-	}
+	var animator: UIViewPropertyAnimator? = nil
 }

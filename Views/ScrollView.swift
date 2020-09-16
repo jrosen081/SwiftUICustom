@@ -8,10 +8,10 @@
 import Foundation
 
 public struct ScrollView<Content: View>: View {
-	let viewBuilder: () -> Content
+	let viewBuilder: Content
 	
-	public init(@ViewBuilder _ viewBuilder: @escaping () -> Content) {
-		self.viewBuilder = viewBuilder
+	public init(@ViewBuilder _ viewBuilder: () -> Content) {
+		self.viewBuilder = viewBuilder()
 	}
 	
 	public var body: Self {
@@ -21,7 +21,7 @@ public struct ScrollView<Content: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let scrollView = SwiftUIScrollView(frame: .zero)
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
-		let scrollableView = self.viewBuilder()._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+		let scrollableView = self.viewBuilder._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
 		scrollView.addSubview(scrollableView)
 		NSLayoutConstraint.activate([
 			scrollView.contentLayoutGuide.leadingAnchor.constraint(equalTo: scrollableView.leadingAnchor),
@@ -33,7 +33,7 @@ public struct ScrollView<Content: View>: View {
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		// Coming back
+		self.viewBuilder._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
 }
 

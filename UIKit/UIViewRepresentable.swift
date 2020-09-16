@@ -17,7 +17,7 @@ public protocol UIViewRepresentable: View where Self.Content == Never {
 }
 
 extension UIViewRepresentable {
-	var body: Never {
+	public var body: Never {
 		fatalError()
 	}
 	

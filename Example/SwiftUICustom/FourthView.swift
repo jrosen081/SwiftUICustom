@@ -14,9 +14,9 @@ struct FourthView: View {
 	@State var showingAlert: Bool = false
 	var body: some View {
 		VStack {
-			Button(content: { Text("HI") }) {
+			Button(action: {
 				self.showingAlert = true
-			}.padding()
+			}, content: { Text("HI") }).padding()
 			NavigationLink(destination: FifthView()) {
 				Text("Ready for the ZStack?")
 			}
@@ -33,7 +33,7 @@ struct FourthView: View {
 			}.navigationTitle("Horizontal And Vertical Scroll View")
 			.padding()
 			.foregroundColor(.link)
-		}.alert(self.$showingAlert) {
+		}.alert($showingAlert) {
 			Alert(title: Text("Button"), primaryButton: .default(Text("Hi"), action: nil), secondaryButton: .default(Text("Bye"), action: nil))
 		}
 	}

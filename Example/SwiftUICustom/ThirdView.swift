@@ -18,19 +18,19 @@ struct ThirdView: View {
 		VStack {
 			List {
 				Text("My name is Jack").padding()
-				Button(content: { Text("Test this") }, onClick: {}).padding()
+				Button(action: {}, content: { Text("Test this") }).padding()
 				ForEach(Array(0..<15)) {
 					Text("The current element is \($0)").padding()
 				}.navigationTitle("This is a list")
 				NavigationLink(destination: FourthView()) {
 					Text("One more?")
 				}
-				if self.isOn {
+				if isOn {
 					Text("The switch is on")
 				}
 			}
-			Toggle(isOn: self.$isOn) {
-				Text(self.isOn ? "Toggling this will hide the row above" : "Toggling this will show the row above").border(.systemBackground).padding().foregroundColor(.systemYellow)
+			Toggle(isOn: $isOn) {
+				Text(isOn ? "Toggling this will hide the row above" : "Toggling this will show the row above").border(.systemBackground).padding().foregroundColor(.systemYellow)
 			}.padding().foregroundColor(.systemGreen)
 		}.background(.red)
 		.foregroundColor(.gray)

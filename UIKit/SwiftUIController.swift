@@ -34,10 +34,9 @@ class Dismissor: UIPercentDrivenInteractiveTransition, UIViewControllerAnimatedT
 		return 0.35
 	}
 	func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
-		guard let backView = transitionContext.view(forKey: .from), let toViewController = transitionContext.viewController(forKey: .to), let toView = toViewController.view else { return }
+		guard let backView = transitionContext.view(forKey: .from) else { return }
 		UIView.animate(withDuration: self.transitionDuration(using: transitionContext), animations: {
 			backView.transform = CGAffineTransform(translationX: 0, y: transitionContext.containerView.frame.height)
-			toView.transform = .identity
 		}, completion: {_ in
 			transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
 		})
@@ -50,7 +49,7 @@ class Presenter: NSObject, UIViewControllerAnimatedTransitioning {
 	}
 	
 	func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
-		guard let forwardView = transitionContext.view(forKey: .to), let fromView = transitionContext.viewController(forKey: .from)?.view else { return }
+		guard let forwardView = transitionContext.view(forKey: .to) else { return }
 		forwardView.translatesAutoresizingMaskIntoConstraints = false
 		let containerView = transitionContext.containerView
 		containerView.addSubview(forwardView)
@@ -66,7 +65,6 @@ class Presenter: NSObject, UIViewControllerAnimatedTransitioning {
 		
 		UIView.animate(withDuration: self.transitionDuration(using: transitionContext), animations: {
 			forwardView.transform = .identity
-			fromView.transform = CGAffineTransform(translationX: 0, y: fromView.frame.height * 0.01).concatenating(CGAffineTransform(scaleX: 1, y: 0.95))
 		}) {_ in
 			transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
 		}
@@ -114,7 +112,7 @@ public class SwiftUIController: UINavigationController {
 		self.isNavigationBarHidden = true
 		self.navigationBar.prefersLargeTitles = true
 		self.transitioningDelegate = self.transitionDelegate
-		self.modalPresentationStyle = .custom
+//		self.modalPresentationStyle = .automatic
 		self.panGesture.minimumNumberOfTouches = 1
 	}
 	
@@ -148,6 +146,10 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 		let underlyingView = self.swiftUIView._toUIView(enclosingController: self, environment: self.actualEnvironment)
 		showView(underlyingView.asTopLevelView())
     }
+	
+	override func viewWillAppear(_ animated: Bool) {
+		self.updateData(with: nil)
+	}
 	
 	func updateData(with animation: Animation?) {
 		guard !self.view.subviews.isEmpty else { return }

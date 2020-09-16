@@ -8,13 +8,13 @@
 import Foundation
 
 public struct Group<Content: View>: View {
-	let contentBuilder: () -> Content
+	let contentBuilder: Content
 	
-	public init(@ViewBuilder contentBuilder: @escaping () -> Content) {
-		self.contentBuilder = contentBuilder
+	public init(@ViewBuilder contentBuilder: () -> Content) {
+		self.contentBuilder = contentBuilder()
 	}
 	
 	public var body: Content {
-		return self.contentBuilder()
+		return self.contentBuilder
 	}
 }

@@ -17,13 +17,18 @@ public struct TransformedView<Content: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let holdingView = SwiftUIView(frame: .zero)
+		holdingView.translatesAutoresizingMaskIntoConstraints = false
 		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
 		view.layer.anchorPoint = self.anchorPoint
 		view.transform  = self.transform
-		return view
+		holdingView.addSubview(view)
+		holdingView.setupFullConstraints(holdingView, view)
+		return holdingView
 	}
 	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+	public func _redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		let view = internalView.subviews[0]
 		self.content._redraw(view: view, controller: controller, environment: environment)
 		view.layer.anchorPoint = self.anchorPoint
 		let animations = {

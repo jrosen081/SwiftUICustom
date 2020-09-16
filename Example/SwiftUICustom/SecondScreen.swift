@@ -23,32 +23,32 @@ public struct SecondScreen: View {
 	public var body: some View {
 		VStack {
 			HStack {
-				Text("The count here is: \(self.count). Inside the object is \(self.object.value)")
+				Text("The count here is: \(count). Inside the object is \(object.value)")
 					.navigationTitle("Second Page")
 					.onAppear {
 						print("Achieved")
 					}.padding()
 					.font(.systemFont(ofSize: 7))
 				Spacer()
-				Button(content: { Text("Nope") }) {
+				Button(action: {
 					self.count += 1
 					self.isShowing = true
-				}.padding()
+				}, content: { Text("Nope") }).padding()
 				Spacer()
 				NavigationLink(destination: ThirdView()) {
 					Text("On to the next one")
 				}.padding()
 			}
-			ForEach(self.currentValues, id: \.int) { value in
-				Button(content: {
+			ForEach(currentValues, id: \.int) { value in
+				Button(action: {
+					(0..<value).forEach { print($0) }
+				}, content: {
 					Image("arrow")
 					.padding()
 					.clipShape(Triangle())
-				}, onClick: {
-					(0..<value).forEach { print($0) }
 				})
 			}
-		}.popover(isShowing: self.$isShowing) {
+		}.popover(isShowing: $isShowing) {
 			Text("Showing")
 		}
 	}

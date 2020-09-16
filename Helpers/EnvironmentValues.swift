@@ -34,7 +34,7 @@ public struct EnvironmentValues {
 	
 	var textContentType: UITextContentType? = nil
 	
-	var currentTransition: AnyTransitionn? = nil
+	var currentTransition: AnyTransition? = nil
 	
 	var currentAnimation: Animation? = nil
 	

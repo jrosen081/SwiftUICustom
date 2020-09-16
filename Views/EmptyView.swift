@@ -27,4 +27,8 @@ class ShrinkingView: UIView {
 	override var intrinsicContentSize: CGSize {
 		return .zero
 	}
+	
+	override class var requiresConstraintBasedLayout: Bool {
+		return true
+	}
 }

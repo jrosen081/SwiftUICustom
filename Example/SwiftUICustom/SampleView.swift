@@ -23,20 +23,20 @@ struct SampleView: View {
 				HStack {
 					Text("Hi")
 						.padding(corners: [.trailing])
-					NavigationLink(destination: SecondScreen(count: self.$currentCount)) {
+					NavigationLink(destination: SecondScreen(count: $currentCount)) {
 						Text("Bye")
 						}.padding().background(.systemGreen)
 				}.padding()
-					.foregroundColor(self.colorScheme == .dark ? .yellow : .green)
+					.foregroundColor(colorScheme == .dark ? .yellow : .green)
 				Spacer()
-				 Button(content: {
-					Text("The current count is \(self.currentCount)")
-						.padding(corners: [.top], paddingSpace: 10)
-				}) {
+				Button(action: {
 					self.currentCount += 1
-				}.fixedSize(width: UIScreen.main.bounds.width - 10, height: 100)
+				}, content: {
+					Text("The current count is \(currentCount)")
+						.padding(corners: [.top], paddingSpace: 10)
+				}) .fixedSize(width: UIScreen.main.bounds.width - 10, height: 100)
 				Spacer()
-				ForEach(self.values) {
+				ForEach(values) {
 					Text($0)
 				}
 				Spacer()
@@ -44,12 +44,12 @@ struct SampleView: View {
 					.padding(corners: [.bottom])
 				Spacer()
 				HStack {
-					Text("The observed value is \(self.model.value)")
+					Text("The observed value is \(model.value)")
 					Spacer()
 				}.padding()
 					.navigationItems(trailing: Text("Trailing"))
 			}.navigationTitle("My name")
-				.environmentObject(self.model)
+				.environmentObject(model)
 				.environment(\.colorScheme, .dark)
 		}
 	}

@@ -8,11 +8,11 @@
 import Foundation
 
 public struct Toggle<Label: View>: View {
-	let creation: () -> Label
+	let creation: Label
 	let isOn: Binding<Bool>
 	
-	public init(isOn: Binding<Bool>, @ViewBuilder creation: @escaping () -> Label) {
-		self.creation = creation
+	public init(isOn: Binding<Bool>, @ViewBuilder creation: () -> Label) {
+		self.creation = creation()
 		self.isOn = isOn
 	}
 	
@@ -23,7 +23,7 @@ public struct Toggle<Label: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let toggle = SwiftUISwitch(binding: self.isOn)
 		toggle.onTintColor = environment.foregroundColor ?? .systemGreen
-		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [self.creation()._toUIView(enclosingController: enclosingController, environment: environment), ExpandingView(), toggle], context: .horizontal)
+		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [self.creation._toUIView(enclosingController: enclosingController, environment: environment), ExpandingView(), toggle], context: .horizontal)
 		swiftUIStackView.translatesAutoresizingMaskIntoConstraints = false
 		swiftUIStackView.axis = .horizontal
 		swiftUIStackView.alignment = .center
@@ -32,7 +32,7 @@ public struct Toggle<Label: View>: View {
 	
 	public func _redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let view = internalView as? UIStackView else { return }
-		self.creation()._redraw(view: view.arrangedSubviews[0], controller: controller, environment: environment)
+		self.creation._redraw(view: view.arrangedSubviews[0], controller: controller, environment: environment)
 	}
 }
 

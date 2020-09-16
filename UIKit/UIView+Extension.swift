@@ -8,13 +8,22 @@
 import Foundation
 
 extension UIView {
-	func setupFullConstraints(_ view1: UIView, _ view2: UIView) {
-		NSLayoutConstraint.activate([
-			view1.bottomAnchor.constraint(equalTo: view2.bottomAnchor),
-			view1.leadingAnchor.constraint(equalTo: view2.leadingAnchor),
-			view1.trailingAnchor.constraint(equalTo: view2.trailingAnchor),
-			view1.topAnchor.constraint(equalTo: view2.topAnchor)
-		])
+	func setupFullConstraints(_ view1: UIView, _ view2: UIView, usingGreaterThan: Bool = false) {
+		if usingGreaterThan {
+			NSLayoutConstraint.activate([
+				view1.bottomAnchor.constraint(greaterThanOrEqualTo: view2.bottomAnchor),
+				view1.leadingAnchor.constraint(lessThanOrEqualTo: view2.leadingAnchor),
+				view1.trailingAnchor.constraint(greaterThanOrEqualTo: view2.trailingAnchor),
+				view1.topAnchor.constraint(lessThanOrEqualTo: view2.topAnchor)
+			])
+		} else {
+			NSLayoutConstraint.activate([
+				view1.bottomAnchor.constraint(equalTo: view2.bottomAnchor),
+				view1.leadingAnchor.constraint(equalTo: view2.leadingAnchor),
+				view1.trailingAnchor.constraint(equalTo: view2.trailingAnchor),
+				view1.topAnchor.constraint(equalTo: view2.topAnchor)
+			])
+		}
 	}
 	
 	@objc func asTopLevelView() -> UIView {

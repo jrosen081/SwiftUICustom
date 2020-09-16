@@ -13,6 +13,7 @@ import SwiftUICustom
 struct FifthView: View {
 	
 	@EnvironmentObject var value: ExampleModel
+	@State var isShowingOverlay: Bool = false
 	
 	var body: some View {
 		ZStack(alignment: .topLeading) {
@@ -27,12 +28,19 @@ struct FifthView: View {
 				}
 				Text("Bottom Trailing")
 			}
-			Button(content: {
-				Text("The count inside value is \(self.value.value). Click to update")
-			}, onClick: {
+			Button(action: {
 				self.value.value += 1
-				}).modifier(GreenView())
+			}, content: {
+				Text("The count inside value is \(self.value.value). Click to update")
+			}).modifier(GreenView())
 		}.padding(paddingSpace: 10).border(.black, lineWidth: 10).padding()
+			.transition(.opacity)
+			.animation(.linear(duration: 2))
+			.navigationItems(trailing: Button(action: {
+				self.withAnimation { self.isShowingOverlay.toggle() }
+			}, content: {
+			Text(self.isShowingOverlay ? "Hide" : "Show")
+		}))
 	}
 }
 
@@ -46,41 +54,68 @@ struct SixthView: View {
 	var body: some View {
 		VStack {
 			if self.number <= 5 {
-				Button(content: {
-					Text("The number is \(self.number)")
-						.transformEffect(self.number <= 1 ? .identity : .init(translationX: 10, y: 0))
-				}, onClick: {
+				Button(action: {
 					self.withAnimation {
 						self.number += 1
 					}
+				}, content: {
+					Text("The number is \(number)")
+						.transformEffect(number <= 1 ? .identity : .init(translationX: 10, y: 0))
 				}).animation(.easeIn(duration: 1))
 			} else {
 				Text("This is a big number")
 				.padding()
 					.foregroundColor(.systemTeal)
 			}
-		
-			if self.number != 2 {
-				Text("The number doesn't equal 2").rotationEffect(.degrees(90))
-			} else {
-				Text("Scaled").transformEffect(CGAffineTransform(translationX: 20, y: 0))
-			}
+			Group {
+				if number != 2 {
+					Text("The number doesn't equal 2").rotationEffect(.degrees(90))
+				} else {
+					Text("Scaled").transformEffect(CGAffineTransform(translationX: 20, y: 0))
+				}
+			}.transition(.slide)
 			
 			TextField("The count is: ", value: self.$textCount, formatter: {
 				let numberFormatter = NumberFormatter()
 				return numberFormatter
 			}())
-			Text("The parsed value is \(self.textCount)").rotationEffect(self.number == 2 ? .degrees(5) : .degrees(0))
-			Slider(value: self.$value, in: (1...15), step: 2) {
-				Text("Value: \(self.value)")
+			Text("The parsed value is \(self.textCount)").rotationEffect(self.number == 2 ? .degrees(5) : .degrees(0)).animation(Animation.linear(duration: 10))
+			Slider(value: $value, in: (1...15), step: 2) {
+				Text("Value: \(value)")
 			}.padding()
-			Stepper(value: self.$stepperState, in: (15...30), step: 3) {
-				Button(content: {
-					Text("Click this to reset. The current # is \(self.stepperState)")
-				}, onClick: {
+			Stepper(value: $stepperState, in: (15...30), step: 3) {
+				Button(action: {
 					self.stepperState = 15
+				}, content: {
+					Text("Click this to reset. The current # is \(stepperState)")
 				})
 			}
+			NavigationLink(destination: TopView(), content: {
+				Text("On to the Next")
+			})
+		}.transition(.opacity)
+	}
+}
+
+@available(iOS 13.0.0, *)
+struct TopView: View {
+	@State var isShowing: Bool = false
+	
+	var body: some View {
+		ZStack {
+			Text("Behind")
+			if isShowing {
+				List {
+					Text("Showing!").padding()
+				}
+			}
 		}
+		.transition(.move(edge: .trailing))
+		.animation(.easeIn)
+		.navigationItems(trailing: Button(action: {
+			self.isShowing.toggle()
+		}, content: {
+			Text(isShowing ? "Hide" : "Show")
+		}))
 	}
 }

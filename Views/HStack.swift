@@ -8,12 +8,12 @@
 import Foundation
 
 public struct HStack<Content: View>: View {
-	let viewCreator: () -> Content
+	let viewCreator: Content
 	let alignment: VerticalAlignment
 	let spacing: CGFloat
 	
-	public init(alignment: VerticalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder _ viewCreator: @escaping () -> Content) {
-		self.viewCreator = viewCreator
+	public init(alignment: VerticalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder _ viewCreator: () -> Content) {
+		self.viewCreator = viewCreator()
 		self.alignment = alignment
 		self.spacing = spacing ?? 5
 	}
@@ -23,7 +23,7 @@ public struct HStack<Content: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = viewCreator()
+		let view = viewCreator
 		let uiView = view._toUIView(enclosingController: enclosingController, environment: environment)
 		(uiView as? InternalLazyCollatedView)?.expand()
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .horizontal)
@@ -35,7 +35,7 @@ public struct HStack<Content: View>: View {
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		let viewProtocol = viewCreator()
+		let viewProtocol = viewCreator
 		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
 		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
 			$1._redraw(view: $0, controller: controller, environment: environment)

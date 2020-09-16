@@ -9,7 +9,7 @@ import Foundation
 
 public struct PopoverView<PresentingView: View, Content: View>: View {
 	let presentingView: PresentingView
-	let contentCreator: () -> Content
+	let contentCreator: Content
 	let binding: Binding<Bool>
 	
 	public var body: Self {
@@ -19,7 +19,7 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = self.presentingView._toUIView(enclosingController: enclosingController, environment: environment)
 		if (self.binding.wrappedValue) {
-			let controller = SwiftUIController(swiftUIView: self.contentCreator())
+			let controller = SwiftUIController(swiftUIView: self.contentCreator)
 			controller.isShowing = self.binding
 			enclosingController.present(controller, animated: true)
 		}
@@ -35,7 +35,7 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 			// Do nothing
 		} else {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
-			let internalController = SwiftUIController(swiftUIView: self.contentCreator())
+			let internalController = SwiftUIController(swiftUIView: self.contentCreator)
 			internalController.isShowing = self.binding
 			controller.present(internalController, animated: true)
 		}
@@ -44,7 +44,7 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 
 
 public extension View {
-	func popover<Content: View>(isShowing: Binding<Bool>, content: @escaping () -> Content) -> PopoverView<Self, Content> {
-		return PopoverView(presentingView: self, contentCreator: content, binding: isShowing)
+	func popover<Content: View>(isShowing: Binding<Bool>, content: () -> Content) -> PopoverView<Self, Content> {
+		return PopoverView(presentingView: self, contentCreator: content(), binding: isShowing)
 	}
 }

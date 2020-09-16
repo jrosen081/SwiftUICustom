@@ -8,12 +8,12 @@
 import Foundation
 
 public struct Button<ButtonContent: View>: View {
-	let content: () -> ButtonContent
+	let content: ButtonContent
 	let onClick: () -> ()
 	
-	public init(content: @escaping () -> ButtonContent, onClick: @escaping () -> ()) {
-		self.content = content
-		self.onClick = onClick
+	public init(action: @escaping () -> (), content: () -> ButtonContent) {
+		self.content = content()
+		self.onClick = action
 	}
 	public var body: Self {
 		return self
@@ -22,7 +22,7 @@ public struct Button<ButtonContent: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		let view = self.content()._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
 		return ButtonView(view: view, onClick: self.onClick)
@@ -31,14 +31,14 @@ public struct Button<ButtonContent: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content()._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+		self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 	
 }
 
 class ButtonView: SwiftUIView {
 	var view: UIView
-	let onClick: () -> ()
+	var onClick: () -> ()
 	var inList: Bool = false
 	
 	override func willExpand(in context: ExpandingContext) -> Bool {
