@@ -34,9 +34,9 @@ public struct TextField<Label: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUITextField = SwiftUITextField(binding: self.binding)
-		let otherView = self.label.padding()._toUIView(enclosingController: enclosingController, environment: environment)
+		let otherView = self.label.padding().__toUIView(enclosingController: enclosingController, environment: environment)
 		let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], context: .horizontal)
 		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		stackView.translatesAutoresizingMaskIntoConstraints = false

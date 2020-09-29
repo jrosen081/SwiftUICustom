@@ -14,7 +14,7 @@ public struct EmptyView: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ShrinkingView()
 	}
 	

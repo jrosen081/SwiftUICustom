@@ -16,12 +16,12 @@ public struct NavigationTopView<Content: View>: View {
 		return self.content
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationItem.title = self.title
 		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
 			enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
 		}
-		return self.content._toUIView(enclosingController: enclosingController, environment: environment)
+		return self.content.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
 }
 

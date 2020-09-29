@@ -51,8 +51,7 @@ public struct SecondScreen: View {
 		}.popover(isShowing: $isShowing) {
 			Text("Showing")
 		}
-	}
-}
+	}}
 
 struct Values {
 	let int: Int

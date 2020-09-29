@@ -22,9 +22,9 @@ public struct HStack<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator
-		let uiView = view._toUIView(enclosingController: enclosingController, environment: environment)
+		let uiView = view.__toUIView(enclosingController: enclosingController, environment: environment)
 		(uiView as? InternalLazyCollatedView)?.expand()
 		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .horizontal)
 		stackView.alignment = self.alignment.stackViewAlignment

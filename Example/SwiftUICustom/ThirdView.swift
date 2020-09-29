@@ -34,6 +34,5 @@ struct ThirdView: View {
 			}.padding().foregroundColor(.systemGreen)
 		}.background(.red)
 		.foregroundColor(.gray)
-		.environment(\.colorScheme, .light)
 	}
 }

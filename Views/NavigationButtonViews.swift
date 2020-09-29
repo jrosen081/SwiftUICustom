@@ -16,18 +16,18 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if let leftItem = self.leftItem {
-			let buttonItem = UIBarButtonItem(customView: leftItem._toUIView(enclosingController: enclosingController, environment: environment))
+			let buttonItem = UIBarButtonItem(customView: leftItem.__toUIView(enclosingController: enclosingController, environment: environment))
 			enclosingController.navigationItem.leftBarButtonItem = buttonItem
 		}
 		
 		if let rightItem = self.rightItem {
-			let buttonItem = UIBarButtonItem(customView: rightItem._toUIView(enclosingController: enclosingController, environment: environment))
+			let buttonItem = UIBarButtonItem(customView: rightItem.__toUIView(enclosingController: enclosingController, environment: environment))
 			enclosingController.navigationItem.rightBarButtonItem = buttonItem
 		}
 		
-		return self.actualView._toUIView(enclosingController: enclosingController, environment: environment)
+		return self.actualView.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {

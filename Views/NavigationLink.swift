@@ -20,10 +20,10 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-		let buttonControl = NavigationButtonLink(view: self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+		let buttonControl = NavigationButtonLink(view: self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
 			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
 		}
 		return buttonControl
@@ -55,13 +55,13 @@ class NavigationButtonLink: ButtonView {
 	override func insideList(width: CGFloat) -> (() -> ())? {
 		guard !self.inList else { return self.onClick }
 		self.inList = true
-		let shapeView = RightArrow().stroke(lineWidth: 1)._toUIView(enclosingController: UIViewController(), environment: self.environment) as! ShapeSwiftUIView<RightArrow>
+		let shapeView = RightArrow().stroke(lineWidth: 1).__toUIView(enclosingController: UIViewController(), environment: self.environment) as! ShapeSwiftUIView<RightArrow>
 		let fullSize = self.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
 		shapeView.givenIntrinsicContentSize = CGSize(width: 10, height: fullSize.height)
-		let paddingView = UIViewWrapper(view: shapeView).padding(paddingSpace: 5)._toUIView(enclosingController: UIViewController(), environment: self.environment)
+		let paddingView = UIViewWrapper(view: shapeView).padding(paddingSpace: 5).__toUIView(enclosingController: UIViewController(), environment: self.environment)
 		let stackView = SwiftUIStackView(arrangedSubviews: [self.view, ExpandingView(), paddingView], context: .horizontal)
 		stackView.translatesAutoresizingMaskIntoConstraints = false
-		setupView(UIViewWrapper(view: stackView).padding()._toUIView(enclosingController: UIViewController(), environment: self.environment))
+		setupView(UIViewWrapper(view: stackView).padding().__toUIView(enclosingController: UIViewController(), environment: self.environment))
 		self.isUserInteractionEnabled = false
 		return self.onClick
 	}

@@ -19,10 +19,10 @@ public struct Button<ButtonContent: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		let view = self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+		let view = self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
 		return ButtonView(view: view, onClick: self.onClick)
@@ -40,6 +40,7 @@ class ButtonView: SwiftUIView {
 	var view: UIView
 	var onClick: () -> ()
 	var inList: Bool = false
+	var alphaToChangeTo: CGFloat = 0.3
 	
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return view.willExpand(in: context)
@@ -73,7 +74,7 @@ class ButtonView: SwiftUIView {
 	}
 	
 	override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-		self.view.alpha = 0.3
+		self.view.alpha = self.alphaToChangeTo
 		return super.beginTracking(touch, with: event)
 	}
 	
@@ -117,6 +118,10 @@ class ButtonView: SwiftUIView {
 	static func == (lhs: ButtonView, rhs: ButtonView) -> Bool {
 		return lhs.view == rhs.view
 	}
+    
+    override var intrinsicContentSize: CGSize {
+        return self.subviews[0].intrinsicContentSize
+    }
 }
 
 class TapSelectorHolder {

@@ -18,8 +18,8 @@ public struct BorderedView<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.content.__toUIView(enclosingController: enclosingController, environment: environment)
 		view.layer.borderWidth = self.width
 		view.layer.borderColor = self.color.cgColor
 		return view

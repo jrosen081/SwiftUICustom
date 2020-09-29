@@ -31,10 +31,10 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let slider = SwiftUISlider(binding: self.binding, closedRange: self.range)
 		slider.tintColor = environment.foregroundColor
-		let label = self.labelCreator._toUIView(enclosingController: enclosingController, environment: environment)
+		let label = self.labelCreator.__toUIView(enclosingController: enclosingController, environment: environment)
 		let horizontalStack = SwiftUIStackView(arrangedSubviews: [label, slider], context: .horizontal)
 		horizontalStack.axis = .horizontal
 		horizontalStack.translatesAutoresizingMaskIntoConstraints = false

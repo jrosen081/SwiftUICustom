@@ -15,9 +15,9 @@ public struct BackgroundColorView<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = SwiftUIView(frame: .zero)
-		let contentView = content._toUIView(enclosingController: enclosingController, environment: environment)
+		let contentView = content.__toUIView(enclosingController: enclosingController, environment: environment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.addSubview(contentView)
 		NSLayoutConstraint.activate([

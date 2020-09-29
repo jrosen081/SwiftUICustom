@@ -31,9 +31,9 @@ public struct PaddingView<Content: View>: View {
 		return self.underlyingView
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let paddingView = SwiftUIView()
-		let underlyingUIView = self.underlyingView._toUIView(enclosingController: enclosingController, environment: environment)
+		let underlyingUIView = self.underlyingView.__toUIView(enclosingController: enclosingController, environment: environment)
 		paddingView.addSubview(underlyingUIView)
 		paddingView.translatesAutoresizingMaskIntoConstraints = false
 		paddingView.bottomAnchor.constraint(equalTo: underlyingUIView.bottomAnchor, constant: paddingCorners.contains(.bottom) ? self.paddingSpace : 0).isActive = true

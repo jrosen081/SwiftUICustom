@@ -16,10 +16,10 @@ public struct TransformedView<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let holdingView = SwiftUIView(frame: .zero)
 		holdingView.translatesAutoresizingMaskIntoConstraints = false
-		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
+		let view = self.content.__toUIView(enclosingController: enclosingController, environment: environment)
 		view.layer.anchorPoint = self.anchorPoint
 		view.transform  = self.transform
 		holdingView.addSubview(view)

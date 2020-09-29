@@ -15,9 +15,9 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let clippedView = ClippedView(shapeGeneric: self.shape)
-		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
+		let view = self.content.__toUIView(enclosingController: enclosingController, environment: environment)
 		clippedView.addSubview(view)
 		clippedView.setupFullConstraints(clippedView, view)
 		return clippedView

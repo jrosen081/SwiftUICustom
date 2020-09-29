@@ -27,9 +27,9 @@ public struct ForEach<Element, StorageType: Equatable, Content: View>: View, Exp
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return InternalLazyCollatedView(arrayValues: self.elements.map(mapper)) {
-			self.contentMapper($0)._toUIView(enclosingController: enclosingController, environment: environment)
+			self.contentMapper($0).__toUIView(enclosingController: enclosingController, environment: environment)
 		}
 	}
 	

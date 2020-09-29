@@ -20,10 +20,10 @@ public struct Toggle<Label: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let toggle = SwiftUISwitch(binding: self.isOn)
 		toggle.onTintColor = environment.foregroundColor ?? .systemGreen
-		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [self.creation._toUIView(enclosingController: enclosingController, environment: environment), ExpandingView(), toggle], context: .horizontal)
+		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [self.creation.__toUIView(enclosingController: enclosingController, environment: environment), ExpandingView(), toggle], context: .horizontal)
 		swiftUIStackView.translatesAutoresizingMaskIntoConstraints = false
 		swiftUIStackView.axis = .horizontal
 		swiftUIStackView.alignment = .center

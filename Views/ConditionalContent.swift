@@ -21,15 +21,15 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let conditionalContainer = ConditionalContainer(frame: .zero)
 		conditionalContainer.translatesAutoresizingMaskIntoConstraints = false
 		let underlyingView: UIView
 		switch self.actualContent {
 		case .first(let view):
-			underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
+			underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = true
-		case .second(let view): underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
+		case .second(let view): underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = false
 		}
 		conditionalContainer.addSubview(underlyingView)
@@ -49,7 +49,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			return
 		case (.first(let first), false):
 			conditional.isTrue = true
-			var newValue = first._toUIView(enclosingController: controller, environment: environment)
+			var newValue = first.__toUIView(enclosingController: controller, environment: environment)
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false
@@ -72,7 +72,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			}
 		case(.second(let second), true):
 			conditional.isTrue = false
-			var newValue = second._toUIView(enclosingController: controller, environment: environment)
+			var newValue = second.__toUIView(enclosingController: controller, environment: environment)
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false

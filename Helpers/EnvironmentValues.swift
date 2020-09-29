@@ -18,7 +18,7 @@ public struct EnvironmentValues {
 	
 	public var lineSpacing: CGFloat = 10
 	
-	public var minimumScaleFactor: CGFloat = 0.25
+    public var minimumScaleFactor: CGFloat = 0.25
 	
 	public var multilineTextAlignment: NSTextAlignment = .center
 

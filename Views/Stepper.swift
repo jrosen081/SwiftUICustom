@@ -1,5 +1,5 @@
 //
-//  Picker.swift
+//  Stepper.swift
 //  SwiftUICustom
 //
 //  Created by Jack Rosen on 9/13/20.
@@ -26,11 +26,11 @@ public struct Stepper<Label>: View where Label : View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
 		let stepper = SwiftUIStepper(binding: self.doubleBinding, range: self.range)
 		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
-		stepper.backgroundColor = environment.colorScheme == .dark ? .white : .black
+		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
 		let vertical = SwiftUIStackView(arrangedSubviews: [stepper], context: .vertical)
 		vertical.alignment = .center
 		let stackView = SwiftUIStackView(arrangedSubviews: [label, vertical], context: .horizontal)
@@ -45,7 +45,7 @@ public struct Stepper<Label>: View where Label : View {
 		guard let stepper = view.subviews[1].subviews[0] as? SwiftUIStepper else { return }
 		stepper.value = Double(self.doubleBinding.wrappedValue)
 		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
-		stepper.backgroundColor = environment.colorScheme == .dark ? .white : .black
+		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
 	}
 }
 

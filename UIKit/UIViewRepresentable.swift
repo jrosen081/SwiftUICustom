@@ -21,7 +21,7 @@ extension UIViewRepresentable {
 		fatalError()
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUIView = SwiftUIViewRepresentable(coordinator: self.makeCoordinator())
 		let underlyingView = self.makeUIView(context: UIViewRepresentableContext(coordinator: swiftUIView.coordinator, environment: environment))
 		swiftUIView.addSubview(underlyingView)

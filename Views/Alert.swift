@@ -73,12 +73,12 @@ public struct AlertView<Content: View>: View {
 		return self.content
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if binding.wrappedValue {
 			enclosingController.present(self.alert.toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
 		
-		return content._toUIView(enclosingController: enclosingController, environment: environment)
+		return content.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {

@@ -18,10 +18,10 @@ public struct List<Content: View>: View {
 		self.viewCreator = viewCreator()
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-		let view = self.viewCreator._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+		let view = self.viewCreator.__toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		(view as? InternalLazyCollatedView)?.expand()
 		let tableView = SwiftUITableView(lazyView: view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 }))
 		return tableView
@@ -31,7 +31,7 @@ public struct List<Content: View>: View {
 		if let tableView = view as? SwiftUITableView {
 			var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-			let view = self.viewCreator._toUIView(enclosingController: controller, environment: newEnvironment)
+			let view = self.viewCreator.__toUIView(enclosingController: controller, environment: newEnvironment)
 			(view as? InternalLazyCollatedView)?.expand()
 			tableView.lazyView = view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 })
 			tableView.reloadData()
@@ -104,7 +104,7 @@ extension SwiftUITableView: UITableViewDataSource {
 		cell.view = HStack {
 			UIViewWrapper(view: view)
 			Spacer()
-			}._toUIView(enclosingController: UIViewController(), environment: EnvironmentValues())
+			}.__toUIView(enclosingController: UIViewController(), environment: EnvironmentValues())
 		return cell
 	}
 }

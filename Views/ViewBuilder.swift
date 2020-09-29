@@ -76,9 +76,9 @@ extension TupleView : View, _BuildingBlock{
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if let val = self.value as? _BuildingBlock {
-			return val._toUIView(enclosingController: enclosingController, environment: environment)
+			return val.__toUIView(enclosingController: enclosingController, environment: environment)
 		}
 		
 		let buildingBlocks: [_BuildingBlock]
@@ -106,7 +106,7 @@ extension TupleView : View, _BuildingBlock{
 		}
 		
 		return InternalLazyCollatedView(arrayValues: Array(0..<buildingBlocks.count)) {
-			buildingBlocks[$0]._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+			buildingBlocks[$0].__toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
 		}
 	}
 	

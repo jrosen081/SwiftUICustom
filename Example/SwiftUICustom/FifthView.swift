@@ -37,7 +37,7 @@ struct FifthView: View {
 			.transition(.opacity)
 			.animation(.linear(duration: 2))
 			.navigationItems(trailing: Button(action: {
-				self.withAnimation { self.isShowingOverlay.toggle() }
+				withAnimation { self.isShowingOverlay.toggle() }
 			}, content: {
 			Text(self.isShowingOverlay ? "Hide" : "Show")
 		}))
@@ -55,13 +55,15 @@ struct SixthView: View {
 		VStack {
 			if self.number <= 5 {
 				Button(action: {
-					self.withAnimation {
+					withAnimation {
 						self.number += 1
 					}
 				}, content: {
 					Text("The number is \(number)")
 						.transformEffect(number <= 1 ? .identity : .init(translationX: 10, y: 0))
-				}).animation(.easeIn(duration: 1))
+				})
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(lineWidth: 1))
+                    .animation(.easeIn(duration: 1))
 			} else {
 				Text("This is a big number")
 				.padding()

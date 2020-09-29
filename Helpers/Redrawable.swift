@@ -7,9 +7,20 @@
 
 import Foundation
 
-protocol Redrawable {
+protocol Redrawable: AnyObject {
 	func addListener(_ listener: UpdateDelegate)
 	func stopRedrawing()
 	func startRedrawing()
 	func performAnimation(animation: Animation)
+}
+
+class WeakRedrawable {
+  weak var redrawable: Redrawable?
+  init(redrawable: Redrawable?) {
+    self.redrawable = redrawable
+  }
+}
+
+class Redrawables {
+  static var redrawables: [WeakRedrawable] = []
 }

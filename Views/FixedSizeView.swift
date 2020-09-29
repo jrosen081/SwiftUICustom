@@ -15,8 +15,8 @@ public struct FixedSizeView<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = content._toUIView(enclosingController: enclosingController, environment: environment)
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = content.__toUIView(enclosingController: enclosingController, environment: environment)
 		let horizontal = view.widthAnchor.constraint(equalToConstant: size.width)
 		horizontal.priority = .required
 		horizontal.isActive = true

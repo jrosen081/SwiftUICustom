@@ -22,7 +22,7 @@ public struct Image: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let imageView = UIImageView(frame: .zero)
 		updateView(imageView, environment: environment)
 		return imageView

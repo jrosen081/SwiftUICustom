@@ -15,10 +15,10 @@ public struct ColorView<Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = color
-		let view = self.view._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+		let view = self.view.__toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		return view
 	}
 	

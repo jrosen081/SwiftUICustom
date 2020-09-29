@@ -13,7 +13,7 @@ public protocol View: _BuildingBlock {
 }
 
 public protocol _BuildingBlock {
-	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
+	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
 }
 
@@ -22,7 +22,7 @@ extension View {
 		self.body._redraw(view: view, controller: controller, environment: environment)
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let mirror = Mirror(reflecting: self)
 		mirror.children.map { $0.value }
 			.compactMap { $0 as? EnvironmentNeeded }
@@ -30,26 +30,26 @@ extension View {
 		if let controller = enclosingController as? UpdateDelegate {
 			mirror.children.map { $0.value }
 				.compactMap { $0 as? Redrawable }
-				.forEach { $0.addListener(controller) }
+				.forEach {
+          $0.addListener(controller)
+          Redrawables.redrawables.append(WeakRedrawable(redrawable: $0))
+      }
 		}
-		return self.body._toUIView(enclosingController: enclosingController, environment: environment)
+		return self.body.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
+}
+
+public func withAnimation<Result>(animation: Animation = .default, operations: () throws -> Result) rethrows -> Result {
+  let drawables = Redrawables.redrawables.compactMap { $0.redrawable }
+  drawables.forEach { $0.stopRedrawing() }
+  let value = try operations()
+  drawables.forEach { $0.performAnimation(animation: animation) }
+  return value
 }
 
 public extension View {
 	func modifier<T: ViewModifier>(_ modifier: T) -> ModifiedContent<Self, T> {
 		return ModifiedContent(content: self, modification: modifier)
-	}
-	
-	func withAnimation<Result>(animation: Animation = .default, operations: () throws -> Result) rethrows -> Result {
-		let mirror = Mirror(reflecting: self)
-		let drawables = mirror.children.map { $0.value }
-			.compactMap { $0 as? Redrawable }
-		drawables.forEach { $0.stopRedrawing() }
-		let value = try operations()
-		drawables.forEach { $0.startRedrawing() }
-		drawables.first?.performAnimation(animation: animation)
-		return value
 	}
 }
 
@@ -58,7 +58,7 @@ public struct ModifiedContent<Content: View, Modification: ViewModifier>: View {
 	let modification: Modification
 	
 	public var body: Modification.Body {
-		self.modification.body(content: _ViewModifier_Content(createView: self.content._toUIView(enclosingController:environment:), updateView: self.content._redraw(view:controller:environment:)))
+		self.modification.body(content: _ViewModifier_Content(createView: self.content.__toUIView(enclosingController:environment:), updateView: self.content._redraw(view:controller:environment:)))
 	}
 }
 
@@ -76,7 +76,7 @@ public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return self.createView(enclosingController, environment)
 	}
 	

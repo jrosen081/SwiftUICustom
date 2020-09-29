@@ -18,7 +18,7 @@ public struct Text: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let label = UILabel(frame: .zero)
 		setupData(label: label, environment: environment)
 		return SwiftUILabel(label: label)
@@ -29,10 +29,11 @@ public struct Text: View {
 		label.text = text
 		label.textAlignment = environment.multilineTextAlignment
 		label.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
-		label.adjustsFontSizeToFitWidth = true
+        label.adjustsFontSizeToFitWidth = false
 		label.minimumScaleFactor = environment.minimumScaleFactor
 		label.font = environment.font
 		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
+        label.numberOfLines = environment.lineLimit ?? 0
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -45,9 +46,11 @@ public struct Text: View {
 
 internal class SwiftUILabel: SwiftUIView {
 	let label: UILabel
-	override var intrinsicContentSize: CGSize {
-		return self.subviews[0].intrinsicContentSize
-	}
+    
+    override var intrinsicContentSize: CGSize {
+        let stringSize = (label.text as NSString?)?.boundingRect(with: UIScreen.main.bounds.size, options: [], attributes: [.font: label.font ?? .preferredFont(forTextStyle: .body)], context: nil)
+        return stringSize?.size ?? label.intrinsicContentSize
+    }
 	
 	init(label view: UILabel) {
 		self.label = view
@@ -55,13 +58,7 @@ internal class SwiftUILabel: SwiftUIView {
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.isUserInteractionEnabled = false
 		self.addSubview(view)
-		NSLayoutConstraint.activate([
-			view.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-			view.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-			view.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-			view.topAnchor.constraint(equalTo: self.topAnchor)
-		])
-		view.setContentCompressionResistancePriority(.init(749), for: .horizontal)
+        self.setupFullConstraints(self, view)
 	}
 	
 	required init(coder: NSCoder) {

@@ -11,14 +11,14 @@ public struct AnyView: View {
 	let viewCreator: (UIViewController, EnvironmentValues) -> UIView
 	
 	public init<S: View>(_ view: S) {
-		viewCreator = view._toUIView(enclosingController:environment:)
+		viewCreator = view.__toUIView(enclosingController:environment:)
 	}
 	
 	public var body: Self {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator(enclosingController, environment)
 		insertView(from: SwiftUIView(), view)
 		return view

@@ -15,8 +15,19 @@ public protocol Shape: View {
 }
 
 public extension Shape {
-	var body: AnyView {
-		return AnyView(UIViewWrapper(view: ShapeSwiftUIView(shape: self)))
+	var body: Self {
+		return self
+	}
+	
+	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let shape = ShapeSwiftUIView(shape: self)
+		shape.shapeLayer.fillColor = (environment.foregroundColor ?? environment.defaultForegroundColor).cgColor
+		return shape
+	}
+	
+	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+		guard let shape = view as? ShapeSwiftUIView<Self> else { return }
+		shape.shapeLayer.fillColor = (environment.foregroundColor ?? environment.defaultForegroundColor).cgColor
 	}
 	
 	func stroke(lineWidth: CGFloat) -> StrokedView<Self> {
@@ -42,7 +53,7 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = false
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -67,7 +78,7 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = true
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor

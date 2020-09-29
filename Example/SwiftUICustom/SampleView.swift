@@ -45,12 +45,14 @@ struct SampleView: View {
 				Spacer()
 				HStack {
 					Text("The observed value is \(model.value)")
+						.onTapGesture {
+							self.model.value.negate()
+						}
 					Spacer()
 				}.padding()
 					.navigationItems(trailing: Text("Trailing"))
 			}.navigationTitle("My name")
 				.environmentObject(model)
-				.environment(\.colorScheme, .dark)
 		}
 	}
 }

@@ -16,8 +16,8 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 		return self
 	}
 	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = self.presentingView._toUIView(enclosingController: enclosingController, environment: environment)
+	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.presentingView.__toUIView(enclosingController: enclosingController, environment: environment)
 		if (self.binding.wrappedValue) {
 			let controller = SwiftUIController(swiftUIView: self.contentCreator)
 			controller.isShowing = self.binding

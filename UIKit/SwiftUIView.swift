@@ -19,4 +19,8 @@ internal class SwiftUIView: UIControl {
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return self.subviews[0].willExpand(in: context)
 	}
+    
+    override var intrinsicContentSize: CGSize {
+        return self.subviews[0].intrinsicContentSize
+    }
 }
