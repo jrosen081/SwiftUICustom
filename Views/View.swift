@@ -15,6 +15,8 @@ public protocol View: _BuildingBlock {
 public protocol _BuildingBlock {
 	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
+    var _isBase: Bool { get }
+    var _baseBlock: _BuildingBlock { get }
 }
 
 extension View {
@@ -37,6 +39,41 @@ extension View {
 		}
 		return self.body.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
+    
+    public var _isBase: Bool {
+        return self.body is Self
+    }
+    
+    public var _baseBlock: _BuildingBlock {
+        return self.body
+    }
+    
+    func expanded() -> [_BuildingBlock] {
+        return ((self as? BuildingBlockCreator)?.toBuildingBlocks() ?? [self])
+            .flatMap { (view) -> [_BuildingBlock] in
+                var content = view
+                while !content._isBase {
+                    content = content._baseBlock
+                }
+                return (content as? Expandable)?.expanded() ?? [content]
+            }
+    }
+}
+
+struct BuildingBlockRepresentable: View {
+    let buildingBlock: _BuildingBlock
+    
+    var body: Self {
+        self
+    }
+    
+    func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        self.buildingBlock.__toUIView(enclosingController: enclosingController, environment: environment)
+    }
+    
+    func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
+    }
 }
 
 public func withAnimation<Result>(animation: Animation = .default, operations: () throws -> Result) rethrows -> Result {

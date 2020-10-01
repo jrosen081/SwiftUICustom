@@ -23,16 +23,19 @@ public struct Toggle<Label: View>: View {
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let toggle = SwiftUISwitch(binding: self.isOn)
 		toggle.onTintColor = environment.foregroundColor ?? .systemGreen
-		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [self.creation.__toUIView(enclosingController: enclosingController, environment: environment), ExpandingView(), toggle], context: .horizontal)
+        let otherView = self.creation.__toUIView(enclosingController: enclosingController, environment: environment)
+		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [otherView, ExpandingView(), toggle], context: .horizontal)
 		swiftUIStackView.translatesAutoresizingMaskIntoConstraints = false
 		swiftUIStackView.axis = .horizontal
 		swiftUIStackView.alignment = .center
+        otherView.isHidden = environment.isLabelsHidden
 		return swiftUIStackView
 	}
 	
 	public func _redraw(view internalView: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		guard let view = internalView as? UIStackView else { return }
 		self.creation._redraw(view: view.arrangedSubviews[0], controller: controller, environment: environment)
+        view.arrangedSubviews[0].isHidden = environment.isLabelsHidden
 	}
 }
 

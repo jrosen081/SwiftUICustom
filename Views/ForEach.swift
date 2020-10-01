@@ -11,12 +11,14 @@ public struct ForEach<Element, StorageType: Equatable, Content: View>: View, Exp
 	
 	let elements: [Element]
 	let mapper: (Element) -> StorageType
-	let contentMapper: (StorageType) -> Content
+	let contentMapper: (StorageType) -> TaggedView<StorageType, Content>
 	
 	public init(_ elements: [Element], id: @escaping (Element) -> StorageType, @ViewBuilder _ contentMapper: @escaping (StorageType) -> Content) {
 		self.elements = elements
 		self.mapper = id
-		self.contentMapper = contentMapper
+		self.contentMapper = {
+            contentMapper($0).tag($0)
+        }
 	}
 	
 	func expanded() -> [_BuildingBlock] {

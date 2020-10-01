@@ -13,10 +13,16 @@ import SwiftUICustom
 struct ThirdView: View {
 	
 	@State var isOn: Bool = true
+    @State var secure: String = ""
 
 	var body: some View {
 		VStack {
 			List {
+                Section(header: Text("Header").padding().foregroundColor(.systemGreen), footer: Text("Footer")) {
+                    ForEach(Array(0..<15)) {_ in
+                        Text("My section").padding()
+                    }
+                }
 				Text("My name is Jack").padding()
 				Button(action: {}, content: { Text("Test this") }).padding()
 				ForEach(Array(0..<15)) {
@@ -28,11 +34,12 @@ struct ThirdView: View {
 				if isOn {
 					Text("The switch is on")
 				}
-			}
+            }
+            SecureField("The value is \(self.secure)", text: self.$secure)
 			Toggle(isOn: $isOn) {
 				Text(isOn ? "Toggling this will hide the row above" : "Toggling this will show the row above").border(.systemBackground).padding().foregroundColor(.systemYellow)
 			}.padding().foregroundColor(.systemGreen)
 		}.background(.red)
-		.foregroundColor(.gray)
+        .listStyle(InsetGroupedListStyle())
 	}
 }

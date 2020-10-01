@@ -50,11 +50,13 @@ struct SixthView: View {
 	@State var textCount: Int = 1
 	@State var value: Double = 1
 	@State var stepperState: Float = 15
+    @State var pickerValue: String = "Mine"
 	
 	var body: some View {
 		VStack {
 			if self.number <= 5 {
 				Button(action: {
+                    self.pickerValue = "Mine"
 					withAnimation {
 						self.number += 1
 					}
@@ -80,7 +82,7 @@ struct SixthView: View {
 			TextField("The count is: ", value: self.$textCount, formatter: {
 				let numberFormatter = NumberFormatter()
 				return numberFormatter
-			}())
+            }()).keyboardType(.numberPad)
 			Text("The parsed value is \(self.textCount)").rotationEffect(self.number == 2 ? .degrees(5) : .degrees(0)).animation(Animation.linear(duration: 10))
 			Slider(value: $value, in: (1...15), step: 2) {
 				Text("Value: \(value)")
@@ -92,6 +94,13 @@ struct SixthView: View {
 					Text("Click this to reset. The current # is \(stepperState)")
 				})
 			}
+            Picker("The letters are \(self.pickerValue)", selection: $pickerValue) {
+                ForEach(["Yours", "Mine", "Other"]) {
+                    Text($0)
+                }
+                Image("arrow").tag("Eight")
+            }
+            
 			NavigationLink(destination: TopView(), content: {
 				Text("On to the Next")
 			})
@@ -102,10 +111,15 @@ struct SixthView: View {
 @available(iOS 13.0.0, *)
 struct TopView: View {
 	@State var isShowing: Bool = false
+    @State var currentDate = Date()
 	
 	var body: some View {
 		ZStack {
-			Text("Behind")
+            VStack {
+                Text("Behind")
+                DatePicker("The date is \(currentDate)", selection: $currentDate)
+                    .labelsHidden()
+            }
 			if isShowing {
 				List {
 					Text("Showing!").padding()

@@ -32,7 +32,7 @@ public struct PaddingView<Content: View>: View {
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let paddingView = SwiftUIView()
+		let paddingView = PaddingUIView()
 		let underlyingUIView = self.underlyingView.__toUIView(enclosingController: enclosingController, environment: environment)
 		paddingView.addSubview(underlyingUIView)
 		paddingView.translatesAutoresizingMaskIntoConstraints = false
@@ -40,12 +40,32 @@ public struct PaddingView<Content: View>: View {
 		paddingView.topAnchor.constraint(equalTo: underlyingUIView.topAnchor, constant: paddingCorners.contains(.top) ? -self.paddingSpace : 0).isActive = true
 		paddingView.leadingAnchor.constraint(equalTo: underlyingUIView.leadingAnchor, constant: paddingCorners.contains(.leading) ? -self.paddingSpace : 0).isActive = true
 		paddingView.trailingAnchor.constraint(equalTo: underlyingUIView.trailingAnchor, constant: paddingCorners.contains(.trailing) ? self.paddingSpace : 0).isActive = true
+        paddingView.extraSize = CGSize(width: (paddingCorners.contains(.leading).toInt + paddingCorners.contains(.trailing).toInt) * self.paddingSpace, height: (paddingCorners.contains(.top).toInt + paddingCorners.contains(.bottom).toInt) * self.paddingSpace)
 		return paddingView
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.underlyingView._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
+}
+
+class PaddingUIView: SwiftUIView {
+    var extraSize = CGSize.zero
+    override var intrinsicContentSize: CGSize {
+        return super.intrinsicContentSize + extraSize
+    }
+}
+
+extension Bool {
+    var toInt: CGFloat {
+        return self ? 1 : 0
+    }
+}
+
+extension CGSize {
+    static func + (lhs: CGSize, rhs: CGSize) -> CGSize {
+        return CGSize(width: lhs.width + rhs.width, height: lhs.height + rhs.height)
+    }
 }
 
 public extension View {

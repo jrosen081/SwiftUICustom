@@ -55,11 +55,11 @@ public enum Edge {
 		case .leading:
 			return CGAffineTransform(translationX: -frame.minX - frame.width, y: 0)
 		case .trailing:
-			return CGAffineTransform(translationX: size.width - frame.minX, y: 0)
+            return CGAffineTransform(translationX: size.width, y: 0)
 		case .top:
 			return CGAffineTransform(translationX: 0, y: -frame.minY - frame.height)
 		case .bottom:
-			return CGAffineTransform(translationX: 0, y: size.height - frame.minY)
+			return CGAffineTransform(translationX: 0, y: size.height)
 		}
 	}
 }

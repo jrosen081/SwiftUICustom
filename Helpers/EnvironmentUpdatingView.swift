@@ -96,4 +96,23 @@ public extension View {
 			$0.currentTransition = transition
 		})
 	}
+    
+    
+    func keyboardType(_ type: UIKeyboardType) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.keyboardType = type
+        })
+    }
+    
+    func labelsHidden() -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.isLabelsHidden = true
+        })
+    }
+    
+    func listStyle(_ style: ListStyle) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.listStyle = style
+        })
+    }
 }

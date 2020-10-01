@@ -21,8 +21,14 @@ public struct EnvironmentValues {
     public var minimumScaleFactor: CGFloat = 0.25
 	
 	public var multilineTextAlignment: NSTextAlignment = .center
+    
+    public var keyboardType: UIKeyboardType = .default
 
 	public var font: UIFont? = nil
+    
+    public var isLabelsHidden = false
+    
+    var listStyle: ListStyle = DefaultListStyle()
 	
 	var foregroundColor: UIColor? = nil
 	
@@ -91,6 +97,9 @@ extension EnvironmentValues {
 		self.keyLookers = values.keyLookers
 		self.currentTransition = values.currentTransition
 		self.currentAnimation = values.currentAnimation
+        self.isLabelsHidden = values.isLabelsHidden
+        self.keyboardType = values.keyboardType
+        self.listStyle = values.listStyle
 	}
 	
 	init(_ controller: UIViewController) {

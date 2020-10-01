@@ -37,11 +37,13 @@ public struct Stepper<Label>: View where Label : View {
 		stackView.spacing = 5
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.axis = .horizontal
+        label.isHidden = environment.isLabelsHidden
 		return stackView
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
+        view.subviews[0].isHidden = environment.isLabelsHidden
 		guard let stepper = view.subviews[1].subviews[0] as? SwiftUIStepper else { return }
 		stepper.value = Double(self.doubleBinding.wrappedValue)
 		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor

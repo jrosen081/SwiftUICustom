@@ -55,6 +55,7 @@ extension Array where Element == _BuildingBlock {
 }
 
 class SwiftUIStackView: UIStackView {
+    let context: ExpandingContext
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return self.arrangedSubviews.contains(where: { $0.willExpand(in: context)} )
 	}
@@ -62,11 +63,16 @@ class SwiftUIStackView: UIStackView {
 	override var intrinsicContentSize: CGSize {
 		return self.arrangedSubviews.map(\.intrinsicContentSize)
 			.reduce(CGSize.zero, {
-				CGSize(width: $0.width + $1.width, height: $0.height + $1.height)
+                if self.context == .horizontal {
+                    return CGSize(width: $0.width + $1.width, height: max($0.height, $1.height))
+                } else {
+                    return CGSize(width: max($0.width, $1.width), height: $0.height + $1.height)
+                }
 			})
 	}
 	
 	init(arrangedSubviews: [UIView], context: ExpandingContext) {
+        self.context = context
 		super.init(frame: .zero)
 		let actualViews = arrangedSubviews.flatMap {
 			($0 as? InternalLazyCollatedView)?.arrangedSubviews ?? [$0]

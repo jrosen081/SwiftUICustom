@@ -52,7 +52,6 @@ struct SampleView: View {
 				}.padding()
 					.navigationItems(trailing: Text("Trailing"))
 			}.navigationTitle("My name")
-				.environmentObject(model)
-		}
+				.environmentObject(model)		}
 	}
 }

@@ -39,11 +39,13 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 		horizontalStack.axis = .horizontal
 		horizontalStack.translatesAutoresizingMaskIntoConstraints = false
 		horizontalStack.spacing = 5
+        label.isHidden = environment.isLabelsHidden
 		return horizontalStack
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.labelCreator._redraw(view: view.subviews[0], controller: controller, environment: environment)
+        view.subviews[0].isHidden = environment.isLabelsHidden
 		guard let slider = view.subviews[1] as? UISlider else { return }
 		slider.tintColor = environment.foregroundColor
 	}

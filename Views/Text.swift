@@ -29,7 +29,7 @@ public struct Text: View {
 		label.text = text
 		label.textAlignment = environment.multilineTextAlignment
 		label.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
-        label.adjustsFontSizeToFitWidth = false
+        label.adjustsFontSizeToFitWidth = true
 		label.minimumScaleFactor = environment.minimumScaleFactor
 		label.font = environment.font
 		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
@@ -48,8 +48,11 @@ internal class SwiftUILabel: SwiftUIView {
 	let label: UILabel
     
     override var intrinsicContentSize: CGSize {
-        let stringSize = (label.text as NSString?)?.boundingRect(with: UIScreen.main.bounds.size, options: [], attributes: [.font: label.font ?? .preferredFont(forTextStyle: .body)], context: nil)
-        return stringSize?.size ?? label.intrinsicContentSize
+        let newLabel = UILabel(frame: .zero)
+        newLabel.text = label.text
+        newLabel.font = label.font
+        newLabel.textAlignment = label.textAlignment
+        return newLabel.intrinsicContentSize
     }
 	
 	init(label view: UILabel) {
@@ -58,7 +61,7 @@ internal class SwiftUILabel: SwiftUIView {
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.isUserInteractionEnabled = false
 		self.addSubview(view)
-        self.setupFullConstraints(self, view)
+        self.setupFullConstraints(view, self)
 	}
 	
 	required init(coder: NSCoder) {

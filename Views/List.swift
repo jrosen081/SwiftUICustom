@@ -21,9 +21,9 @@ public struct List<Content: View>: View {
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-		let view = self.viewCreator.__toUIView(enclosingController: enclosingController, environment: newEnvironment)
-		(view as? InternalLazyCollatedView)?.expand()
-		let tableView = SwiftUITableView(lazyView: view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 }))
+        let tableView = SwiftUITableView(buildingBlocks: self.viewCreator.expanded().toSections, style: environment.listStyle._tableViewStyle)
+        tableView.viewController = enclosingController
+        tableView.environment = newEnvironment
 		return tableView
 	}
 	
@@ -31,12 +31,35 @@ public struct List<Content: View>: View {
 		if let tableView = view as? SwiftUITableView {
 			var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-			let view = self.viewCreator.__toUIView(enclosingController: controller, environment: newEnvironment)
-			(view as? InternalLazyCollatedView)?.expand()
-			tableView.lazyView = view as? InternalLazyCollatedView ?? InternalLazyCollatedView(arrayValues: [view], viewCreator: { $0 })
+			let view = self.viewCreator
+            tableView.buildingBlocks = view.expanded().toSections
+            tableView.environment = environment
+            tableView.viewController = controller
 			tableView.reloadData()
 		}
 	}
+}
+
+extension Array where Element == _BuildingBlock {
+    var toSections: [SectionProtocol] {
+        var sections: [SectionProtocol] = []
+        var nonSectionedElements: [_BuildingBlock] = []
+        for element in self {
+            if let section = element as? SectionProtocol {
+                if !nonSectionedElements.isEmpty {
+                    sections.append(UngroupedSection(buildingBlocks: nonSectionedElements))
+                    nonSectionedElements = []
+                }
+                sections.append(section)
+            } else {
+                nonSectionedElements.append(element)
+            }
+        }
+        if !nonSectionedElements.isEmpty {
+            sections.append(UngroupedSection(buildingBlocks: nonSectionedElements))
+        }
+        return sections
+    }
 }
 
 class SwiftUITableView: UITableView {
@@ -48,13 +71,17 @@ class SwiftUITableView: UITableView {
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return true
 	}
-	var lazyView: InternalLazyCollatedView
+	var buildingBlocks: [SectionProtocol]
 	
 	var tableViewClickedResponses: [IndexPath: () -> ()] = [:]
+    
+    var environment = EnvironmentValues()
+    
+    var viewController: UIViewController = UIViewController()
 	
-	init(lazyView: InternalLazyCollatedView) {
-		self.lazyView = lazyView
-		super.init(frame: .zero, style: .plain)
+    init(buildingBlocks: [SectionProtocol], style: UITableView.Style) {
+		self.buildingBlocks = buildingBlocks
+		super.init(frame: .zero, style: style)
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.dataSource = self
 		self.delegate = self
@@ -84,13 +111,50 @@ struct UIViewWrapper: UIViewRepresentable {
 	}
 }
 
+class HeaderFooterView: UITableViewHeaderFooterView {
+    override var intrinsicContentSize: CGSize {
+        return self.contentView.subviews[0].intrinsicContentSize
+    }
+}
+
 extension SwiftUITableView: UITableViewDataSource {
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return self.buildingBlocks.count
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        return (self.buildingBlocks[section].headerView?.__toUIView(enclosingController: viewController, environment: environment)).map({ underlyingView in
+            let sectionHeader = HeaderFooterView(frame: .zero)
+            sectionHeader.contentView.addSubview(underlyingView)
+            sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
+            return sectionHeader
+        })
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return self.tableView(tableView, viewForHeaderInSection: section)?.intrinsicContentSize.height ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return self.tableView(tableView, viewForFooterInSection: section)?.intrinsicContentSize.height ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return (self.buildingBlocks[section].footerView?.__toUIView(enclosingController: viewController, environment: environment)).map({ underlyingView in
+            let sectionHeader = HeaderFooterView(frame: .zero)
+            sectionHeader.contentView.addSubview(underlyingView)
+            sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
+            return sectionHeader
+        })
+    }
+    
 	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return lazyView.count
+        return self.buildingBlocks[section].buildingBlocks.count
 	}
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-		let view = self.lazyView[indexPath.row]
+        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: viewController, environment: self.environment)
 		guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
 		if let onClick = view.insideList(width: self.frame.width) {
 			self.tableViewClickedResponses[indexPath] = onClick
@@ -116,8 +180,9 @@ extension SwiftUITableView: UITableViewDelegate {
 	}
 	
 	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-		let height = self.lazyView[indexPath.row].intrinsicContentSize.height
-		return height
+        let height = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: UIViewController(), environment: self.environment)
+        height.insideList(width: tableView.frame.width)
+        return height.intrinsicContentSize.height
 	}
 }
 

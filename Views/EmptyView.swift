@@ -31,4 +31,13 @@ class ShrinkingView: UIView {
 	override class var requiresConstraintBasedLayout: Bool {
 		return true
 	}
+    
+    init() {
+        super.init(frame: .zero)
+        self.translatesAutoresizingMaskIntoConstraints = false
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }
