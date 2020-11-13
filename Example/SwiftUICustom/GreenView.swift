@@ -10,7 +10,7 @@ import Foundation
 import SwiftUICustom
 
 struct GreenView: ViewModifier {
-	func body(content: Content) -> ColorView<Content>{
+	func body(content: Content) -> EnvironmentUpdatingView<Content>{
 		content.foregroundColor(.systemGreen)
 	}
 }

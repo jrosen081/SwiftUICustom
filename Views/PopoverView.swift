@@ -30,7 +30,7 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 		self.presentingView._redraw(view: view, controller: controller, environment: environment)
 		if (!binding.wrappedValue) {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
-		} else if let _ = controller.presentedViewController as? SwiftUIController {
+		} else if let _ = controller.presentedViewController as? SwiftUIController<Content> {
 			// Something is presented
 			// Do nothing
 		} else {

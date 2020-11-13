@@ -7,19 +7,56 @@
 
 import UIKit
 
-public protocol View: _BuildingBlock {
+public protocol View: _View {
 	associatedtype Content: View
 	var body: Content { get }
 }
+
+public protocol _View : _BuildingBlock, Hashable { }
 
 public protocol _BuildingBlock {
 	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
     var _isBase: Bool { get }
     var _baseBlock: _BuildingBlock { get }
+    func _isEqual(to other: _BuildingBlock) -> Bool
+    func _hash(into hasher: inout Hasher)
+    func _reset()
 }
 
 extension View {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.body == rhs.body
+    }
+    
+    public func _hash(into hasher: inout Hasher) {
+        return self.hash(into: &hasher)
+    }
+    
+    public func _isEqual(to other: _BuildingBlock) -> Bool {
+        if let otherSelf = other as? Self {
+            return otherSelf == self
+        }
+        return false
+    }
+    
+    public func _reset() {
+        if self.body is Self {
+            return
+        }
+        let mirror = Mirror(reflecting: self)
+        mirror.children.map { $0.value }
+            .compactMap { $0 as? Redrawable }
+            .forEach {
+                $0.reset()
+            }
+        self.body._reset()
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        self.body.hash(into: &hasher)
+    }
+    
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.body._redraw(view: view, controller: controller, environment: environment)
 	}
@@ -55,7 +92,7 @@ extension View {
                 while !content._isBase {
                     content = content._baseBlock
                 }
-                return (content as? Expandable)?.expanded() ?? [content]
+                return (content as? Expandable)?.expanded() ?? [view]
             }
     }
 }

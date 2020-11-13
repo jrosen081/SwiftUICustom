@@ -13,11 +13,18 @@ import SwiftUICustom
 struct ThirdView: View {
 	
 	@State var isOn: Bool = true
+    @State var forJoe: Bool = true
     @State var secure: String = ""
 
 	var body: some View {
 		VStack {
 			List {
+                Image("arrow").fixedSize(width: 30, height: 40)
+                HStack {
+                    Toggle(isOn: $forJoe) {
+                        Text("This one is for Joe and is a really long thing")
+                    }
+                }
                 Section(header: Text("Header").padding().foregroundColor(.systemGreen), footer: Text("Footer")) {
                     ForEach(Array(0..<15)) {_ in
                         Text("My section").padding()

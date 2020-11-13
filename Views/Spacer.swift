@@ -31,7 +31,12 @@ public struct Spacer: View {
 	}
 }
 
-internal class ExpandingView: SwiftUIView {
+internal class ExpandingView: UIView {
+    
+    func withContext(_ context: ExpandingContext) -> Self {
+        self.context = [context]
+        return self
+    }
 	
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return self.context.contains(context)
@@ -40,10 +45,10 @@ internal class ExpandingView: SwiftUIView {
 	init() {
 		super.init(frame: .zero)
 		self.translatesAutoresizingMaskIntoConstraints = false
-		setContentCompressionResistancePriority(.init(1), for: .horizontal)
-		setContentCompressionResistancePriority(.init(1), for: .vertical)
-		setContentHuggingPriority(.init(1), for: .horizontal)
-		setContentHuggingPriority(.init(1), for: .vertical)
+		setContentCompressionResistancePriority(.init(240), for: .horizontal)
+		setContentCompressionResistancePriority(.init(240), for: .vertical)
+		setContentHuggingPriority(.init(240), for: .horizontal)
+		setContentHuggingPriority(.init(240), for: .vertical)
 	}
 	
 	required init?(coder: NSCoder) {

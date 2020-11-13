@@ -8,6 +8,17 @@
 import Foundation
 
 public struct HStack<Content: View>: View {
+    
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.alignment == rhs.alignment && lhs.spacing == rhs.spacing && lhs.viewCreator == rhs.viewCreator
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        viewCreator.hash(into: &hasher)
+        spacing.hash(into: &hasher)
+        alignment.hash(into: &hasher)
+    }
+    
 	let viewCreator: Content
 	let alignment: VerticalAlignment
 	let spacing: CGFloat
@@ -61,11 +72,18 @@ class SwiftUIStackView: UIStackView {
 	}
 	
 	override var intrinsicContentSize: CGSize {
+        let expandedSign = UIView.layoutFittingExpandedSize.width
 		return self.arrangedSubviews.map(\.intrinsicContentSize)
 			.reduce(CGSize.zero, {
                 if self.context == .horizontal {
+                    if $0.width == expandedSign || $1.width == expandedSign {
+                        return CGSize(width: expandedSign, height: max($0.height, $1.height))
+                    }
                     return CGSize(width: $0.width + $1.width, height: max($0.height, $1.height))
                 } else {
+                    if $0.height == expandedSign || $1.height == expandedSign {
+                        return CGSize(width: max($0.width, $1.width), height: expandedSign)
+                    }
                     return CGSize(width: max($0.width, $1.width), height: $0.height + $1.height)
                 }
 			})

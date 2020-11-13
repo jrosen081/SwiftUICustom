@@ -116,7 +116,10 @@ struct TopView: View {
 	var body: some View {
 		ZStack {
             VStack {
-                Text("Behind")
+                NavigationLink(destination: TabViewExample()) {
+                    Text("Behind")
+                }
+                
                 DatePicker("The date is \(currentDate)", selection: $currentDate)
                     .labelsHidden()
             }

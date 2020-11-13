@@ -101,6 +101,14 @@ internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 			invalidateIntrinsicContentSize()
 		}
 	}
+    
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        if self.isFilled {
+            return super.point(inside: point, with: event)
+        } else {
+            return false
+        }
+    }
 	
 	override var intrinsicContentSize: CGSize {
 		givenIntrinsicContentSize ?? UIView.layoutFittingExpandedSize
@@ -157,8 +165,12 @@ extension UIBezierPath {
 	}
 }
 
-extension Shape {
-	func takingUpSuperclassSize() {
-		
-	}
+struct CheckMark: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: 0, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: 0))
+        }
+    }
 }

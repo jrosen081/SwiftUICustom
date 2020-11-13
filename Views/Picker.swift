@@ -7,7 +7,17 @@
 
 import Foundation
 
-public struct Picker<Label, SelectionValue, Content>: View where Label : View, SelectionValue : Equatable, Content : View {
+public struct Picker<Label, SelectionValue, Content>: View where Label : View, SelectionValue : Hashable, Content : View {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.label == rhs.label && lhs.content == rhs.content && lhs.selectionValue.wrappedValue == rhs.selectionValue.wrappedValue
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        self.label.hash(into: &hasher)
+        self.selectionValue.wrappedValue.hash(into: &hasher)
+        self.content.hash(into: &hasher)
+    }
+    
     let label: Label
     let content: Content
     let selectionValue: Binding<SelectionValue>
@@ -33,28 +43,17 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
         })
         let picker = SwiftUIPicker(binding: binding, stringOptions: allOptions)
         picker.environment = environment
+        picker.allOptions = allOptions
         let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
         let stackView = SwiftUIStackView(arrangedSubviews: [label, picker], context: .horizontal)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.spacing = 5
         label.isHidden = environment.isLabelsHidden
-        return stackView
+        return environment.pickerStyle._updatePicker(picker: self, defaultView: stackView).__toUIView(enclosingController: enclosingController, environment: environment)
     }
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        let expanded = self.content.expanded()
-        let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is SelectionValue})
-        let binding: Binding<Int> = Binding(get: {
-            return allOptions.firstIndex(where: { $0.taggedValue as? SelectionValue == self.selectionValue.wrappedValue }) ?? 0
-        }, set: {index in
-            guard let taggedValue = allOptions[index].taggedValue as? SelectionValue else { return }
-            self.selectionValue.wrappedValue = taggedValue
-        })
-        guard let picker = view.subviews[1] as? SwiftUIPicker else { return }
-        picker.binding = binding
-        picker.allOptions = allOptions
-        self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
-        view.subviews[0].isHidden = environment.isLabelsHidden
+        environment.pickerStyle._redraw(picker: self, defaultView: view, controller: controller, environment: environment)
     }
 }
 

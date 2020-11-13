@@ -17,18 +17,48 @@ public struct FixedSizeView<Content: View>: View {
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = content.__toUIView(enclosingController: enclosingController, environment: environment)
-		let horizontal = view.widthAnchor.constraint(equalToConstant: size.width)
-		horizontal.priority = .required
-		horizontal.isActive = true
-		let vertical = view.heightAnchor.constraint(equalToConstant: size.height)
-		vertical.priority = .required
-		vertical.isActive = true
-		return view
+        let swiftUIView = FixedSizeUIView(size: self.size)
+        swiftUIView.translatesAutoresizingMaskIntoConstraints = false
+        swiftUIView.addSubview(view)
+        view.setupFullConstraints(view, swiftUIView)
+		return swiftUIView
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.content._redraw(view: view, controller: controller, environment: environment)
+        guard let sizeView = view as? FixedSizeUIView else { return }
+        sizeView.size = self.size
+        sizeView.invalidateIntrinsicContentSize()
+        self.content._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
+}
+
+class FixedSizeUIView: UIView {
+    var size: CGSize {
+        didSet {
+            self.widthConstraint?.constant = size.width
+            self.heightConstraint?.constant = size.height
+        }
+    }
+    var widthConstraint: NSLayoutConstraint?
+    var heightConstraint: NSLayoutConstraint?
+    
+    override var intrinsicContentSize: CGSize {
+        return size
+    }
+    
+    init(size: CGSize) {
+        self.size = size
+        super.init(frame: .zero)
+        self.widthConstraint = self.widthAnchor.constraint(equalToConstant: size.width)
+        self.widthConstraint?.isActive = true
+        self.heightConstraint = self.heightAnchor.constraint(equalToConstant: size.height)
+        self.heightConstraint?.isActive = true
+        self.translatesAutoresizingMaskIntoConstraints = false
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }
 
 public extension View {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol ObservableObject {
+public protocol ObservableObject : AnyObject {
 }
 
 extension ObservableObject {
@@ -41,6 +41,15 @@ extension ObservableObject {
 				return redrawable
 			}.first?.performAnimation(animation: animation)
 	}
+    
+    func reset() {
+        let mirror = Mirror(reflecting: self)
+        mirror.children.map { $0.value }
+            .compactMap { $0 as? Redrawable }
+            .forEach({
+                $0.reset()
+            })
+    }
 }
 
 
@@ -59,7 +68,7 @@ public class Published<Value>: State<Value> {
 
 @propertyWrapper
 public class ObservedObject<Object: ObservableObject>: Redrawable {
-	let value: Object
+	var value: Object
 	
 	func startRedrawing() {
 		self.value.startRedrawing()
@@ -84,4 +93,8 @@ public class ObservedObject<Object: ObservableObject>: Redrawable {
 	public var wrappedValue: Object {
 		return value
 	}
+    
+    func reset() {
+        self.value.reset()
+    }
 }

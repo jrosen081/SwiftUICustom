@@ -22,6 +22,17 @@ public struct Corner: OptionSet {
 }
 
 public struct PaddingView<Content: View>: View {
+    
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.paddingSpace == rhs.paddingSpace && lhs.paddingCorners == rhs.paddingCorners && lhs.underlyingView == rhs.underlyingView
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        self.paddingCorners.rawValue.hash(into: &hasher)
+        self.paddingSpace.hash(into: &hasher)
+        self.underlyingView.hash(into: &hasher)
+    }
+    
 	let paddingCorners: Corner
 	let paddingSpace: CGFloat
 	let underlyingView: Content
@@ -69,7 +80,7 @@ extension CGSize {
 }
 
 public extension View {
-	func padding(corners: Corner = .all, paddingSpace: CGFloat = 10) -> PaddingView<Self>{
-		return PaddingView(paddingCorners: corners, paddingSpace: paddingSpace, underlyingView: self)
+	func padding(edges: Corner = .all, paddingSpace: CGFloat = 10) -> PaddingView<Self>{
+		return PaddingView(paddingCorners: edges, paddingSpace: paddingSpace, underlyingView: self)
 	}
 }

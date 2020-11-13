@@ -43,8 +43,23 @@ public struct EnvironmentValues {
 	var currentTransition: AnyTransition? = nil
 	
 	var currentAnimation: Animation? = nil
+    
+    var pickerStyle: PickerStyle = DefaultPickerStyle()
+    
+    var inList = false
+    
+    var textFieldStyle: TextFieldStyle = DefaultTextFieldStyle()
+    
+    var buttonStyle: _PrimitiveButtonStyle {
+        get {
+            return self[PrimitiveButtonStyleKey.self]
+        }
+        set {
+            self[PrimitiveButtonStyleKey.self] = newValue
+        }
+    }
 	
-	public var colorScheme: ColorScheme = .dark
+	public var colorScheme: ColorScheme = .light
 	
 	func withUpdates(_ updates: (inout EnvironmentValues) -> ()) -> EnvironmentValues {
 		var value = EnvironmentValues(self)
@@ -74,6 +89,12 @@ struct EnvironmentObjectGetter<Object>: EnvironmentKey {
 	}
 }
 
+struct PrimitiveButtonStyleKey: EnvironmentKey {
+    static var defaultValue: _PrimitiveButtonStyle {
+        return DefaultButtonStyle()
+    }
+}
+
 struct KeyLooker {
 	var actualValue: Any
 	var classValue: Any
@@ -100,6 +121,10 @@ extension EnvironmentValues {
         self.isLabelsHidden = values.isLabelsHidden
         self.keyboardType = values.keyboardType
         self.listStyle = values.listStyle
+        self.pickerStyle = values.pickerStyle
+        self.inList = values.inList
+        self.colorScheme = values.colorScheme
+        self.textFieldStyle = values.textFieldStyle
 	}
 	
 	init(_ controller: UIViewController) {

@@ -30,7 +30,5 @@ public struct ColorView<Content: View>: View {
 }
 
 public extension View {
-	func foregroundColor(_ color: UIColor?) -> ColorView<Self> {
-		return ColorView(color: color, view: self)
-	}
+	
 }

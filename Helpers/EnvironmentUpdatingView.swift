@@ -115,4 +115,28 @@ public extension View {
             $0.listStyle = style
         })
     }
+    
+    func pickerStyle(_ style: PickerStyle) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.pickerStyle = style
+        })
+    }
+    
+    func textFieldStyle(_ style: TextFieldStyle) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.textFieldStyle = style
+        })
+    }
+    
+    func buttonStyle<Style: PrimitiveButtonStyle>(_ style: Style) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.buttonStyle = style
+        })
+    }
+    
+    func foregroundColor(_ color: UIColor?) -> EnvironmentUpdatingView<Self> {
+        return EnvironmentUpdatingView(content: self, updates: {
+            $0.foregroundColor = color
+        })
+    }
 }

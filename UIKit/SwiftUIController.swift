@@ -73,7 +73,7 @@ class Presenter: NSObject, UIViewControllerAnimatedTransitioning {
 	
 }
 
-public class SwiftUIController: UINavigationController {
+public class SwiftUIController<Content: View>: SwiftUIInternalController<Content> {
 	
 	lazy var panGesture: UIPanGestureRecognizer = {
 		let panGesture = UIPanGestureRecognizer(target: self, action: #selector(self.swipeDown(pan:)))
@@ -106,13 +106,9 @@ public class SwiftUIController: UINavigationController {
 	
 	var isShowing: Binding<Bool>? = nil
 	
-	public init<Content: View>(swiftUIView: Content) {
-		super.init(nibName: nil, bundle: nil)
-		self.viewControllers = [SwiftUIInternalController(swiftUIView: swiftUIView, environment: EnvironmentValues(self))]
-		self.isNavigationBarHidden = true
-		self.navigationBar.prefersLargeTitles = true
+	public init(swiftUIView: Content) {
+        super.init(swiftUIView: swiftUIView, environment: EnvironmentValues(UIViewController()))
 		self.transitioningDelegate = self.transitionDelegate
-//		self.modalPresentationStyle = .automatic
 		self.panGesture.minimumNumberOfTouches = 1
 	}
 	
@@ -121,13 +117,15 @@ public class SwiftUIController: UINavigationController {
 	}
 }
 
-internal class SwiftUIInternalController<Content: View>: UIViewController, UpdateDelegate {
-	let swiftUIView: Content
-	let environment: EnvironmentValues
+public class SwiftUIInternalController<Content: View>: UIViewController, UpdateDelegate {
+	var swiftUIView: Content
+	var environment: EnvironmentValues
 	
 	var actualEnvironment: EnvironmentValues {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = nil
+        newEnvironment.isLabelsHidden = false
+        newEnvironment.inList = false
 		return newEnvironment
 	}
 	
@@ -147,19 +145,27 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 		showView(underlyingView.asTopLevelView())
     }
 	
-	override func viewWillAppear(_ animated: Bool) {
-		self.updateData(with: nil)
+    public override func viewWillAppear(_ animated: Bool) {
+//		self.updateData(with: nil)
 	}
 	
 	func updateData(with animation: Animation?) {
 		guard !self.view.subviews.isEmpty else { return }
 		var environment = self.actualEnvironment
 		environment.currentAnimation = animation
+        if self.environment.colorScheme == .dark {
+            self.view.backgroundColor = .black
+        } else {
+            self.view.backgroundColor = .white
+        }
 		self.swiftUIView._redraw(view: self.view.subviews[0], controller: self, environment: environment)
 	}
 	
-	override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
 		super.traitCollectionDidChange(previousTraitCollection)
+        self.environment = self.environment.withUpdates {
+            $0.colorScheme = EnvironmentValues(self).colorScheme
+        }
 		UIView.animate(withDuration: 0.33) {
 			self.view.backgroundColor = self.actualEnvironment.colorScheme == .dark ? .black : .white
 			self.updateData(with: nil)
@@ -169,13 +175,22 @@ internal class SwiftUIInternalController<Content: View>: UIViewController, Updat
 	func showView(_ underlyingView: UIView) {
 		self.view.subviews.forEach { $0.removeFromSuperview() }
 		self.view.addSubview(underlyingView)
-		NSLayoutConstraint.activate([
-			underlyingView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
-			underlyingView.leadingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.leadingAnchor),
-			underlyingView.trailingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.trailingAnchor),
-			underlyingView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor)
-		])
+        if underlyingView.insetsLayoutMarginsFromSafeArea {
+            NSLayoutConstraint.activate([
+                underlyingView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
+                underlyingView.leadingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.leadingAnchor),
+                underlyingView.trailingAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.trailingAnchor),
+                underlyingView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor)
+            ])
+        } else {
+            underlyingView.setupFullConstraints(underlyingView, self.view)
+        }
+		
 		self.view.backgroundColor = self.actualEnvironment.colorScheme == .dark ? .black : .white
 	}
+    
+    deinit {
+        self.swiftUIView._reset()
+    }
 
 }

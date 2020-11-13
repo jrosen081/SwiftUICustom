@@ -20,6 +20,7 @@ public struct List<Content: View>: View {
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+        newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
         let tableView = SwiftUITableView(buildingBlocks: self.viewCreator.expanded().toSections, style: environment.listStyle._tableViewStyle)
         tableView.viewController = enclosingController
@@ -30,6 +31,7 @@ public struct List<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		if let tableView = view as? SwiftUITableView {
 			var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+            newEnvironment.inList = true
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
 			let view = self.viewCreator
             tableView.buildingBlocks = view.expanded().toSections
@@ -38,6 +40,20 @@ public struct List<Content: View>: View {
 			tableView.reloadData()
 		}
 	}
+}
+
+struct ReferenceList<Content: View>: View {
+    let viewCreator: () -> Content
+    
+    init(@ViewBuilder _ creator: @escaping () -> Content) {
+        self.viewCreator = creator
+    }
+    
+    var body: List<Content> {
+        return List{
+            self.viewCreator()
+        }
+    }
 }
 
 extension Array where Element == _BuildingBlock {
@@ -77,7 +93,17 @@ class SwiftUITableView: UITableView {
     
     var environment = EnvironmentValues()
     
-    var viewController: UIViewController = UIViewController()
+    var actualEnvironment: EnvironmentValues {
+        return environment.withUpdates({
+            $0.inList = true
+        })
+    }
+    
+    weak var viewController: UIViewController?
+    
+    var usableController: UIViewController {
+        return self.viewController ?? UIViewController()
+    }
 	
     init(buildingBlocks: [SectionProtocol], style: UITableView.Style) {
 		self.buildingBlocks = buildingBlocks
@@ -124,7 +150,7 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].headerView?.__toUIView(enclosingController: viewController, environment: environment)).map({ underlyingView in
+        return (self.buildingBlocks[section].headerView?.__toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -132,16 +158,8 @@ extension SwiftUITableView: UITableViewDataSource {
         })
     }
     
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return self.tableView(tableView, viewForHeaderInSection: section)?.intrinsicContentSize.height ?? 0
-    }
-    
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return self.tableView(tableView, viewForFooterInSection: section)?.intrinsicContentSize.height ?? 0
-    }
-    
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].footerView?.__toUIView(enclosingController: viewController, environment: environment)).map({ underlyingView in
+        return (self.buildingBlocks[section].footerView?.__toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -154,21 +172,22 @@ extension SwiftUITableView: UITableViewDataSource {
 	}
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: viewController, environment: self.environment)
+        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: usableController, environment: self.actualEnvironment)
 		guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
 		if let onClick = view.insideList(width: self.frame.width) {
 			self.tableViewClickedResponses[indexPath] = onClick
 			cell.view = view
+            view.isUserInteractionEnabled = false
 			return cell
 		}
-		if view.willExpand(in: .vertical) {
+		if view.willExpand(in: .horizontal) {
 			cell.view = view
 			return cell
 		}
 		cell.view = HStack {
 			UIViewWrapper(view: view)
 			Spacer()
-			}.__toUIView(enclosingController: UIViewController(), environment: EnvironmentValues())
+        }.__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
 		return cell
 	}
 }
@@ -179,11 +198,11 @@ extension SwiftUITableView: UITableViewDelegate {
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
 	
-	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let height = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: UIViewController(), environment: self.environment)
-        height.insideList(width: tableView.frame.width)
-        return height.intrinsicContentSize.height
-	}
+//	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+//        let height = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
+//        height.insideList(width: tableView.frame.width)
+//        return height.intrinsicContentSize.height
+//	}
 }
 
 class SwiftUITableViewCell: UITableViewCell {
@@ -195,7 +214,7 @@ class SwiftUITableViewCell: UITableViewCell {
 	var view: UIView? {
 		didSet {
 			if let view = self.view {
-				let tableViewCell = self
+                let tableViewCell = self.contentView
 				tableViewCell.addSubview(view)
 				NSLayoutConstraint.activate([
 					view.leadingAnchor.constraint(equalTo: tableViewCell.leadingAnchor),

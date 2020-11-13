@@ -8,6 +8,15 @@
 import Foundation
 
 public struct ZStack<Content: View>: View {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.alignment == rhs.alignment && lhs.contentBuilder == rhs.contentBuilder
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        contentBuilder.hash(into: &hasher)
+        alignment.hash(into: &hasher)
+    }
+    
 	let contentBuilder: Content
 	let alignment: Alignment
 	

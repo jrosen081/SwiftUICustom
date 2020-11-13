@@ -47,7 +47,9 @@ public struct TupleView<T>: BuildingBlockCreator {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
 		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10]
-		} else {
+        } else if let blocks = self.value as? [_BuildingBlock] {
+            buildingBlocks = blocks
+        } else {
 			buildingBlocks = []
 		}
 		return buildingBlocks

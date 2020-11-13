@@ -33,7 +33,6 @@ extension UIView {
 	@discardableResult
 	@objc func insideList(width: CGFloat) -> (() -> ())? {
 		let values = self.subviews.map { $0.insideList(width: width) }
-		self.isUserInteractionEnabled = false
 		return values.first(where: { $0 != nil}) ?? nil
 	}
 	

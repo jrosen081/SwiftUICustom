@@ -29,6 +29,10 @@ public class State<T>: Binding<T> {
 			super.wrappedValue = newValue
 		}
 	}
+    
+    override func reset() {
+        self.underlyingValue = self.startingValue
+    }
 	
 	public override var projectedValue: Binding<T> {
 		return self

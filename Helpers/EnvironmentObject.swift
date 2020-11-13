@@ -9,6 +9,11 @@ import Foundation
 
 @propertyWrapper
 public class EnvironmentObject<Value: ObservableObject>: Environment<Value>, Redrawable {
+    
+    func reset() {
+        // Do nothing
+    }
+    
 	func addListener(_ listener: UpdateDelegate) {
 		self.wrappedValue.addListener(listener)
 	}

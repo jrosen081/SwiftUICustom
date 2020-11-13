@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Alignment: Equatable {
+public struct Alignment: Hashable {
 	let horizontalAlignment: HorizontalAlignment
 	let verticalAlignment: VerticalAlignment
 	

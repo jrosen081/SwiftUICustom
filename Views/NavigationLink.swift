@@ -22,20 +22,39 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
-		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-		let buttonControl = NavigationButtonLink(view: self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
-			enclosingController.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
-		}
-		return buttonControl
+        weak var controller: UIViewController? = enclosingController
+        let buttonControl: NavigationButtonLink
+        if !environment.inList {
+            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+            buttonControl = NavigationButtonLink(view: self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+                controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
+            }
+
+        } else {
+            buttonControl = NavigationButtonLink(view: HStack {
+                self.content
+                Spacer()
+                RightArrow().stroke(lineWidth: 1).foregroundColor(environment.defaultForegroundColor).fixedSize(width: 10, height: 20).padding(edges: .trailing, paddingSpace: 5)
+            }.padding().__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+                controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
+            }
+
+        }
+				return buttonControl
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        weak var usableController: UIViewController? = controller
 		var newEnvironment = EnvironmentValues(environment)
-		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+        if !environment.inList {
+            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+            self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+        } else {
+            self.content._redraw(view: view.subviews[0].subviews[0], controller: controller, environment: environment)
+        }
 		guard let navigationButton = view as? NavigationButtonLink else { return }
 		navigationButton.onClick = {
-			controller.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: newEnvironment), animated: true)
+            usableController?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
 		}
 	}
 }
@@ -53,15 +72,6 @@ class NavigationButtonLink: ButtonView {
 	}
 	
 	override func insideList(width: CGFloat) -> (() -> ())? {
-		guard !self.inList else { return self.onClick }
-		self.inList = true
-		let shapeView = RightArrow().stroke(lineWidth: 1).__toUIView(enclosingController: UIViewController(), environment: self.environment) as! ShapeSwiftUIView<RightArrow>
-		let fullSize = self.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-		shapeView.givenIntrinsicContentSize = CGSize(width: 10, height: fullSize.height)
-		let paddingView = UIViewWrapper(view: shapeView).padding(paddingSpace: 5).__toUIView(enclosingController: UIViewController(), environment: self.environment)
-		let stackView = SwiftUIStackView(arrangedSubviews: [self.view, ExpandingView(), paddingView], context: .horizontal)
-		stackView.translatesAutoresizingMaskIntoConstraints = false
-		setupView(UIViewWrapper(view: stackView).padding().__toUIView(enclosingController: UIViewController(), environment: self.environment))
 		self.isUserInteractionEnabled = false
 		return self.onClick
 	}

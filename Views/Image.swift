@@ -17,6 +17,11 @@ public struct Image: View {
 	public init(uiImage: UIImage) {
 		self.image = uiImage
 	}
+    
+    @available(iOS 13, *)
+    public init(systemImage: String) {
+        self.image = UIImage(systemName: systemImage) ?? UIImage()
+    }
 	
 	public var body: Self {
 		return self

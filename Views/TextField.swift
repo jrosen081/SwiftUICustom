@@ -23,9 +23,13 @@ public struct TextField<Label: View>: View {
 		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
         swiftUITextField.font = environment.font
         swiftUITextField.keyboardType = environment.keyboardType
+        swiftUITextField.textContentType = environment.textContentType
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.axis = .horizontal
         otherView.isHidden = environment.isLabelsHidden
+        if let text = self.label as? Text {
+            environment.textFieldStyle._updateTextField(swiftUITextField, label: text)
+        }
         swiftUITextField.isSecureTextEntry = self.isSecure
 		return stackView
 	}
@@ -33,6 +37,7 @@ public struct TextField<Label: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.label.padding()._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
+        
 	}
 }
 

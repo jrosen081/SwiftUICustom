@@ -8,6 +8,10 @@
 import Foundation
 
 public struct Text: View {
+    public static func == (lhs: Text, rhs: Text) -> Bool {
+        return lhs.text == rhs.text
+    }
+    
 	let text: String
 	
 	public init(_ text: String) {
@@ -41,6 +45,9 @@ public struct Text: View {
 		setupData(label: swiftUILabel.label, environment: environment)
 	}
 	
+    public func _resetLinks(view: UIView, controller: UIViewController) {
+        // Do nothing
+    }
 	
 }
 
@@ -61,6 +68,8 @@ internal class SwiftUILabel: SwiftUIView {
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.isUserInteractionEnabled = false
 		self.addSubview(view)
+        view.setContentCompressionResistancePriority(.init(240), for: .horizontal)
+        setContentCompressionResistancePriority(.init(240), for: .horizontal)
         self.setupFullConstraints(view, self)
 	}
 	

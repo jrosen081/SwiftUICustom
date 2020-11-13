@@ -19,10 +19,18 @@ public struct NavigationTopView<Content: View>: View {
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationItem.title = self.title
 		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
-			enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
+            enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
 		}
 		return self.content.__toUIView(enclosingController: enclosingController, environment: environment)
 	}
+    
+    public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        controller.navigationItem.title = self.title
+        if let navigationController = controller.navigationController, let index = navigationController.viewControllers.firstIndex(of: controller) {
+            controller.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
+        }
+        self.content._redraw(view: view, controller: controller, environment: environment)
+    }
 }
 
 public extension View {

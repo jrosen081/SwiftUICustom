@@ -12,6 +12,7 @@ protocol Redrawable: AnyObject {
 	func stopRedrawing()
 	func startRedrawing()
 	func performAnimation(animation: Animation)
+    func reset()
 }
 
 class WeakRedrawable {

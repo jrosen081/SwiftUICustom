@@ -14,8 +14,8 @@ public struct ViewBuilder {
 		return EmptyView()
 	}
 	
-	public static func buildBlock<Content: View>(_ content: Content) -> TupleView<Content> {
-		return TupleView(value: content )
+	public static func buildBlock<Content: View>(_ content: Content) -> Content {
+		return content
 	}
 	
 	public static func buildBlock<C1: View, C2: View>(_ c1: C1, _ c2: C2) -> TupleView<(C1, C2)> {
@@ -69,9 +69,23 @@ public struct ViewBuilder {
 			return ConditionalContent(actualContent: .second(EmptyView()))
 		}
 	}
+    
+    static func buildBlock(_ views: [_BuildingBlock]) -> TupleView<[_BuildingBlock]> {
+        return TupleView(value: views)
+    }
 }
 
 extension TupleView : View, _BuildingBlock{
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.toBuildingBlocks().elementsEqual(rhs.toBuildingBlocks(), by: { $0._isEqual(to: $1 ) })
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        self.toBuildingBlocks().forEach {
+            $0._hash(into: &hasher)
+        }
+    }
+    
 	public var body: Self {
 		return self
 	}
@@ -101,7 +115,9 @@ extension TupleView : View, _BuildingBlock{
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
 		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10]
-		} else {
+        } else if let blocks = self.value as? [_BuildingBlock] {
+            buildingBlocks = blocks
+        } else {
 			buildingBlocks = []
 		}
 		
@@ -135,7 +151,9 @@ extension TupleView : View, _BuildingBlock{
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9]
 		} else if let (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10) = self.value as? (_BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock, _BuildingBlock) {
 			buildingBlocks = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10]
-		} else {
+        } else if let blocks = self.value as? [_BuildingBlock] {
+            buildingBlocks = blocks
+        } else {
 			buildingBlocks = []
 		}
 		

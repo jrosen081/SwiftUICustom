@@ -33,8 +33,8 @@ public struct Stepper<Label>: View where Label : View {
 		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
 		let vertical = SwiftUIStackView(arrangedSubviews: [stepper], context: .vertical)
 		vertical.alignment = .center
-		let stackView = SwiftUIStackView(arrangedSubviews: [label, vertical], context: .horizontal)
-		stackView.spacing = 5
+        let stackView = SwiftUIStackView(arrangedSubviews: [label, ExpandingView().withContext(.horizontal), vertical], context: .horizontal)
+        stackView.spacing = 1
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.axis = .horizontal
         label.isHidden = environment.isLabelsHidden
@@ -44,7 +44,7 @@ public struct Stepper<Label>: View where Label : View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
-		guard let stepper = view.subviews[1].subviews[0] as? SwiftUIStepper else { return }
+		guard let stepper = view.subviews[2].subviews[0] as? SwiftUIStepper else { return }
 		stepper.value = Double(self.doubleBinding.wrappedValue)
 		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white

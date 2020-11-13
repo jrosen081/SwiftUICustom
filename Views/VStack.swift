@@ -8,6 +8,16 @@
 import Foundation
 
 public struct VStack<Content: View>: View {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.alignment == rhs.alignment && lhs.spacing == rhs.spacing && lhs.viewCreator == rhs.viewCreator
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        viewCreator.hash(into: &hasher)
+        spacing.hash(into: &hasher)
+        alignment.hash(into: &hasher)
+    }
+    
 	let viewCreator: Content
 	let spacing: CGFloat
 	let alignment: HorizontalAlignment

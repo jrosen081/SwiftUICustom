@@ -11,18 +11,19 @@ public struct Button<ButtonContent: View>: View {
 	let content: ButtonContent
 	let onClick: () -> ()
 	
-	public init(action: @escaping () -> (), content: () -> ButtonContent) {
+	public init(action: @escaping () -> (), @ViewBuilder content: () -> ButtonContent) {
 		self.content = content()
 		self.onClick = action
 	}
-	public var body: Self {
-		return self
+	public var body: ButtonContent {
+        return self.content
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		let view = self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
+        let view = environment.buttonStyle._makeBody(configuration: actualThing).__toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
 		return ButtonView(view: view, onClick: self.onClick)
@@ -31,9 +32,13 @@ public struct Button<ButtonContent: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
-		self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+        let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
+        environment.buttonStyle._makeBody(configuration: actualThing)._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
 	
+    public func _resetLinks(view: UIView, controller: UIViewController) {
+        // Do nothing
+    }
 }
 
 class ButtonView: SwiftUIView {

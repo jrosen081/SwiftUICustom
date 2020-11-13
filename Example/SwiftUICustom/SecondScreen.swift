@@ -45,13 +45,24 @@ public struct SecondScreen: View {
 				}, content: {
 					Image("arrow")
 					.padding()
-					.clipShape(Triangle())
+					.clipShape(Circle())
 				})
 			}
 		}.popover(isShowing: $isShowing) {
-			Text("Showing")
+			CheckThis()
 		}
 	}}
+
+struct CheckThis: View {
+    @State var value = 1
+    
+    var body: OnTapGestureView<Text> {
+        Text("Value: \(value)")
+            .onTapGesture {
+                self.value += 1
+            }
+    }
+}
 
 struct Values {
 	let int: Int

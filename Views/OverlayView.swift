@@ -10,33 +10,15 @@ import Foundation
 public struct OverlayView<Under: View, Over: View>: View {
     let under: Under
     let over: Over
+    let alignment: Alignment
     
-    public var body: Self {
-        return self
+    public var body: ZStack<TupleView<(Under, Over)>> {
+        ZStack(alignment: alignment) {
+            self.under
+            self.over
+        }
     }
     
-    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let container = OverlayUIKitView(frame: .zero)
-        container.translatesAutoresizingMaskIntoConstraints = false
-        let under = self.under.__toUIView(enclosingController: enclosingController, environment: environment)
-        container.addSubview(under)
-        container.setupFullConstraints(container, under)
-        let over = self.over.__toUIView(enclosingController: enclosingController, environment: environment)
-        over.isUserInteractionEnabled = false
-        container.addSubview(over)
-        NSLayoutConstraint.activate([
-            over.trailingAnchor.constraint(lessThanOrEqualTo: under.trailingAnchor),
-            over.bottomAnchor.constraint(lessThanOrEqualTo: under.bottomAnchor),
-            over.topAnchor.constraint(greaterThanOrEqualTo: under.topAnchor),
-            over.leadingAnchor.constraint(greaterThanOrEqualTo: under.leadingAnchor),
-        ])
-        return container
-    }
-    
-    public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        self.under._redraw(view: view.subviews[0], controller: controller, environment: environment)
-        self.over._redraw(view: view.subviews[1], controller: controller, environment: environment)
-    }
 }
 
 class OverlayUIKitView: SwiftUIView {
@@ -50,7 +32,7 @@ class OverlayUIKitView: SwiftUIView {
 }
 
 public extension View {
-    func overlay<V: View>(_ over: V) -> OverlayView<Self, V> {
-        return OverlayView(under: self, over: over)
+    func overlay<V: View>(_ over: V, alignment: Alignment = .center) -> OverlayView<Self, V> {
+        return OverlayView(under: self, over: over, alignment: alignment)
     }
 }
