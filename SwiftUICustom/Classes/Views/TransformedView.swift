@@ -7,10 +7,38 @@
 
 import Foundation
 
+extension CGAffineTransform: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        a.hash(into: &hasher)
+        b.hash(into: &hasher)
+        c.hash(into: &hasher)
+        d.hash(into: &hasher)
+        tx.hash(into: &hasher)
+        ty.hash(into: &hasher)
+    }
+}
+
+extension CGPoint: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        x.hash(into: &hasher)
+        y.hash(into: &hasher)
+    }
+}
+
 public struct TransformedView<Content: View>: View {
 	let content: Content
 	let transform: CGAffineTransform
 	let anchorPoint: CGPoint
+    
+    public func _isEqual(toSameType other: TransformedView<Content>, environment: EnvironmentValues) -> Bool {
+        content._isEqual(to: other.content, environment: environment) && transform == other.transform && anchorPoint == other.anchorPoint
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+        transform.hash(into: &hasher)
+        anchorPoint.hash(into: &hasher)
+    }
 	
 	public var body: Self {
 		return self

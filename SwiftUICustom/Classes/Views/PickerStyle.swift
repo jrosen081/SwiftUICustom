@@ -7,12 +7,18 @@
 
 import Foundation
 
+public enum PickerStyleType: Hashable {
+    case wheel, form
+}
+
 public protocol PickerStyle {
+    var _pickerStyle: PickerStyleType { get }
     func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock
     func _redraw<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues)
 }
 
 public struct WheelPickerStyle: PickerStyle {
+    public var _pickerStyle: PickerStyleType = .wheel
     public func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
         return UIViewWrapper(view: defaultView)
     }
@@ -38,6 +44,7 @@ public typealias DefaultPickerStyle = WheelPickerStyle
 
 
 struct FormPickerStyle: PickerStyle {
+    var _pickerStyle: PickerStyleType = .form
     func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
         let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
         let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!

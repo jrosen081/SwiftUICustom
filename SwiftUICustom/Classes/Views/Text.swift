@@ -8,8 +8,12 @@
 import Foundation
 
 public struct Text: View {
-    public static func == (lhs: Text, rhs: Text) -> Bool {
-        return lhs.text == rhs.text
+    public func _isEqual(toSameType other: Text, environment: EnvironmentValues) -> Bool {
+        text == other.text
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        text.hash(into: &hasher)
     }
     
 	let text: String

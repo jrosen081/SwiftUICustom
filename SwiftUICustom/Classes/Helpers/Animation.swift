@@ -7,7 +7,13 @@
 
 import Foundation
 
-public struct Animation: Equatable {
+extension UIView.AnimationOptions: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        self.rawValue.hash(into: &hasher)
+    }
+}
+
+public struct Animation: Hashable {
 	var animationOptions: UIView.AnimationOptions
 	var delay: Double
 	var duration: Double

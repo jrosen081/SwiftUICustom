@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol UIViewRepresentable: View where Self.Content == Never {
+public protocol UIViewRepresentable: View where Self.Content == Self {
 	typealias Context = UIViewRepresentableContext<Self>
 	associatedtype UIViewType : UIView
 	associatedtype Coordinator
@@ -17,8 +17,8 @@ public protocol UIViewRepresentable: View where Self.Content == Never {
 }
 
 extension UIViewRepresentable {
-	public var body: Never {
-		fatalError()
+	public var body: Self {
+        self
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
@@ -33,6 +33,14 @@ extension UIViewRepresentable {
 		guard let view = internalView as? SwiftUIViewRepresentable<Self.Coordinator>, let actualView = view.subviews[0] as? Self.UIViewType else { return }
 		self.updateUIView(actualView, context: UIViewRepresentableContext(coordinator: view.coordinator, environment: environment))
 	}
+    
+    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
+        return true
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        0.hash(into: &hasher)
+    }
 }
 
 internal class SwiftUIViewRepresentable<Coordinator>: SwiftUIView {
@@ -51,7 +59,6 @@ internal class SwiftUIViewRepresentable<Coordinator>: SwiftUIView {
 public struct UIViewRepresentableContext<Context> where Context: UIViewRepresentable {
 	let coordinator: Context.Coordinator
 	var environment: EnvironmentValues
-
 }
 
 
@@ -59,4 +66,8 @@ extension Never: View {
 	public var body: Self {
 		fatalError()
 	}
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        fatalError()
+    }
 }

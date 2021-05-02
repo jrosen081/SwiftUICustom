@@ -28,6 +28,16 @@ public struct BorderedView<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		content._redraw(view: view, controller: controller, environment: environment)
 	}
+    
+    public func _isEqual(toSameType other: BorderedView<Content>, environment: EnvironmentValues) -> Bool {
+        return self.content._isEqual(to: other, environment: environment) && width == other.width && color == other.color
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+        width.hash(into: &hasher)
+        color.hash(into: &hasher)
+    }
 }
 
 public extension View {

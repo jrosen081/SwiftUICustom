@@ -21,6 +21,14 @@ public struct EmptyView: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		// Do nothing
 	}
+    
+    public func _isEqual(toSameType other: EmptyView, environment: EnvironmentValues) -> Bool {
+        return true
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        1000.hash(into: &hasher)
+    }
 }
 
 class ShrinkingView: UIView {

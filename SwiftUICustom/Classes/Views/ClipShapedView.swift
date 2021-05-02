@@ -28,6 +28,15 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 		self.content._redraw(view: clippedView.subviews[0], controller: controller, environment: environment)
 		clippedView.shapeGeneric = self.shape
 	}
+    
+    public func _isEqual(toSameType other: ClipShapedView<ShapeGeneric, Content>, environment: EnvironmentValues) -> Bool {
+        return shape._isEqual(to: other.shape, environment: environment) && content._isEqual(to: other.content, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        shape._hash(into: &hasher, environment: environment)
+        content._hash(into: &hasher, environment: environment)
+    }
 }
 
 class ClippedView<ShapeGeneric: Shape>: SwiftUIView {

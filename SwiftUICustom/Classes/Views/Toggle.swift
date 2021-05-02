@@ -10,6 +10,15 @@ import Foundation
 public struct Toggle<Label: View>: View {
 	let creation: Label
 	let isOn: Binding<Bool>
+    
+    public func _isEqual(toSameType other: Toggle<Label>, environment: EnvironmentValues) -> Bool {
+        creation._isEqual(to: other.creation, environment: environment) && isOn.wrappedValue == other.isOn.wrappedValue
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        creation._hash(into: &hasher, environment: environment)
+        isOn.wrappedValue.hash(into: &hasher)
+    }
 	
 	public init(isOn: Binding<Bool>, @ViewBuilder creation: () -> Label) {
 		self.creation = creation()
@@ -24,7 +33,7 @@ public struct Toggle<Label: View>: View {
 		let toggle = SwiftUISwitch(binding: self.isOn)
 		toggle.onTintColor = environment.foregroundColor ?? .systemGreen
         let otherView = self.creation.__toUIView(enclosingController: enclosingController, environment: environment)
-		let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [otherView, ExpandingView(), toggle], context: .horizontal)
+        let swiftUIStackView = SwiftUIStackView(arrangedSubviews: [otherView, ExpandingView(), toggle], context: .horizontal, buildingBlocks: [self.creation, UIViewWrapper(view: ExpandingView()), UIViewWrapper(view: toggle)])
 		swiftUIStackView.translatesAutoresizingMaskIntoConstraints = false
 		swiftUIStackView.axis = .horizontal
 		swiftUIStackView.alignment = .center

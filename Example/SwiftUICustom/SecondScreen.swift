@@ -47,7 +47,7 @@ public struct SecondScreen: View {
 					.padding()
 					.clipShape(Circle())
 				})
-			}
+            }.navigationItems(trailing: Text("Fake"))
 		}.popover(isShowing: $isShowing) {
 			CheckThis()
 		}

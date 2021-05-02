@@ -14,8 +14,8 @@ public struct NavigationView<Body: View>: View {
 		self.viewBuilder = viewBuilder()
 	}
 	
-	public var body: Self {
-		return self
+	public var body: Body {
+		return viewBuilder
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {

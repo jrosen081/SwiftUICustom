@@ -45,6 +45,14 @@ public struct Image: View {
 			updateView(imageView, environment: environment)
 		}
 	}
+    
+    public func _isEqual(toSameType other: Image, environment: EnvironmentValues) -> Bool {
+        other.image.isEqual(self.image)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        image.hash(into: &hasher)
+    }
 }
 
 extension UIImageView {

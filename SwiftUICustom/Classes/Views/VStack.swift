@@ -8,14 +8,15 @@
 import Foundation
 
 public struct VStack<Content: View>: View {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.alignment == rhs.alignment && lhs.spacing == rhs.spacing && lhs.viewCreator == rhs.viewCreator
+    
+    public func _isEqual(toSameType other: VStack<Content>, environment: EnvironmentValues) -> Bool {
+        self.alignment == other.alignment && self.spacing == other.spacing && self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
     }
     
-    public func hash(into hasher: inout Hasher) {
-        viewCreator.hash(into: &hasher)
-        spacing.hash(into: &hasher)
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         alignment.hash(into: &hasher)
+        spacing.hash(into: &hasher)
+        viewCreator._hash(into: &hasher, environment: environment)
     }
     
 	let viewCreator: Content
@@ -32,23 +33,21 @@ public struct VStack<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = viewCreator
-		let uiView = view.__toUIView(enclosingController: enclosingController, environment: environment)
-		(uiView as? InternalLazyCollatedView)?.expand()
-		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .vertical)
-		stackView.alignment = self.alignment.stackViewAlignment
-		stackView.axis = .vertical
-		stackView.translatesAutoresizingMaskIntoConstraints = false
-		stackView.spacing = self.spacing
-		return stackView
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		let viewProtocol = viewCreator
-		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
-		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
-			$1._redraw(view: $0, controller: controller, environment: environment)
-		}
-	}
+    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        let view = viewCreator
+        let buildingBlocks = view.expanded()
+        let underlyingViews = buildingBlocks.map { $0.__toUIView(enclosingController: enclosingController, environment: environment) }
+        let stackView = SwiftUIStackView(arrangedSubviews: underlyingViews, context: .vertical, buildingBlocks: buildingBlocks)
+        stackView.alignment = self.alignment.stackViewAlignment
+        stackView.spacing = self.spacing
+        stackView.axis = .vertical
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }
+    
+    public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        let viewProtocol = viewCreator
+        guard let stackView = view as? SwiftUIStackView else { return }
+        stackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment)
+    }
 }

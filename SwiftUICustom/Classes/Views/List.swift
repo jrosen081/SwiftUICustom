@@ -34,12 +34,19 @@ public struct List<Content: View>: View {
             newEnvironment.inList = true
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
 			let view = self.viewCreator
-            tableView.buildingBlocks = view.expanded().toSections
             tableView.environment = environment
             tableView.viewController = controller
-			tableView.reloadData()
+			tableView.diff(buildingBlocks: view.expanded().toSections, controller: controller, environment: environment)
 		}
 	}
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        viewCreator._hash(into: &hasher, environment: environment)
+    }
+    
+    public func _isEqual(toSameType other: List<Content>, environment: EnvironmentValues) -> Bool {
+        self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
+    }
 }
 
 struct ReferenceList<Content: View>: View {
@@ -103,6 +110,39 @@ class SwiftUITableView: UITableView {
     
     var usableController: UIViewController {
         return self.viewController ?? UIViewController()
+    }
+    
+    func diff(buildingBlocks: [SectionProtocol], controller: UIViewController, environment: EnvironmentValues) {
+//        self.performBatchUpdates({
+//            if self.buildingBlocks.count < buildingBlocks.count {
+//                self.insertSections(IndexSet(self.buildingBlocks.count ..< buildingBlocks.count), with: .automatic)
+//            } else if self.buildingBlocks.count > buildingBlocks.count {
+//                self.deleteSections(IndexSet(buildingBlocks.count ..< self.buildingBlocks.count), with: .automatic)
+//            }
+//            zip(self.buildingBlocks.enumerated(), buildingBlocks).forEach { oldSectionInfo, newSection in
+//                let (index, oldSection) = oldSectionInfo
+//                let changes = oldSection.buildingBlocks.diff(other: newSection.buildingBlocks, environment: environment)
+//                self.deleteRows(at: changes.deletion.map { IndexPath(row: $0, section: index) }, with: .automatic)
+//                self.insertRows(at: changes.additions.map { IndexPath(row: $0, section: index) }, with: .automatic)
+//                changes.moved.forEach { (old, new) in
+//                    guard old != new else { return }
+//                    self.moveRow(at: IndexPath(row: old, section: index), to: IndexPath(row: new, section: index))
+//                }
+//            }
+//        }) { _ in
+//            self.buildingBlocks = buildingBlocks
+//            if let visibleRows = self.indexPathsForVisibleRows {
+//                visibleRows.forEach {
+//                    guard let cell = self.cellForRow(at: $0) as? SwiftUITableViewCell, let view = cell.view else { return }
+//                    buildingBlocks[$0.section].buildingBlocks[$0.row]._redraw(view: view, controller: controller, environment: environment)
+//                }
+//            } else {
+//                self.reloadData()
+//            }
+//        }
+        // This does diff correctly, but there are weird sizing things, so punting until I redo the layout system
+        self.buildingBlocks = buildingBlocks
+        self.reloadData()
     }
 	
     init(buildingBlocks: [SectionProtocol], style: UITableView.Style) {
@@ -180,14 +220,14 @@ extension SwiftUITableView: UITableViewDataSource {
             view.isUserInteractionEnabled = false
 			return cell
 		}
-		if view.willExpand(in: .horizontal) {
+//		if view.willExpand(in: .horizontal) {
 			cell.view = view
-			return cell
-		}
-		cell.view = HStack {
-			UIViewWrapper(view: view)
-			Spacer()
-        }.__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
+//			return cell
+//		}
+//		cell.view = HStack {
+//			UIViewWrapper(view: view)
+//			Spacer()
+//        }.__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
 		return cell
 	}
 }
@@ -197,12 +237,6 @@ extension SwiftUITableView: UITableViewDelegate {
 		self.tableViewClickedResponses[indexPath]?()
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
-	
-//	func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-//        let height = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
-//        height.insideList(width: tableView.frame.width)
-//        return height.intrinsicContentSize.height
-//	}
 }
 
 class SwiftUITableViewCell: UITableViewCell {
@@ -210,11 +244,18 @@ class SwiftUITableViewCell: UITableViewCell {
 	override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
 		super.init(style: style, reuseIdentifier: reuseIdentifier)
 	}
+    
+    lazy var baseView: UIView = {
+        let view = UIView(frame: self.contentView.frame)
+        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        self.contentView.addSubview(view)
+        return view
+    }()
 	
 	var view: UIView? {
 		didSet {
 			if let view = self.view {
-                let tableViewCell = self.contentView
+                let tableViewCell = self.baseView
 				tableViewCell.addSubview(view)
 				NSLayoutConstraint.activate([
 					view.leadingAnchor.constraint(equalTo: tableViewCell.leadingAnchor),

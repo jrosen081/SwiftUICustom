@@ -11,6 +11,17 @@ public struct Stepper<Label>: View where Label : View {
 	let doubleBinding: Binding<Int>
 	let range: ClosedRange<Int>
 	let label: Label
+    
+    public func _isEqual(toSameType other: Stepper<Label>, environment: EnvironmentValues) -> Bool {
+        doubleBinding.wrappedValue == other.doubleBinding.wrappedValue && range == other.range && label._isEqual(to: other.label, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        doubleBinding.wrappedValue.hash(into: &hasher)
+        range.hash(into: &hasher)
+        label._hash(into: &hasher, environment: environment)
+    }
+    
 	public init<V>(value: Binding<V>, in range: ClosedRange<V>, step: V.Stride, label: () -> Label) where V : Strideable {
 		let array = Array(stride(from: range.lowerBound, through: range.upperBound, by: step))
 		self.range = ClosedRange(uncheckedBounds: (lower: 0, upper: array.count - 1))
@@ -31,9 +42,9 @@ public struct Stepper<Label>: View where Label : View {
 		let stepper = SwiftUIStepper(binding: self.doubleBinding, range: self.range)
 		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
-		let vertical = SwiftUIStackView(arrangedSubviews: [stepper], context: .vertical)
+		let vertical = SwiftUIStackView(arrangedSubviews: [stepper], context: .vertical, buildingBlocks: [])
 		vertical.alignment = .center
-        let stackView = SwiftUIStackView(arrangedSubviews: [label, ExpandingView().withContext(.horizontal), vertical], context: .horizontal)
+        let stackView = SwiftUIStackView(arrangedSubviews: [label, ExpandingView().withContext(.horizontal), vertical], context: .horizontal, buildingBlocks: [])
         stackView.spacing = 1
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.axis = .horizontal

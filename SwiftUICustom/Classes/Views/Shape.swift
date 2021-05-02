@@ -18,6 +18,14 @@ public extension Shape {
 	var body: Self {
 		return self
 	}
+    
+    func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
+        return self.path(in: CGRect(origin: .zero, size: CGSize(width: 100, height: 100))) == other.path(in: CGRect(origin: .zero, size: CGSize(width: 100, height: 100))) // Prob won't work for all cases??
+    }
+    
+    func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        self.path(in: CGRect(origin: .zero, size: CGSize(width: 100, height: 100))).hash(into: &hasher)
+    }
 	
 	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let shape = ShapeSwiftUIView(shape: self)
@@ -69,6 +77,15 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		view.shapeLayer.lineWidth = self.width
 		view.shapeLayer.fillColor = nil
 	}
+    
+    public func _isEqual(toSameType other: StrokedView<ShapeGeneric>, environment: EnvironmentValues) -> Bool {
+        return shape._isEqual(toSameType: other.shape, environment: environment) && other.width == self.width
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        shape._hash(into: &hasher, environment: environment)
+        width.hash(into: &hasher)
+    }
 }
 
 public struct FilledView<ShapeGeneric: Shape>: View {
@@ -92,6 +109,14 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
 		view.shapeLayer.strokeColor = nil
 	}
+    
+    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
+        return shape._isEqual(toSameType: other.shape, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        shape._hash(into: &hasher, environment: environment)
+    }
 }
 
 internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {

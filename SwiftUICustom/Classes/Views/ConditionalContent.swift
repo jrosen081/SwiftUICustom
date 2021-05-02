@@ -10,7 +10,7 @@ import Foundation
 
 
 public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
-	enum ActualContent {
+    enum ActualContent {
 		case first(TrueContent)
 		case second(FalseContent)
 	}
@@ -20,6 +20,14 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 	public var body: Self {
 		return self
 	}
+    
+    public func _isEqual(toSameType other: ConditionalContent<TrueContent, FalseContent>, environment: EnvironmentValues) -> Bool {
+        return true // If they are the same types then animate between them
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        100.hash(into: &hasher)
+    }
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let conditionalContainer = ConditionalContainer(frame: .zero)
@@ -29,7 +37,8 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 		case .first(let view):
 			underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = true
-		case .second(let view): underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
+		case .second(let view):
+            underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = false
 		}
 		conditionalContainer.addSubview(underlyingView)

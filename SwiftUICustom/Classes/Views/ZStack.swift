@@ -8,13 +8,13 @@
 import Foundation
 
 public struct ZStack<Content: View>: View {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.alignment == rhs.alignment && lhs.contentBuilder == rhs.contentBuilder
+    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
+        self.alignment == other.alignment && self.contentBuilder._isEqual(to: other.contentBuilder, environment: environment)
     }
     
-    public func hash(into hasher: inout Hasher) {
-        contentBuilder.hash(into: &hasher)
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         alignment.hash(into: &hasher)
+        contentBuilder._hash(into: &hasher, environment: environment)
     }
     
 	let contentBuilder: Content
@@ -30,36 +30,45 @@ public struct ZStack<Content: View>: View {
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let enclosingView = SwiftUIView(frame: .zero)
+		let enclosingView = ZStackView(frame: .zero)
 		enclosingView.translatesAutoresizingMaskIntoConstraints = false
-		let view = contentBuilder.__toUIView(enclosingController: enclosingController, environment: environment)
-		((view as? InternalCollatedView)?.underlyingViews ?? [view]).enumerated().forEach { (index, underlyingView) in
-			if index == 0 {
-				enclosingView.addSubview(underlyingView)
-				NSLayoutConstraint.activate([
-					underlyingView.leadingAnchor.constraint(equalTo: enclosingView.leadingAnchor),
-					underlyingView.trailingAnchor.constraint(equalTo: enclosingView.trailingAnchor),
-					underlyingView.topAnchor.constraint(equalTo: enclosingView.topAnchor),
-					underlyingView.bottomAnchor.constraint(equalTo: enclosingView.bottomAnchor)
-				])
-				return
-			}
-			enclosingView.addSubview(underlyingView)
-			NSLayoutConstraint.activate([
-				self.alignment.horizontalAlignment.toAnchor(inView: underlyingView).constraint(equalTo: self.alignment.horizontalAlignment.toAnchor(inView: enclosingView)),
-				self.alignment.verticalAlignment.toAnchor(inView: underlyingView).constraint(equalTo: self.alignment.verticalAlignment.toAnchor(inView: enclosingView)),
-				underlyingView.widthAnchor.constraint(lessThanOrEqualTo: enclosingView.widthAnchor, multiplier: 1),
-				underlyingView.heightAnchor.constraint(lessThanOrEqualTo: enclosingView.heightAnchor, multiplier: 1),
-			])
-		}
+        let buildingBlocks = contentBuilder.expanded()
+        enclosingView.diff(buildingBlocks: buildingBlocks, controller: enclosingController, environment: environment, alignment: alignment)
 		return enclosingView
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		let viewProtocol = contentBuilder
-		guard let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
-		zip(view.subviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
-			$1._redraw(view: $0, controller: controller, environment: environment)
-		}
+		guard let zstackView = view as? ZStackView else { return }
+        zstackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment, alignment: alignment)
 	}
+}
+
+class ZStackView: SwiftUIView {
+    var buildingBlocks: [_BuildingBlock] = []
+    
+    func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues, alignment: Alignment) {
+        let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
+        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0].__toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
+        let allDeletions = diffResults.deletion.map { ($0, self.subviews[$0]) }
+        let moving = diffResults.moved.map { ($0.1, self.subviews[$0.0], buildingBlocks[$0.1]) }
+        allDeletions.forEach { $0.1.removeFromSuperview() }
+        let operationsToPerform = (allAdditions + moving).sorted(by: { $0.0 < $1.0 })
+        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock) in
+            uiView.removeFromSuperview()
+            self.insertSubview(uiView, at: indexToInsert)
+            self.setupSubview(underlyingView: uiView, alignment: alignment)
+            buildingBlock._redraw(view: uiView, controller: controller, environment: environment)
+        }
+        self.buildingBlocks = buildingBlocks
+    }
+    
+    func setupSubview(underlyingView: UIView, alignment: Alignment) {
+        NSLayoutConstraint.activate([
+            alignment.horizontalAlignment.toAnchor(inView: underlyingView).constraint(equalTo: alignment.horizontalAlignment.toAnchor(inView: self)),
+            alignment.verticalAlignment.toAnchor(inView: underlyingView).constraint(equalTo: alignment.verticalAlignment.toAnchor(inView: self)),
+            self.widthAnchor.constraint(greaterThanOrEqualTo: underlyingView.widthAnchor, multiplier: 1),
+            self.heightAnchor.constraint(greaterThanOrEqualTo: underlyingView.heightAnchor, multiplier: 1),
+        ])
+    }
 }

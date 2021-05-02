@@ -7,7 +7,52 @@
 
 import Foundation
 
-public struct EnvironmentValues {
+extension NSTextAlignment: Hashable {}
+extension UIKeyboardType: Hashable {}
+
+public struct EnvironmentValues: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        lineLimit?.hash(into: &hasher)
+        lineSpacing.hash(into: &hasher)
+        minimumScaleFactor.hash(into: &hasher)
+        multilineTextAlignment.hash(into: &hasher)
+        keyboardType.hash(into: &hasher)
+        font?.hash(into: &hasher)
+        isLabelsHidden.hash(into: &hasher)
+        listStyle._tableViewStyle.hash(into: &hasher)
+        foregroundColor?.hash(into: &hasher)
+        allowsTightening.hash(into: &hasher)
+        textContentType?.hash(into: &hasher)
+        currentAnimation?.hash(into: &hasher)
+        currentTransition?.hash(into: &hasher)
+        pickerStyle._pickerStyle.hash(into: &hasher)
+        inList.hash(into: &hasher)
+        textFieldStyle._testFieldStyle.hash(into: &hasher)
+        colorScheme.hash(into: &hasher)
+        keyLookers.hash(into: &hasher)
+    }
+    
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.lineLimit == rhs.lineLimit
+            && lhs.lineSpacing == rhs.lineSpacing
+            && lhs.minimumScaleFactor == rhs.minimumScaleFactor
+            && lhs.multilineTextAlignment == rhs.multilineTextAlignment
+            && lhs.keyboardType == rhs.keyboardType
+            && lhs.font == rhs.font
+            && lhs.isLabelsHidden == rhs.isLabelsHidden
+            && lhs.listStyle._tableViewStyle == rhs.listStyle._tableViewStyle
+            && lhs.foregroundColor == rhs.foregroundColor
+            && lhs.allowsTightening == rhs.allowsTightening
+            && lhs.textContentType == rhs.textContentType
+            && lhs.currentTransition == rhs.currentTransition
+            && lhs.currentAnimation == rhs.currentAnimation
+            && lhs.pickerStyle._pickerStyle == rhs.pickerStyle._pickerStyle
+            && lhs.inList == rhs.inList
+            && lhs.textFieldStyle._testFieldStyle == rhs.textFieldStyle._testFieldStyle
+            && lhs.colorScheme == rhs.colorScheme
+            && lhs.keyLookers == rhs.keyLookers
+    }
+    
 	public var lineLimit: Int? = nil {
 		didSet {
 			if let limit = lineLimit, limit < 1 {
@@ -67,6 +112,7 @@ public struct EnvironmentValues {
 		return value
 	}
 	
+    // TODO: Rethink this one
 	var keyLookers: [KeyLooker] = []
 	
 	subscript<K>(key: K.Type) -> K.Value where K : EnvironmentKey {
@@ -95,7 +141,13 @@ struct PrimitiveButtonStyleKey: EnvironmentKey {
     }
 }
 
-struct KeyLooker {
+struct ListStyleKey: EnvironmentKey {
+    static var defaultValue: ListStyle {
+        return DefaultListStyle()
+    }
+}
+
+struct KeyLooker: Hashable {
 	var actualValue: Any
 	var classValue: Any
 	
@@ -103,6 +155,15 @@ struct KeyLooker {
 		self.actualValue = actualValue
 		self.classValue = classValue
 	}
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        return true
+    }
+    
+    // TODO: Uhh let's get back to this one again
+    func hash(into hasher: inout Hasher) {
+        ObjectIdentifier(Self.self).hash(into: &hasher)
+    }
 }
 
 extension EnvironmentValues {

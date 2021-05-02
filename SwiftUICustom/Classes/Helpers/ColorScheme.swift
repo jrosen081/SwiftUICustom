@@ -7,6 +7,6 @@
 
 import Foundation
 
-public enum ColorScheme {
+public enum ColorScheme: Hashable {
 	case dark, light
 }

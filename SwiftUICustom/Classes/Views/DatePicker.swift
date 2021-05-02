@@ -8,6 +8,18 @@
 import Foundation
 
 public struct DatePicker<Label: View>: View {
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        label._hash(into: &hasher, environment: environment)
+        components.hash(into: &hasher)
+        range.hash(into: &hasher)
+        binding.wrappedValue.hash(into: &hasher)
+    }
+    
+    public func _isEqual(toSameType other: DatePicker<Label>, environment: EnvironmentValues) -> Bool {
+        label._isEqual(to: other.label, environment: environment) && components == other.components && range == other.range && binding.wrappedValue == other.binding.wrappedValue
+    }
+    
     let label: Label
     let components: UIDatePicker.Mode
     let range: ClosedRange<Date>
@@ -35,7 +47,7 @@ public struct DatePicker<Label: View>: View {
         datePicker.minimumDate = self.range.lowerBound
         datePicker.maximumDate = self.range.upperBound
         let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
-        let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], context: .horizontal)
+        let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: datePicker)])
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.spacing = 5
         label.isHidden = environment.isLabelsHidden

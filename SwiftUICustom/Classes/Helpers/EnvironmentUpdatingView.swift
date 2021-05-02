@@ -27,6 +27,20 @@ public struct EnvironmentUpdatingView<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.content._redraw(view: view, controller: controller, environment: environment.withUpdates(self.updates))
 	}
+    
+    public func _isEqual(toSameType other: EnvironmentUpdatingView<Content>, environment: EnvironmentValues) -> Bool {
+        var environment1 = environment
+        var environment2 = environment
+        self.updates(&environment1)
+        other.updates(&environment2)
+        return self.content._isEqual(to: other, environment: environment) && environment1 == environment2
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        environment.withUpdates(updates).hash(into: &hasher)
+        content._hash(into: &hasher, environment: environment)
+    }
+    
 }
 
 public extension View {

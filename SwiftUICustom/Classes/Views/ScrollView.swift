@@ -14,8 +14,8 @@ public struct ScrollView<Content: View>: View {
 		self.viewBuilder = viewBuilder()
 	}
 	
-	public var body: Self {
-		return self
+	public var body: Content {
+        return self.viewBuilder
 	}
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {

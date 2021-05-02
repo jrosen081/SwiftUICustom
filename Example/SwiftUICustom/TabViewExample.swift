@@ -15,6 +15,9 @@ struct TabViewExample: View {
     @State var username = "My name"
     @State var password = "no"
     @State var whatOption = false
+    @State var totalOptions = ["fake"]
+    @State var isRising = true
+    @State var shouldAdd = false
     var body: some View {
         TabView {
             Text(whatOption ? "Not option 1" : "Option 1")
@@ -24,11 +27,28 @@ struct TabViewExample: View {
                 .tabBarItem {
                     Text("My option")
                 }
-            Text("Next Option with value: \(count)").onTapGesture {
-                self.count *= -1
-            }.tabBarItem {
-                Text("Try this?")
-                Image(systemImage: "pencil")
+            VStack {
+                ForEach(totalOptions) { name in
+                    Text(name).onTapGesture {
+                        if isRising && totalOptions.count > 10 {
+                            isRising = false
+                        } else if !isRising && totalOptions.isEmpty {
+                            isRising = true
+                        }
+                        if isRising {
+                            totalOptions.append("Fake \(totalOptions.count + 1)")
+                        } else {
+                            totalOptions.removeLast()
+                        }
+                        print(totalOptions)
+                    }
+                }
+                Text("Next Option with value: \(count)").onTapGesture {
+                    self.count *= -1
+                }.tabBarItem {
+                    Text("Try this?")
+                    Image(systemImage: "pencil")
+                }
             }
             Form {
                 Section(header: Text("First Section")) {
@@ -45,8 +65,12 @@ struct TabViewExample: View {
                     SecureField("Password", text: self.$password)
                         .textContentType(.password)
                 }
+                if shouldAdd {
+                    Text("Is added")
+                }
                 Button(action: {
-                    print("Sending count: \(count)")
+                    self.shouldAdd.toggle()
+                    print("We should certainly add \(self.shouldAdd)")
                 }, content: {
                     Text("Send the count to someone")
                 })

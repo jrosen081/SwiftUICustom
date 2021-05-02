@@ -10,6 +10,14 @@ import Foundation
 public struct NavigationLink<Content: View, Destination: View>: View {
 	let destination: Destination
 	let content: Content
+    
+    public func _isEqual(toSameType other: NavigationLink<Content, Destination>, environment: EnvironmentValues) -> Bool {
+        return content._isEqual(to: other.content, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+    }
 	
 	public init(destination: Destination, content:  () -> Content) {
 		self.destination = destination
@@ -38,7 +46,6 @@ public struct NavigationLink<Content: View, Destination: View>: View {
             }.padding().__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
                 controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
             }
-
         }
 				return buttonControl
 	}

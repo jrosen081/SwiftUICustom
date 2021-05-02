@@ -11,7 +11,17 @@ public struct TextField<Label: View>: View {
 	let binding: Binding<String>
 	let label: Label
     let isSecure: Bool
-	
+    
+    public func _isEqual(toSameType other: TextField<Label>, environment: EnvironmentValues) -> Bool {
+        self.label._isEqual(to: other.label, environment: environment) && self.binding.wrappedValue == other.binding.wrappedValue && self.isSecure == other.isSecure
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        binding.wrappedValue.hash(into: &hasher)
+        label._hash(into: &hasher, environment: environment)
+        isSecure.hash(into: &hasher)
+    }
+    
 	public var body: Self {
 		return self
 	}
@@ -19,7 +29,7 @@ public struct TextField<Label: View>: View {
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUITextField = SwiftUITextField(binding: self.binding)
 		let otherView = self.label.padding().__toUIView(enclosingController: enclosingController, environment: environment)
-		let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], context: .horizontal)
+        let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: swiftUITextField)])
 		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
         swiftUITextField.font = environment.font
         swiftUITextField.keyboardType = environment.keyboardType

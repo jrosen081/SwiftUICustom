@@ -118,7 +118,12 @@ public class SwiftUIController<Content: View>: SwiftUIInternalController<Content
 }
 
 public class SwiftUIInternalController<Content: View>: UIViewController, UpdateDelegate {
-	var swiftUIView: Content
+    var swiftUIView: Content {
+        didSet {
+            let underlyingView = self.swiftUIView.__toUIView(enclosingController: self, environment: self.actualEnvironment)
+            showView(underlyingView.asTopLevelView())
+        }
+    }
 	var environment: EnvironmentValues
 	
 	var actualEnvironment: EnvironmentValues {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-@_functionBuilder
+@resultBuilder
 public struct ViewBuilder {
 	
 	public static func buildBlock() -> EmptyView {
@@ -75,17 +75,18 @@ public struct ViewBuilder {
     }
 }
 
-extension TupleView : View, _BuildingBlock{
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.toBuildingBlocks().elementsEqual(rhs.toBuildingBlocks(), by: { $0._isEqual(to: $1 ) })
+extension TupleView : View, _View {
+    
+    public func _isEqual(toSameType other: TupleView<T>, environment: EnvironmentValues) -> Bool {
+        let selfBuildingBlocks = self.toBuildingBlocks()
+        let otherBuildingBlocks = other.toBuildingBlocks()
+        return selfBuildingBlocks.elementsEqual(otherBuildingBlocks, by: { $0._isEqual(to: $1, environment: environment) }) && selfBuildingBlocks.count == otherBuildingBlocks.count
     }
     
-    public func hash(into hasher: inout Hasher) {
-        self.toBuildingBlocks().forEach {
-            $0._hash(into: &hasher)
-        }
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        toBuildingBlocks().forEach { $0._hash(into: &hasher, environment: environment) }
     }
-    
+        
 	public var body: Self {
 		return self
 	}

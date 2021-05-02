@@ -67,4 +67,12 @@ public struct Section<Parent: View, Content: View, Footer: View>: View, SectionP
     var buildingBlocks: [_BuildingBlock] {
         return content.expanded()
     }
+    
+    public func _isEqual(toSameType other: Section<Parent, Content, Footer>, environment: EnvironmentValues) -> Bool {
+        [headerView, footerView, content].compactMap { $0 }.isEqual(to: [other.headerView, other.footerView, other.content].compactMap { $0 }, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        [headerView, footerView, content].compactMap { $0 }.forEach { $0._hash(into: &hasher, environment: environment) }
+    }
 }

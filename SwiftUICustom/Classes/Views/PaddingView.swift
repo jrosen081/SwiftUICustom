@@ -23,14 +23,14 @@ public struct Corner: OptionSet {
 
 public struct PaddingView<Content: View>: View {
     
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.paddingSpace == rhs.paddingSpace && lhs.paddingCorners == rhs.paddingCorners && lhs.underlyingView == rhs.underlyingView
+    public func _isEqual(toSameType other: PaddingView<Content>, environment: EnvironmentValues) -> Bool {
+        paddingSpace == other.paddingSpace && paddingCorners == other.paddingCorners && underlyingView._isEqual(to: other.underlyingView, environment: environment)
     }
     
-    public func hash(into hasher: inout Hasher) {
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         self.paddingCorners.rawValue.hash(into: &hasher)
         self.paddingSpace.hash(into: &hasher)
-        self.underlyingView.hash(into: &hasher)
+        self.underlyingView._hash(into: &hasher, environment: environment)
     }
     
 	let paddingCorners: Corner

@@ -8,17 +8,15 @@
 import Foundation
 
 public struct HStack<Content: View>: View {
-    
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.alignment == rhs.alignment && lhs.spacing == rhs.spacing && lhs.viewCreator == rhs.viewCreator
+    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
+        self.alignment == other.alignment && self.spacing == other.spacing && self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
     }
     
-    public func hash(into hasher: inout Hasher) {
-        viewCreator.hash(into: &hasher)
-        spacing.hash(into: &hasher)
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         alignment.hash(into: &hasher)
+        spacing.hash(into: &hasher)
+        viewCreator._hash(into: &hasher, environment: environment)
     }
-    
 	let viewCreator: Content
 	let alignment: VerticalAlignment
 	let spacing: CGFloat
@@ -35,9 +33,9 @@ public struct HStack<Content: View>: View {
 	
 	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator
-		let uiView = view.__toUIView(enclosingController: enclosingController, environment: environment)
-		(uiView as? InternalLazyCollatedView)?.expand()
-		let stackView = SwiftUIStackView(arrangedSubviews: (uiView as? InternalCollatedView)?.underlyingViews ?? [uiView], context: .horizontal)
+        let buildingBlocks = view.expanded()
+        let underlyingViews = buildingBlocks.map { $0.__toUIView(enclosingController: enclosingController, environment: environment) }
+		let stackView = SwiftUIStackView(arrangedSubviews: underlyingViews, context: .horizontal, buildingBlocks: buildingBlocks)
 		stackView.alignment = self.alignment.stackViewAlignment
 		stackView.spacing = self.spacing
 		stackView.axis = .horizontal
@@ -47,10 +45,8 @@ public struct HStack<Content: View>: View {
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		let viewProtocol = viewCreator
-		guard let stackView = view as? UIStackView, let buildingBlockCreator = viewProtocol as? BuildingBlockCreator else { return }
-		zip(stackView.arrangedSubviews, buildingBlockCreator.toBuildingBlocks().expanded()).forEach {
-			$1._redraw(view: $0, controller: controller, environment: environment)
-		}
+        guard let stackView = view as? SwiftUIStackView else { return }
+        stackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment)
 	}
 }
 
@@ -66,7 +62,24 @@ extension Array where Element == _BuildingBlock {
 }
 
 class SwiftUIStackView: UIStackView {
+    var buildingBlocks: [_BuildingBlock]
     let context: ExpandingContext
+    
+    func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues) {
+        let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
+        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0].__toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
+        let allDeletions = diffResults.deletion.map { ($0, self.arrangedSubviews[$0]) }
+        let moving = diffResults.moved.map { ($0.1, self.arrangedSubviews[$0.0], buildingBlocks[$0.1]) }
+        allDeletions.forEach { $0.1.removeFromSuperview() }
+        let operationsToPerform = (allAdditions + moving).sorted(by: { $0.0 < $1.0 })
+        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock) in
+            self.removeArrangedSubview(uiView)
+            self.insertArrangedSubview(uiView, at: indexToInsert)
+            buildingBlock._redraw(view: uiView, controller: controller, environment: environment)
+        }
+        self.buildingBlocks = buildingBlocks
+    }
+    
 	override func willExpand(in context: ExpandingContext) -> Bool {
 		return self.arrangedSubviews.contains(where: { $0.willExpand(in: context)} )
 	}
@@ -89,7 +102,8 @@ class SwiftUIStackView: UIStackView {
 			})
 	}
 	
-	init(arrangedSubviews: [UIView], context: ExpandingContext) {
+    init(arrangedSubviews: [UIView], context: ExpandingContext, buildingBlocks: [_BuildingBlock]) {
+        self.buildingBlocks = buildingBlocks
         self.context = context
 		super.init(frame: .zero)
 		let actualViews = arrangedSubviews.flatMap {

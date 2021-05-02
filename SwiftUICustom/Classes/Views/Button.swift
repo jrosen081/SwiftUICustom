@@ -35,6 +35,14 @@ public struct Button<ButtonContent: View>: View {
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
         environment.buttonStyle._makeBody(configuration: actualThing)._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
+    
+    public func _isEqual(toSameType other: Button<ButtonContent>, environment: EnvironmentValues) -> Bool {
+        return content._isEqual(to: other.content, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+    }
 	
     public func _resetLinks(view: UIView, controller: UIViewController) {
         // Do nothing

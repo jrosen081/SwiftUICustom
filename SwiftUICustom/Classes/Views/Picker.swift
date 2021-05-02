@@ -8,14 +8,13 @@
 import Foundation
 
 public struct Picker<Label, SelectionValue, Content>: View where Label : View, SelectionValue : Hashable, Content : View {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.label == rhs.label && lhs.content == rhs.content && lhs.selectionValue.wrappedValue == rhs.selectionValue.wrappedValue
+    public func _isEqual(toSameType other: Picker<Label, SelectionValue, Content>, environment: EnvironmentValues) -> Bool {
+        label._isEqual(to: other.label, environment: environment) && content._isEqual(to: other.content, environment: environment) && selectionValue.wrappedValue == other.selectionValue.wrappedValue
     }
-    
-    public func hash(into hasher: inout Hasher) {
-        self.label.hash(into: &hasher)
-        self.selectionValue.wrappedValue.hash(into: &hasher)
-        self.content.hash(into: &hasher)
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        label._hash(into: &hasher, environment: environment)
+        selectionValue.wrappedValue.hash(into: &hasher)
+        content._hash(into: &hasher, environment: environment)
     }
     
     let label: Label
@@ -45,7 +44,7 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
         picker.environment = environment
         picker.allOptions = allOptions
         let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
-        let stackView = SwiftUIStackView(arrangedSubviews: [label, picker], context: .horizontal)
+        let stackView = SwiftUIStackView(arrangedSubviews: [label, picker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: picker)])
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.spacing = 5
         label.isHidden = environment.isLabelsHidden
@@ -95,7 +94,7 @@ class SwiftUIPicker: UIPickerView, UIPickerViewDataSource, UIPickerViewDelegate 
         expandingView.context = [.horizontal]
         let expandingView2 = ExpandingView()
         expandingView2.context = [.horizontal]
-        return SwiftUIStackView(arrangedSubviews: [expandingView, view, expandingView2], context: .horizontal)
+        return SwiftUIStackView(arrangedSubviews: [expandingView, view, expandingView2], context: .horizontal, buildingBlocks: [UIViewWrapper(view: ExpandingView()), self.allOptions[row], UIViewWrapper(view: ExpandingView())])
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {

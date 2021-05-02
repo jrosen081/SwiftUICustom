@@ -13,8 +13,8 @@ class InternalCollatedView: SwiftUIStackView {
 		return self.arrangedSubviews
 	}
 	
-	init(underlyingViews: [UIView]) {
-		super.init(arrangedSubviews: underlyingViews, context: .vertical)
+    init(underlyingViews: [UIView], buildingBlocks: [_BuildingBlock]) {
+		super.init(arrangedSubviews: underlyingViews, context: .vertical, buildingBlocks: buildingBlocks)
 	}
 	
 	required init(coder: NSCoder) {
@@ -37,7 +37,7 @@ class InternalLazyCollatedView: InternalCollatedView {
 	
 	init<T: Equatable>(arrayValues: [T], viewCreator: @escaping (T) -> UIView) {
 		self.viewCount = arrayValues.map { (viewCreator($0), 1) }
-		super.init(underlyingViews: [])
+        super.init(underlyingViews: [], buildingBlocks: [])
 		
 		self.translatesAutoresizingMaskIntoConstraints = false
 	}

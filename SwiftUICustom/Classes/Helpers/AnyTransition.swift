@@ -7,28 +7,41 @@
 
 import Foundation
 
-public struct AnyTransition {
+internal indirect enum TransitionId: Hashable {
+    case identity, opacity, scale, slide, move(Edge), asymmetric(insertion: TransitionId, removal: TransitionId)
+}
+
+public struct AnyTransition: Hashable {
+    public static func == (lhs: AnyTransition, rhs: AnyTransition) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        id.hash(into: &hasher)
+    }
+    
+    var id: TransitionId
 	var performTransition: (_ view: UIView, _ totalSize: CGSize, _ isComingIn: Bool) -> ()
 	
-	public static let identity = AnyTransition(performTransition: {_,_,_  in })
-	public static let opacity = AnyTransition { view,_,_ in
+    public static let identity = AnyTransition(id: .identity, performTransition: {_,_,_  in })
+    public static let opacity = AnyTransition(id: .opacity) { view,_,_ in
 		view.alpha = 0
 	}
 	
-	public static let scale = AnyTransition { view,_,_ in
+    public static let scale = AnyTransition(id: .scale) { view,_,_ in
 		view.transform = CGAffineTransform(scaleX: 0, y: 0)
 	}
 	
 	public static let slide = AnyTransition.asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing))
 	
 	public static func move(edge: Edge) -> AnyTransition {
-		AnyTransition {view,size,_ in
+        AnyTransition(id: .move(edge)) {view,size,_ in
 			view.transform = edge.toTransform(frame: view.superview?.convert(view.frame, to: nil) ?? .zero, size: size, rToL: UIView.userInterfaceLayoutDirection(for: view.semanticContentAttribute) == .rightToLeft)
 		}
 	}
 	
 	public static func asymmetric(insertion: AnyTransition, removal: AnyTransition) -> AnyTransition {
-		AnyTransition {view,size,comingIn in
+        AnyTransition(id: .asymmetric(insertion: insertion.id, removal: removal.id)) {view,size,comingIn in
 			if comingIn {
 				insertion.performTransition(view, size, true)
 			} else {
@@ -38,7 +51,7 @@ public struct AnyTransition {
 	}
 }
 
-public enum Edge {
+public enum Edge: Hashable {
 	case leading, trailing, top, bottom
 	
 	var rToLEdge: Edge {

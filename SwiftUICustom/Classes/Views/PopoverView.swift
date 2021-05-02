@@ -11,6 +11,16 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 	let presentingView: PresentingView
 	let contentCreator: Content
 	let binding: Binding<Bool>
+    
+    public func _isEqual(toSameType other: PopoverView<PresentingView, Content>, environment: EnvironmentValues) -> Bool {
+        presentingView._isEqual(to: other.presentingView, environment: environment) && contentCreator._isEqual(to: other.contentCreator, environment: environment) && binding.wrappedValue == other.binding.wrappedValue
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        presentingView._hash(into: &hasher, environment: environment)
+        contentCreator._hash(into: &hasher, environment: environment)
+        binding.wrappedValue.hash(into: &hasher)
+    }
 	
 	public var body: Self {
 		return self
@@ -30,9 +40,8 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 		self.presentingView._redraw(view: view, controller: controller, environment: environment)
 		if (!binding.wrappedValue) {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
-		} else if let _ = controller.presentedViewController as? SwiftUIController<Content> {
-			// Something is presented
-			// Do nothing
+		} else if let presented = controller.presentedViewController as? SwiftUIController<Content> {
+            presented.swiftUIView = self.contentCreator
 		} else {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
 			let internalController = SwiftUIController(swiftUIView: self.contentCreator)

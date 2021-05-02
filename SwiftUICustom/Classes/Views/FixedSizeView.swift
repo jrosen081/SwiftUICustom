@@ -30,6 +30,16 @@ public struct FixedSizeView<Content: View>: View {
         sizeView.invalidateIntrinsicContentSize()
         self.content._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
+    
+    public func _isEqual(toSameType other: FixedSizeView<Content>, environment: EnvironmentValues) -> Bool {
+        self.size == other.size && self.content._isEqual(to: other.content, environment: environment)
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        size.width.hash(into: &hasher)
+        size.height.hash(into: &hasher)
+        content._hash(into: &hasher, environment: environment)
+    }
 }
 
 class FixedSizeUIView: UIView {

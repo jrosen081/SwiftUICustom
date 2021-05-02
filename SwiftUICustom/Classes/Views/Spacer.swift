@@ -21,6 +21,14 @@ public struct Spacer: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		// Do nothing
 	}
+    
+    public func _isEqual(toSameType other: Spacer, environment: EnvironmentValues) -> Bool {
+        return true
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        (-1555).hash(into: &hasher)
+    }
 }
 
 @objc internal enum ExpandingContext: Int {

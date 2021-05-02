@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Alert {
+public struct Alert: Hashable {
 	
 	let title: String
 	let message: String?
@@ -35,7 +35,16 @@ public struct Alert {
 		return controller
 	}
 	
-	public struct Button {
+    public struct Button: Hashable {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.text == rhs.text && lhs.style == rhs.style
+        }
+        
+        public func hash(into hasher: inout Hasher) {
+            text.hash(into: &hasher)
+            style.hash(into: &hasher)
+        }
+        
 		let text: String
 		let onClick: (() -> ())?
 		let style: UIAlertAction.Style
@@ -65,6 +74,19 @@ public struct Alert {
 }
 
 public struct AlertView<Content: View>: View {
+    
+    public func _isEqual(toSameType other: AlertView<Content>, environment: EnvironmentValues) -> Bool {
+        let lhs = self
+        let rhs = other
+        return lhs.alert == rhs.alert && lhs.content._isEqual(to: rhs, environment: environment) && lhs.binding.wrappedValue == rhs.binding.wrappedValue
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        alert.hash(into: &hasher)
+        content._hash(into: &hasher, environment: environment)
+        binding.wrappedValue.hash(into: &hasher)
+    }
+    
 	let binding: Binding<Bool>
 	let alert: Alert
 	let content: Content

@@ -7,7 +7,17 @@
 
 import Foundation
 
-public struct TabView<Selection: Equatable, Content: View>: View {
+public struct TabView<Selection: Hashable, Content: View>: View {
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+        binding?.wrappedValue.hash(into: &hasher)
+    }
+    
+    public func _isEqual(toSameType other: TabView<Selection, Content>, environment: EnvironmentValues) -> Bool {
+        content._isEqual(to: other.content, environment: environment) && binding?.wrappedValue == other.binding?.wrappedValue
+    }
+    
     let content: Content
     let binding: Binding<Selection>?
     

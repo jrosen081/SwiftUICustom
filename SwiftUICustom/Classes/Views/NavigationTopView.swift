@@ -31,6 +31,16 @@ public struct NavigationTopView<Content: View>: View {
         }
         self.content._redraw(view: view, controller: controller, environment: environment)
     }
+    
+    public func _isEqual(toSameType other: NavigationTopView<Content>, environment: EnvironmentValues) -> Bool {
+        self.content._isEqual(to: other.content, environment: environment) && self.title == other.title && self.prefersLarge == other.prefersLarge
+    }
+    
+    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
+        content._hash(into: &hasher, environment: environment)
+        title.hash(into: &hasher)
+        prefersLarge.hash(into: &hasher)
+    }
 }
 
 public extension View {
