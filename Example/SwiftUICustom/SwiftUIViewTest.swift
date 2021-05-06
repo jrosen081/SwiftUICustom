@@ -13,6 +13,17 @@ struct SwiftUIViewTest: View {
     var body: some View {
         VStack {
             Text("Hi")
+            Spacer()
+            GeometryReader { proxy in
+                Text("hi")
+            }
+            Text("this")
+            HStack { Spacer() }
+            Text("other")
+            GeometryReader { proxy in
+                Color.green
+                Text("This")
+            }
         }
     }
 }

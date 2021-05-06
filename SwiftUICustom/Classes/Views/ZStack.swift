@@ -29,7 +29,7 @@ public struct ZStack<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let enclosingView = ZStackView(frame: .zero)
 		enclosingView.translatesAutoresizingMaskIntoConstraints = false
         let buildingBlocks = contentBuilder.expanded()
@@ -42,6 +42,14 @@ public struct ZStack<Content: View>: View {
 		guard let zstackView = view as? ZStackView else { return }
         zstackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment, alignment: alignment)
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return expanded().map { $0._requestedSize(within: size, environment: environment) }.reduce(CGSize.zero, max(size1:size2:))
+    }
+    
+    private func max(size1: CGSize, size2: CGSize) -> CGSize {
+        return CGSize(width: Swift.max(size1.width, size2.width), height: Swift.max(size1.height, size2.height))
+    }
 }
 
 class ZStackView: SwiftUIView {
@@ -49,7 +57,7 @@ class ZStackView: SwiftUIView {
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues, alignment: Alignment) {
         let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
-        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0].__toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
+        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
         let allDeletions = diffResults.deletion.map { ($0, self.subviews[$0]) }
         let moving = diffResults.moved.map { ($0.1, self.subviews[$0.0], buildingBlocks[$0.1]) }
         allDeletions.forEach { $0.1.removeFromSuperview() }

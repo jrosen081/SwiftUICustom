@@ -33,36 +33,37 @@ public struct Stepper<Label>: View where Label : View {
 		self.label = label()
 	}
 	
-	public var body: Self {
-		return self
-	}
-	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
-		let stepper = SwiftUIStepper(binding: self.doubleBinding, range: self.range)
-		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
-		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
-		let vertical = SwiftUIStackView(arrangedSubviews: [stepper], context: .vertical, buildingBlocks: [])
-		vertical.alignment = .center
-        let stackView = SwiftUIStackView(arrangedSubviews: [label, ExpandingView().withContext(.horizontal), vertical], context: .horizontal, buildingBlocks: [])
-        stackView.spacing = 1
-		stackView.translatesAutoresizingMaskIntoConstraints = false
-		stackView.axis = .horizontal
-        label.isHidden = environment.isLabelsHidden
-		return stackView
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
-        view.subviews[0].isHidden = environment.isLabelsHidden
-		guard let stepper = view.subviews[2].subviews[0] as? SwiftUIStepper else { return }
-		stepper.value = Double(self.doubleBinding.wrappedValue)
-		stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
-		stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
-	}
+    public var body: HStack<TupleView<(Label, Spacer, _StepperView)>> {
+        HStack {
+            self.label
+            Spacer()
+            _StepperView(binding: doubleBinding, range: range)
+        }
+    }
 }
 
-class SwiftUIStepper: UIStepper {
+public struct _StepperView: UIViewRepresentable {
+    public typealias UIViewType = SwiftUIStepper
+    @Binding var binding: Int
+    let range: ClosedRange<Int>
+    
+    public func makeUIView(context: Context) -> SwiftUIStepper {
+        let stepper = SwiftUIStepper(binding: $binding, range: range)
+        let environment = context.environment
+        stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
+        stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
+        return stepper
+    }
+    
+    public func updateUIView(_ stepper: SwiftUIStepper, context: Context) {
+        let environment = context.environment
+        stepper.value = Double(self.binding)
+        stepper.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
+        stepper.backgroundColor = environment.colorScheme == .dark ? .black : .white
+    }
+}
+
+public class SwiftUIStepper: UIStepper {
 	let binding: Binding<Int>
 	
 	init(binding: Binding<Int>, range: ClosedRange<Int>) {

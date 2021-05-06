@@ -75,4 +75,8 @@ public struct Section<Parent: View, Content: View, Footer: View>: View, SectionP
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         [headerView, footerView, content].compactMap { $0 }.forEach { $0._hash(into: &hasher, environment: environment) }
     }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
+    }
 }

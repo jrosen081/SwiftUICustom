@@ -40,3 +40,9 @@ extension UIView {
 		return false
 	}
 }
+
+extension CGSize {
+    func min(_ other: CGSize) -> CGSize {
+        return CGSize(width: Swift.min(other.width, self.width), height: Swift.min(other.height, self.height))
+    }
+}

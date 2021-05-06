@@ -27,7 +27,7 @@ public extension Shape {
         self.path(in: CGRect(origin: .zero, size: CGSize(width: 100, height: 100))).hash(into: &hasher)
     }
 	
-	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let shape = ShapeSwiftUIView(shape: self)
 		shape.shapeLayer.fillColor = (environment.foregroundColor ?? environment.defaultForegroundColor).cgColor
 		return shape
@@ -45,6 +45,10 @@ public extension Shape {
 	func fill() -> FilledView<Self> {
 		return FilledView(shape: self)
 	}
+    
+    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
+    }
 }
 
 extension Path: Shape {
@@ -61,7 +65,7 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = false
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -86,6 +90,10 @@ public struct StrokedView<ShapeGeneric: Shape>: View {
         shape._hash(into: &hasher, environment: environment)
         width.hash(into: &hasher)
     }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
+    }
 }
 
 public struct FilledView<ShapeGeneric: Shape>: View {
@@ -95,7 +103,7 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = ShapeSwiftUIView(shape: self.shape)
 		view.isFilled = true
 		view.tintColor = environment.foregroundColor ?? environment.defaultForegroundColor
@@ -116,6 +124,10 @@ public struct FilledView<ShapeGeneric: Shape>: View {
     
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         shape._hash(into: &hasher, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
     }
 }
 

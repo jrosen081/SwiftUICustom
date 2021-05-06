@@ -14,7 +14,7 @@ public struct Spacer: View {
 	
 	public init() { }
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ExpandingView()
 	}
 	
@@ -28,6 +28,10 @@ public struct Spacer: View {
     
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         (-1555).hash(into: &hasher)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
     }
 }
 

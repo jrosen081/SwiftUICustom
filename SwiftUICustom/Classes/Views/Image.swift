@@ -27,7 +27,7 @@ public struct Image: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let imageView = UIImageView(frame: .zero)
 		updateView(imageView, environment: environment)
 		return imageView
@@ -52,6 +52,10 @@ public struct Image: View {
     
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         image.hash(into: &hasher)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return image.size
     }
 }
 

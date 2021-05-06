@@ -15,8 +15,8 @@ public struct TabBarUpdatingView<Content: View, TabBarItem: View>: View {
         return self
     }
     
-    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let underlyingUIView = underlyingView.__toUIView(enclosingController: enclosingController, environment: environment)
+    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        let underlyingUIView = underlyingView._toUIView(enclosingController: enclosingController, environment: environment)
         let allOptions = tabBarItem.expanded()
         if let image = allOptions.first(where: { $0 is Image }) as? Image {
             enclosingController.tabBarItem.image = image.image
@@ -46,6 +46,10 @@ public struct TabBarUpdatingView<Content: View, TabBarItem: View>: View {
     
     public func _isEqual(toSameType other: TabBarUpdatingView<Content, TabBarItem>, environment: EnvironmentValues) -> Bool {
         underlyingView._isEqual(to: other.underlyingView, environment: environment) && tabBarItem._isEqual(to: other.tabBarItem, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        underlyingView._requestedSize(within: size, environment: environment)
     }
 }
 

@@ -42,11 +42,11 @@ public struct DatePicker<Label: View>: View {
         return self
     }
     
-    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let datePicker = SwiftUIDatePicker(binding: self.binding)
         datePicker.minimumDate = self.range.lowerBound
         datePicker.maximumDate = self.range.upperBound
-        let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
+        let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
         let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: datePicker)])
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.spacing = 5
@@ -61,6 +61,12 @@ public struct DatePicker<Label: View>: View {
         picker?.binding = self.binding
         self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        let width = size.width
+        let datePicker = UIDatePicker()
+        return CGSize(width: width, height: datePicker.intrinsicContentSize.height)
     }
 }
 

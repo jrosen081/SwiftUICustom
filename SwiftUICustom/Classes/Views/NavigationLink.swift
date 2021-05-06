@@ -28,13 +28,13 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
         weak var controller: UIViewController? = enclosingController
         let buttonControl: NavigationButtonLink
         if !environment.inList {
             newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-            buttonControl = NavigationButtonLink(view: self.content.__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+            buttonControl = NavigationButtonLink(view: self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
                 controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
             }
 
@@ -43,7 +43,7 @@ public struct NavigationLink<Content: View, Destination: View>: View {
                 self.content
                 Spacer()
                 RightArrow().stroke(lineWidth: 1).foregroundColor(environment.defaultForegroundColor).fixedSize(width: 10, height: 20).padding(edges: .trailing, paddingSpace: 5)
-            }.padding().__toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
+            }.padding()._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
                 controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
             }
         }
@@ -64,6 +64,10 @@ public struct NavigationLink<Content: View, Destination: View>: View {
             usableController?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
 		}
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
+    }
 }
 
 class NavigationButtonLink: ButtonView {

@@ -34,7 +34,7 @@ public struct TabView<Selection: Hashable, Content: View>: View {
         return self
     }
     
-    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let allOptions = content.expanded()
         let tabBarController = UITabBarController(nibName: nil, bundle: nil)
         tabBarController.viewControllers = allOptions.map(BuildingBlockRepresentable.init(buildingBlock:)).map(SwiftUIController.init(swiftUIView:))
@@ -50,5 +50,9 @@ public struct TabView<Selection: Hashable, Content: View>: View {
         zip(tabBarController.viewControllers!, allOptions).forEach {(controller, view) in
             view._redraw(view: controller.view.subviews[0], controller: controller, environment: environment)
         }
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
     }
 }

@@ -31,7 +31,7 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
         return self
     }
     
-    public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let expanded = self.content.expanded()
         let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is SelectionValue})
         let binding: Binding<Int> = Binding(get: {
@@ -43,16 +43,20 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
         let picker = SwiftUIPicker(binding: binding, stringOptions: allOptions)
         picker.environment = environment
         picker.allOptions = allOptions
-        let label = self.label.__toUIView(enclosingController: enclosingController, environment: environment)
+        let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
         let stackView = SwiftUIStackView(arrangedSubviews: [label, picker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: picker)])
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.spacing = 5
         label.isHidden = environment.isLabelsHidden
-        return environment.pickerStyle._updatePicker(picker: self, defaultView: stackView).__toUIView(enclosingController: enclosingController, environment: environment)
+        return environment.pickerStyle._updatePicker(picker: self, defaultView: stackView)._toUIView(enclosingController: enclosingController, environment: environment)
     }
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         environment.pickerStyle._redraw(picker: self, defaultView: view, controller: controller, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return size.min(UIPickerView().intrinsicContentSize)
     }
 }
 
@@ -89,7 +93,7 @@ class SwiftUIPicker: UIPickerView, UIPickerViewDataSource, UIPickerViewDelegate 
     }
     
     func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView {
-        let view = self.allOptions[row].__toUIView(enclosingController: UIViewController(), environment: self.environment)
+        let view = self.allOptions[row]._toUIView(enclosingController: UIViewController(), environment: self.environment)
         let expandingView = ExpandingView()
         expandingView.context = [.horizontal]
         let expandingView2 = ExpandingView()

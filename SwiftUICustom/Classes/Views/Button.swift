@@ -19,11 +19,11 @@ public struct Button<ButtonContent: View>: View {
         return self.content
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = EnvironmentValues(environment)
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
-        let view = environment.buttonStyle._makeBody(configuration: actualThing).__toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        let view = environment.buttonStyle._makeBody(configuration: actualThing)._toUIView(enclosingController: enclosingController, environment: newEnvironment)
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
 		return ButtonView(view: view, onClick: self.onClick)
@@ -46,6 +46,10 @@ public struct Button<ButtonContent: View>: View {
 	
     public func _resetLinks(view: UIView, controller: UIViewController) {
         // Do nothing
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
     }
 }
 

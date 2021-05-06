@@ -31,10 +31,10 @@ public struct HStack<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator
         let buildingBlocks = view.expanded()
-        let underlyingViews = buildingBlocks.map { $0.__toUIView(enclosingController: enclosingController, environment: environment) }
+        let underlyingViews = buildingBlocks.map { $0._toUIView(enclosingController: enclosingController, environment: environment) }
 		let stackView = SwiftUIStackView(arrangedSubviews: underlyingViews, context: .horizontal, buildingBlocks: buildingBlocks)
 		stackView.alignment = self.alignment.stackViewAlignment
 		stackView.spacing = self.spacing
@@ -48,6 +48,10 @@ public struct HStack<Content: View>: View {
         guard let stackView = view as? SwiftUIStackView else { return }
         stackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment)
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size // TODO: this
+    }
 }
 
 extension Array where Element == _BuildingBlock {
@@ -67,7 +71,7 @@ class SwiftUIStackView: UIStackView {
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues) {
         let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
-        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0].__toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
+        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
         let allDeletions = diffResults.deletion.map { ($0, self.arrangedSubviews[$0]) }
         let moving = diffResults.moved.map { ($0.1, self.arrangedSubviews[$0.0], buildingBlocks[$0.1]) }
         allDeletions.forEach { $0.1.removeFromSuperview() }

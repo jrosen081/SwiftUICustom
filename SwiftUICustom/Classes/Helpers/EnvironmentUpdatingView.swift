@@ -15,13 +15,13 @@ public struct EnvironmentUpdatingView<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let updates = environment.withUpdates(self.updates)
 		if #available(iOS 13.0, *) {
 			enclosingController.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
 			enclosingController.navigationController?.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
 		}
-		return self.content.__toUIView(enclosingController: enclosingController, environment: updates)
+		return self.content._toUIView(enclosingController: enclosingController, environment: updates)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -41,6 +41,9 @@ public struct EnvironmentUpdatingView<Content: View>: View {
         content._hash(into: &hasher, environment: environment)
     }
     
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment.withUpdates(updates))
+    }
 }
 
 public extension View {

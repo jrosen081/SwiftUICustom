@@ -16,12 +16,12 @@ public struct NavigationTopView<Content: View>: View {
 		return self.content
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationItem.title = self.title
 		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
             enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
 		}
-		return self.content.__toUIView(enclosingController: enclosingController, environment: environment)
+		return self.content._toUIView(enclosingController: enclosingController, environment: environment)
 	}
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -40,6 +40,10 @@ public struct NavigationTopView<Content: View>: View {
         content._hash(into: &hasher, environment: environment)
         title.hash(into: &hasher)
         prefersLarge.hash(into: &hasher)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
     }
 }
 

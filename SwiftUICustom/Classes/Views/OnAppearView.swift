@@ -15,8 +15,8 @@ public struct OnAppearView<Content: View>: View {
 		return self.view
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = self.view.__toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.view._toUIView(enclosingController: enclosingController, environment: environment)
 		onAppear()
 		return view
 	}

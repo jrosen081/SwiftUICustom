@@ -16,12 +16,20 @@ public protocol UIViewRepresentable: View where Self.Content == Self {
 	func makeCoordinator() -> Self.Coordinator
 }
 
+extension UIViewRepresentable where Self.Coordinator == Never {
+    public func makeCoordinator() -> Never { Never() }
+}
+
 extension UIViewRepresentable {
 	public var body: Self {
         self
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        self.makeUIView(context: UIViewRepresentableContext(coordinator: self.makeCoordinator(), environment: EnvironmentValues())).sizeThatFits(size)
+    }
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUIView = SwiftUIViewRepresentable(coordinator: self.makeCoordinator())
 		let underlyingView = self.makeUIView(context: UIViewRepresentableContext(coordinator: swiftUIView.coordinator, environment: environment))
 		swiftUIView.addSubview(underlyingView)
@@ -62,12 +70,8 @@ public struct UIViewRepresentableContext<Context> where Context: UIViewRepresent
 }
 
 
-extension Never: View {
+public struct Never: View {
 	public var body: Self {
 		fatalError()
 	}
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        fatalError()
-    }
 }

@@ -18,7 +18,7 @@ public struct NavigationView<Body: View>: View {
 		return viewBuilder
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let controller = InternalNavigationController(nibName: nil, bundle: nil)
         controller.navigationBar.prefersLargeTitles = true
         enclosingController.addChild(controller)

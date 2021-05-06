@@ -86,14 +86,18 @@ extension TupleView : View, _View {
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         toBuildingBlocks().forEach { $0._hash(into: &hasher, environment: environment) }
     }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return VStack { self.expanded() }._requestedSize(within: size, environment: environment)
+    }
         
 	public var body: Self {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		if let val = self.value as? _BuildingBlock {
-			return val.__toUIView(enclosingController: enclosingController, environment: environment)
+			return val._toUIView(enclosingController: enclosingController, environment: environment)
 		}
 		
 		let buildingBlocks: [_BuildingBlock]
@@ -123,7 +127,7 @@ extension TupleView : View, _View {
 		}
 		
 		return InternalLazyCollatedView(arrayValues: Array(0..<buildingBlocks.count)) {
-			buildingBlocks[$0].__toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+			buildingBlocks[$0]._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
 		}
 	}
 	

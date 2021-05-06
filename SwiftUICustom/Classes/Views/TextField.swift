@@ -26,9 +26,9 @@ public struct TextField<Label: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUITextField = SwiftUITextField(binding: self.binding)
-		let otherView = self.label.padding().__toUIView(enclosingController: enclosingController, environment: environment)
+		let otherView = self.label.padding()._toUIView(enclosingController: enclosingController, environment: environment)
         let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: swiftUITextField)])
 		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
         swiftUITextField.font = environment.font
@@ -47,8 +47,13 @@ public struct TextField<Label: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.label.padding()._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
-        
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        let fullWidth = size.width
+        let height = Text(binding.wrappedValue).lineLimit(1)._requestedSize(within: size, environment: environment).height
+        return CGSize(width: fullWidth, height: height)
+    }
 }
 
 public extension TextField {

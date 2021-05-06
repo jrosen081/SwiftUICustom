@@ -21,13 +21,17 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
         contentCreator._hash(into: &hasher, environment: environment)
         binding.wrappedValue.hash(into: &hasher)
     }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        presentingView._requestedSize(within: size, environment: environment)
+    }
 	
 	public var body: Self {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = self.presentingView.__toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = self.presentingView._toUIView(enclosingController: enclosingController, environment: environment)
 		if (self.binding.wrappedValue) {
 			let controller = SwiftUIController(swiftUIView: self.contentCreator)
 			controller.isShowing = self.binding

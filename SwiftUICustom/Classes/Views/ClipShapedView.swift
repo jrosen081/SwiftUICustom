@@ -15,9 +15,9 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let clippedView = ClippedView(shapeGeneric: self.shape)
-		let view = self.content.__toUIView(enclosingController: enclosingController, environment: environment)
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
 		clippedView.addSubview(view)
 		clippedView.setupFullConstraints(clippedView, view)
 		return clippedView
@@ -36,6 +36,10 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         shape._hash(into: &hasher, environment: environment)
         content._hash(into: &hasher, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
     }
 }
 

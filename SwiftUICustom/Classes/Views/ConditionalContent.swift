@@ -29,16 +29,16 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
         100.hash(into: &hasher)
     }
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let conditionalContainer = ConditionalContainer(frame: .zero)
 		conditionalContainer.translatesAutoresizingMaskIntoConstraints = false
 		let underlyingView: UIView
 		switch self.actualContent {
 		case .first(let view):
-			underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
+			underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = true
 		case .second(let view):
-            underlyingView = view.__toUIView(enclosingController: enclosingController, environment: environment)
+            underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
 			conditionalContainer.isTrue = false
 		}
 		conditionalContainer.addSubview(underlyingView)
@@ -58,7 +58,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			return
 		case (.first(let first), false):
 			conditional.isTrue = true
-			var newValue = first.__toUIView(enclosingController: controller, environment: environment)
+			var newValue = first._toUIView(enclosingController: controller, environment: environment)
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false
@@ -81,7 +81,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			}
 		case(.second(let second), true):
 			conditional.isTrue = false
-			var newValue = second.__toUIView(enclosingController: controller, environment: environment)
+			var newValue = second._toUIView(enclosingController: controller, environment: environment)
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false
@@ -122,6 +122,13 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			whenFinished()
 		}
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        switch self.actualContent {
+        case .first(let first): return first._requestedSize(within: size, environment: environment)
+        case .second(let second): return second._requestedSize(within: size, environment: environment)
+        }
+    }
 }
 
 class ConditionalContainer: SwiftUIView {

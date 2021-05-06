@@ -18,7 +18,7 @@ public struct List<Content: View>: View {
 		self.viewCreator = viewCreator()
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
         newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
@@ -46,6 +46,10 @@ public struct List<Content: View>: View {
     
     public func _isEqual(toSameType other: List<Content>, environment: EnvironmentValues) -> Bool {
         self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        size
     }
 }
 
@@ -190,7 +194,7 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].headerView?.__toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
+        return (self.buildingBlocks[section].headerView?._toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -199,7 +203,7 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].footerView?.__toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
+        return (self.buildingBlocks[section].footerView?._toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -212,7 +216,7 @@ extension SwiftUITableView: UITableViewDataSource {
 	}
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row].__toUIView(enclosingController: usableController, environment: self.actualEnvironment)
+        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row]._toUIView(enclosingController: usableController, environment: self.actualEnvironment)
 		guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
 		if let onClick = view.insideList(width: self.frame.width) {
 			self.tableViewClickedResponses[indexPath] = onClick

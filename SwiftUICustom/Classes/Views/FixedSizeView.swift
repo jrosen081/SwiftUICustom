@@ -15,8 +15,8 @@ public struct FixedSizeView<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = content.__toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+		let view = content._toUIView(enclosingController: enclosingController, environment: environment)
         let swiftUIView = FixedSizeUIView(size: self.size)
         swiftUIView.translatesAutoresizingMaskIntoConstraints = false
         swiftUIView.addSubview(view)
@@ -39,6 +39,10 @@ public struct FixedSizeView<Content: View>: View {
         size.width.hash(into: &hasher)
         size.height.hash(into: &hasher)
         content._hash(into: &hasher, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return CGSize(width: min(size.width, self.size.width), height: min(size.height, self.size.height))
     }
 }
 

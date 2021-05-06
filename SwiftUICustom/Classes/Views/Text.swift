@@ -26,7 +26,7 @@ public struct Text: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let label = UILabel(frame: .zero)
 		setupData(label: label, environment: environment)
 		return SwiftUILabel(label: label)
@@ -51,6 +51,10 @@ public struct Text: View {
 	
     public func _resetLinks(view: UIView, controller: UIViewController) {
         // Do nothing
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return (text as NSString).boundingRect(with: size, options: [], attributes: [.font: environment.font ?? UIFont.systemFont(ofSize: UIFont.systemFontSize)], context: .none).size
     }
 	
 }

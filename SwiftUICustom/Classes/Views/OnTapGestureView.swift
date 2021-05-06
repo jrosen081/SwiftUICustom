@@ -34,8 +34,8 @@ public struct OnTapGestureView<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let view = content.__toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        let view = content._toUIView(enclosingController: enclosingController, environment: environment)
 		let buttonView = ButtonView(view: view, onClick: getActualOnClick(enclosingController: enclosingController))
 		buttonView.alphaToChangeTo = 1
 		return buttonView
@@ -46,6 +46,10 @@ public struct OnTapGestureView<Content: View>: View {
         button.onClick = getActualOnClick(enclosingController: controller)
 		self.content._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        content._requestedSize(within: size, environment: environment)
+    }
 }
 
 extension View {

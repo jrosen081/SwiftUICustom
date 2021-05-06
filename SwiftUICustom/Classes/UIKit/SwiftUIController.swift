@@ -120,7 +120,7 @@ public class SwiftUIController<Content: View>: SwiftUIInternalController<Content
 public class SwiftUIInternalController<Content: View>: UIViewController, UpdateDelegate {
     var swiftUIView: Content {
         didSet {
-            let underlyingView = self.swiftUIView.__toUIView(enclosingController: self, environment: self.actualEnvironment)
+            let underlyingView = self.swiftUIView._toUIView(enclosingController: self, environment: self.actualEnvironment)
             showView(underlyingView.asTopLevelView())
         }
     }
@@ -146,7 +146,7 @@ public class SwiftUIInternalController<Content: View>: UIViewController, UpdateD
 	
 	public override func viewDidLoad() {
         super.viewDidLoad()
-		let underlyingView = self.swiftUIView.__toUIView(enclosingController: self, environment: self.actualEnvironment)
+		let underlyingView = self.swiftUIView._toUIView(enclosingController: self, environment: self.actualEnvironment)
 		showView(underlyingView.asTopLevelView())
     }
 	

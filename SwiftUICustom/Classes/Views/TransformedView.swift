@@ -44,10 +44,10 @@ public struct TransformedView<Content: View>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let holdingView = SwiftUIView(frame: .zero)
 		holdingView.translatesAutoresizingMaskIntoConstraints = false
-		let view = self.content.__toUIView(enclosingController: enclosingController, environment: environment)
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
 		view.layer.anchorPoint = self.anchorPoint
 		view.transform  = self.transform
 		holdingView.addSubview(view)
@@ -68,6 +68,10 @@ public struct TransformedView<Content: View>: View {
 			animations()
 		}
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return size.min(UISwitch().intrinsicContentSize)
+    }
 }
 
 public extension View {

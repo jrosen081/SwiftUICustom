@@ -47,12 +47,16 @@ public struct PrimitiveButtonStyleConfiguration {
             return self
         }
         
-        public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-            return self.buildingBlock.__toUIView(enclosingController: enclosingController, environment: environment)
+        public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+            return self.buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
         }
         
         public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
             self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
+        }
+        
+        public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+            buildingBlock._requestedSize(within: size, environment: environment)
         }
     }
 }

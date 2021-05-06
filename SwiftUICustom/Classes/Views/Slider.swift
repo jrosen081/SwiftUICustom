@@ -23,6 +23,11 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
     public func _isEqual(toSameType other: Slider<Label, ValueLabel>, environment: EnvironmentValues) -> Bool {
         range == other.range && stride == other.stride && labelCreator._isEqual(to: other.labelCreator, environment: environment) && binding.wrappedValue == other.binding.wrappedValue
     }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        let width = size.width
+        return CGSize(width: width, height: max(labelCreator._requestedSize(within: size, environment: environment).height, UISlider().intrinsicContentSize.height))
+    }
 	
 	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, label: () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
 		self.range = ClosedRange(uncheckedBounds: (lower: Float(bounds.lowerBound), upper: Float(bounds.upperBound)))
@@ -42,10 +47,10 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let slider = SwiftUISlider(binding: self.binding, closedRange: self.range)
 		slider.tintColor = environment.foregroundColor
-		let label = self.labelCreator.__toUIView(enclosingController: enclosingController, environment: environment)
+		let label = self.labelCreator._toUIView(enclosingController: enclosingController, environment: environment)
         let horizontalStack = SwiftUIStackView(arrangedSubviews: [label, slider], context: .horizontal, buildingBlocks: [self.labelCreator, UIViewWrapper(view: slider)])
 		horizontalStack.axis = .horizontal
 		horizontalStack.translatesAutoresizingMaskIntoConstraints = false

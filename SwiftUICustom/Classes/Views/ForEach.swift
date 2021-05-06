@@ -37,9 +37,9 @@ public struct ForEach<Element, StorageType: Hashable, Content: View>: View, Expa
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return InternalLazyCollatedView(arrayValues: self.elements.map(mapper)) {
-			self.contentMapper($0).__toUIView(enclosingController: enclosingController, environment: environment)
+			self.contentMapper($0)._toUIView(enclosingController: enclosingController, environment: environment)
 		}
 	}
 	
@@ -50,6 +50,10 @@ public struct ForEach<Element, StorageType: Hashable, Content: View>: View, Expa
 			
 		}
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        VStack { self }._requestedSize(within: size, environment: environment)
+    }
 }
 
 public extension ForEach where Element : Equatable, StorageType == Element {

@@ -14,7 +14,7 @@ public struct EmptyView: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		return ShrinkingView()
 	}
 	
@@ -28,6 +28,10 @@ public struct EmptyView: View {
     
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         1000.hash(into: &hasher)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return .zero
     }
 }
 

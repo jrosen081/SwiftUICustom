@@ -23,27 +23,36 @@ extension _View {
     }
 }
 
+
+internal enum LayoutPriority {
+    case value(Int)
+    case lowest
+    case inBetween
+    case firm
+}
+
+public struct _ViewInfo {
+    let isBase: Bool
+    let baseBlock: _BuildingBlock
+    let layoutPriority: LayoutPriority
+}
+
 public protocol _BuildingBlock {
-	func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
+	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
-    var _isBase: Bool { get }
-    var _baseBlock: _BuildingBlock { get }
+    var _viewInfo: _ViewInfo { get }
     func _isEqual(to other: _BuildingBlock, environment: EnvironmentValues) -> Bool
     func _hash(into hasher: inout Hasher, environment: EnvironmentValues)
     func _reset()
+    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize
 }
 
 extension _BuildingBlock {
-    func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        ObjectIdentifier(Self.self).hash(into: &hasher)
+    var _isBase: Bool {
+        return _viewInfo.isBase
     }
-    
-    func fakeHash(into hasher: inout Hasher) {
-        ObjectIdentifier(Self.self).hash(into: &hasher)
-    }
-    
-    func fakeEquals(other: _BuildingBlock) -> Bool {
-        return other is Self
+    var _baseBlock: _BuildingBlock {
+        return _viewInfo.baseBlock
     }
 }
 
@@ -115,6 +124,10 @@ extension View {
         return self.body._hash(into: &hasher, environment: environment)
     }
     
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        self.body._requestedSize(within: size, environment: environment)
+    }
+    
     public func _reset() {
         if self.body is Self {
             return
@@ -132,7 +145,7 @@ extension View {
 		self.body._redraw(view: view, controller: controller, environment: environment)
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let mirror = Mirror(reflecting: self)
 		mirror.children.map { $0.value }
 			.compactMap { $0 as? EnvironmentNeeded }
@@ -145,16 +158,21 @@ extension View {
           Redrawables.redrawables.append(WeakRedrawable(redrawable: $0))
       }
 		}
-		return self.body.__toUIView(enclosingController: enclosingController, environment: environment)
+		return self.body._toUIView(enclosingController: enclosingController, environment: environment)
 	}
     
-    public var _isBase: Bool {
+    private var _isBase: Bool {
         return self.body is Self
     }
     
-    public var _baseBlock: _BuildingBlock {
+    private var _baseBlock: _BuildingBlock {
         return self.body
     }
+    
+    public var _viewInfo: _ViewInfo {
+        return _ViewInfo(isBase: _isBase, baseBlock: _baseBlock, layoutPriority: .lowest)
+    }
+    
     
     func expanded() -> [_BuildingBlock] {
         return ((self as? BuildingBlockCreator)?.toBuildingBlocks() ?? [self])
@@ -175,8 +193,8 @@ struct BuildingBlockRepresentable: View {
         self
     }
     
-    func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        self.buildingBlock.__toUIView(enclosingController: enclosingController, environment: environment)
+    func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        self.buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
     }
     
     func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -189,6 +207,10 @@ struct BuildingBlockRepresentable: View {
         
     func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         self.buildingBlock._hash(into: &hasher, environment: environment)
+    }
+    
+    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        return self.buildingBlock._requestedSize(within: size, environment: environment)
     }
     
 }
@@ -229,8 +251,8 @@ public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        return buildingBlock.__toUIView(enclosingController: enclosingController, environment: environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        return buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -243,5 +265,9 @@ public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
     
     public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
         buildingBlock._hash(into: &hasher, environment: environment)
+    }
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        buildingBlock._requestedSize(within: size, environment: environment)
     }
 }

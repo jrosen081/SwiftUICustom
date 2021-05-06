@@ -16,18 +16,18 @@ public struct AnyView: View {
         Int.random(in: 0..<Int.max).hash(into: &hasher)
     }
     
-	let viewCreator: (UIViewController, EnvironmentValues) -> UIView
+    let buildingBlock: _BuildingBlock
 	
 	public init<S: View>(_ view: S) {
-		viewCreator = view.__toUIView(enclosingController:environment:)
+		buildingBlock = view
 	}
 	
 	public var body: Self {
 		return self
 	}
 	
-	public func __toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let view = viewCreator(enclosingController, environment)
+	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        let view = buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
 		insertView(from: SwiftUIView(), view)
 		return view
 	}
@@ -45,6 +45,10 @@ public struct AnyView: View {
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		insertView(from: view, viewCreator(controller, environment))
+        insertView(from: view, buildingBlock._toUIView(enclosingController: controller, environment: environment))
 	}
+    
+    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
+        buildingBlock._requestedSize(within: size, environment: environment)
+    }
 }
