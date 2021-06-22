@@ -127,7 +127,7 @@ public class SwiftUIInternalController<Content: View>: UIViewController, UpdateD
 	var environment: EnvironmentValues
 	
 	var actualEnvironment: EnvironmentValues {
-		var newEnvironment = EnvironmentValues(environment)
+		var newEnvironment = environment
 		newEnvironment.foregroundColor = nil
         newEnvironment.isLabelsHidden = false
         newEnvironment.inList = false

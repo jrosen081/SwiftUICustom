@@ -75,17 +75,7 @@ public struct ViewBuilder {
     }
 }
 
-extension TupleView : View, _View {
-    
-    public func _isEqual(toSameType other: TupleView<T>, environment: EnvironmentValues) -> Bool {
-        let selfBuildingBlocks = self.toBuildingBlocks()
-        let otherBuildingBlocks = other.toBuildingBlocks()
-        return selfBuildingBlocks.elementsEqual(otherBuildingBlocks, by: { $0._isEqual(to: $1, environment: environment) }) && selfBuildingBlocks.count == otherBuildingBlocks.count
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        toBuildingBlocks().forEach { $0._hash(into: &hasher, environment: environment) }
-    }
+extension TupleView : View, _BuildingBlock {
     
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         return VStack { self.expanded() }._requestedSize(within: size, environment: environment)

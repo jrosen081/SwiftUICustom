@@ -19,7 +19,7 @@ public struct List<Content: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+		var newEnvironment: EnvironmentValues = environment
         newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
         let tableView = SwiftUITableView(buildingBlocks: self.viewCreator.expanded().toSections, style: environment.listStyle._tableViewStyle)
@@ -30,7 +30,7 @@ public struct List<Content: View>: View {
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		if let tableView = view as? SwiftUITableView {
-			var newEnvironment: EnvironmentValues = EnvironmentValues(environment)
+			var newEnvironment: EnvironmentValues = environment
             newEnvironment.inList = true
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
 			let view = self.viewCreator
@@ -39,14 +39,6 @@ public struct List<Content: View>: View {
 			tableView.diff(buildingBlocks: view.expanded().toSections, controller: controller, environment: environment)
 		}
 	}
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        viewCreator._hash(into: &hasher, environment: environment)
-    }
-    
-    public func _isEqual(toSameType other: List<Content>, environment: EnvironmentValues) -> Bool {
-        self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
-    }
     
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         size

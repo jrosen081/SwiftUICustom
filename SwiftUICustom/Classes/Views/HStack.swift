@@ -8,15 +8,6 @@
 import Foundation
 
 public struct HStack<Content: View>: View {
-    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
-        self.alignment == other.alignment && self.spacing == other.spacing && self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        alignment.hash(into: &hasher)
-        spacing.hash(into: &hasher)
-        viewCreator._hash(into: &hasher, environment: environment)
-    }
 	let viewCreator: Content
 	let alignment: VerticalAlignment
 	let spacing: CGFloat
@@ -70,7 +61,7 @@ class SwiftUIStackView: UIStackView {
     let context: ExpandingContext
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues) {
-        let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
+        let diffResults = self.buildingBlocks.diff(other: buildingBlocks)
         let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
         let allDeletions = diffResults.deletion.map { ($0, self.arrangedSubviews[$0]) }
         let moving = diffResults.moved.map { ($0.1, self.arrangedSubviews[$0.0], buildingBlocks[$0.1]) }

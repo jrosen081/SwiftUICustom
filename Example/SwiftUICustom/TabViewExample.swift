@@ -18,6 +18,7 @@ struct TabViewExample: View {
     @State var totalOptions = ["fake"]
     @State var isRising = true
     @State var shouldAdd = false
+    @Environment(\.openUrl) var openUrl
     var body: some View {
         TabView {
             Text(whatOption ? "Not option 1" : "Option 1")
@@ -74,6 +75,12 @@ struct TabViewExample: View {
                 }, content: {
                     Text("Send the count to someone")
                 })
+                
+                Button {
+                    openUrl(URL(string: "https://www.google.com")!)
+                } content: {
+                    Text("Open Google")
+                }
             }.tabBarItem {
                 Text("Form")
                 Image(systemImage: "rectangle")

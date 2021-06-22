@@ -9,18 +9,9 @@ import Foundation
 
 public struct TaggedView<Tag: Hashable, Content: View>: View, Taggable {
     let tag: Tag
-    
-    public func _isEqual(toSameType other: TaggedView<Tag, Content>, environment: EnvironmentValues) -> Bool {
-        tag == other.tag && content._isEqual(to: other.content, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        tag.hash(into: &hasher)
-        content._hash(into: &hasher, environment: environment)
-    }
         
-    var taggedValue: Any {
-        return tag
+    var taggedValue: AnyHashable {
+        return AnyHashable(tag)
     }
     
     let content: Content
@@ -30,7 +21,7 @@ public struct TaggedView<Tag: Hashable, Content: View>: View, Taggable {
 }
 
 protocol Taggable {
-    var taggedValue: Any { get }
+    var taggedValue: AnyHashable { get }
 }
 
 public extension View {

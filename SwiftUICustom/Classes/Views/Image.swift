@@ -46,14 +46,6 @@ public struct Image: View {
 		}
 	}
     
-    public func _isEqual(toSameType other: Image, environment: EnvironmentValues) -> Bool {
-        other.image.isEqual(self.image)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        image.hash(into: &hasher)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         return image.size
     }

@@ -12,16 +12,6 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 	let contentCreator: Content
 	let binding: Binding<Bool>
     
-    public func _isEqual(toSameType other: PopoverView<PresentingView, Content>, environment: EnvironmentValues) -> Bool {
-        presentingView._isEqual(to: other.presentingView, environment: environment) && contentCreator._isEqual(to: other.contentCreator, environment: environment) && binding.wrappedValue == other.binding.wrappedValue
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        presentingView._hash(into: &hasher, environment: environment)
-        contentCreator._hash(into: &hasher, environment: environment)
-        binding.wrappedValue.hash(into: &hasher)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         presentingView._requestedSize(within: size, environment: environment)
     }

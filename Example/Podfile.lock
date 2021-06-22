@@ -1,15 +1,22 @@
 PODS:
-  - SwiftUICustom (0.1.0)
+  - Runtime (2.2.2)
+  - SwiftUICustom (0.1.0):
+    - Runtime
 
 DEPENDENCIES:
   - SwiftUICustom (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - Runtime
 
 EXTERNAL SOURCES:
   SwiftUICustom:
     :path: "../"
 
 SPEC CHECKSUMS:
-  SwiftUICustom: 133aa48b5268c6d65c92730883f90e6145a54391
+  Runtime: 67741bd196fb4ad821c4d259ccc527bf734d8806
+  SwiftUICustom: f9e85356daa138d1118ecdf621648658f38c531e
 
 PODFILE CHECKSUM: eabce768c1825a7f545fd3fe40fda93f6e8a772e
 

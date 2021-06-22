@@ -33,14 +33,6 @@ public struct PrimitiveButtonStyleConfiguration {
     }
     
     public struct Label: View {
-        public func _isEqual(toSameType other: PrimitiveButtonStyleConfiguration.Label, environment: EnvironmentValues) -> Bool {
-            buildingBlock._isEqual(to: other.buildingBlock, environment: environment)
-        }
-        
-        public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-            buildingBlock._hash(into: &hasher, environment: environment)
-        }
-        
         let buildingBlock: _BuildingBlock
         
         public var body: Self {

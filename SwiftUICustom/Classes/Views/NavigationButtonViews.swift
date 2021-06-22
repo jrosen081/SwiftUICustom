@@ -41,25 +41,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
 			rightItem._redraw(view: barItem, controller: controller, environment: environment)
 		}
 	}
-    
-    public func _isEqual(toSameType other: NavigationButtonViews<Left, Right, Content>, environment: EnvironmentValues) -> Bool {
-        guard (leftItem == nil) == (other.leftItem == nil) && (rightItem == nil) == (other.rightItem == nil) else { return false }
-        if let leftItem = leftItem, let otherLeft = other.leftItem {
-            guard leftItem._isEqual(to: otherLeft, environment: environment) else { return false }
-        }
         
-        if let rightItem = rightItem, let otherRight = other.rightItem {
-            guard rightItem._isEqual(to: otherRight, environment: environment) else { return false }
-        }
-        return actualView._isEqual(to: other.actualView, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        actualView._hash(into: &hasher, environment: environment)
-        leftItem?._hash(into: &hasher, environment: environment)
-        rightItem?._hash(into: &hasher, environment: environment)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         actualView._requestedSize(within: size, environment: environment)
     }

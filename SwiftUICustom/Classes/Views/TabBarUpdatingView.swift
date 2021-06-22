@@ -39,15 +39,6 @@ public struct TabBarUpdatingView<Content: View, TabBarItem: View>: View {
         }
     }
     
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        underlyingView._hash(into: &hasher, environment: environment)
-        tabBarItem._hash(into: &hasher, environment: environment)
-    }
-    
-    public func _isEqual(toSameType other: TabBarUpdatingView<Content, TabBarItem>, environment: EnvironmentValues) -> Bool {
-        underlyingView._isEqual(to: other.underlyingView, environment: environment) && tabBarItem._isEqual(to: other.tabBarItem, environment: environment)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         underlyingView._requestedSize(within: size, environment: environment)
     }

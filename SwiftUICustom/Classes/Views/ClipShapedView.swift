@@ -29,15 +29,6 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 		clippedView.shapeGeneric = self.shape
 	}
     
-    public func _isEqual(toSameType other: ClipShapedView<ShapeGeneric, Content>, environment: EnvironmentValues) -> Bool {
-        return shape._isEqual(to: other.shape, environment: environment) && content._isEqual(to: other.content, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        shape._hash(into: &hasher, environment: environment)
-        content._hash(into: &hasher, environment: environment)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         content._requestedSize(within: size, environment: environment)
     }

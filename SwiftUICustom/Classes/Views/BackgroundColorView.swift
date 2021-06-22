@@ -8,17 +8,7 @@
 import Foundation
 
 public struct BackgroundColorView<Content: View>: View {
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        color.hash(into: &hasher)
-        content._hash(into: &hasher, environment: environment)
-    }
-    
-    public func _isEqual(toSameType other: BackgroundColorView<Content>, environment: EnvironmentValues) -> Bool {
-        self.color == other.color && self.content._isEqual(to: other.content, environment: environment)
-    }
-        
-	let color: UIColor
+    let color: UIColor
 	let content: Content
 	
 	public var body: Self {

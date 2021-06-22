@@ -11,14 +11,6 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	let destination: Destination
 	let content: Content
     
-    public func _isEqual(toSameType other: NavigationLink<Content, Destination>, environment: EnvironmentValues) -> Bool {
-        return content._isEqual(to: other.content, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        content._hash(into: &hasher, environment: environment)
-    }
-	
 	public init(destination: Destination, content:  () -> Content) {
 		self.destination = destination
 		self.content = content()
@@ -29,7 +21,7 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		var newEnvironment = EnvironmentValues(environment)
+		var newEnvironment = environment
         weak var controller: UIViewController? = enclosingController
         let buttonControl: NavigationButtonLink
         if !environment.inList {
@@ -52,7 +44,7 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         weak var usableController: UIViewController? = controller
-		var newEnvironment = EnvironmentValues(environment)
+		var newEnvironment = environment
         if !environment.inList {
             newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
             self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)

@@ -8,15 +8,6 @@
 import Foundation
 
 public struct ZStack<Content: View>: View {
-    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
-        self.alignment == other.alignment && self.contentBuilder._isEqual(to: other.contentBuilder, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        alignment.hash(into: &hasher)
-        contentBuilder._hash(into: &hasher, environment: environment)
-    }
-    
 	let contentBuilder: Content
 	let alignment: Alignment
 	
@@ -56,7 +47,7 @@ class ZStackView: SwiftUIView {
     var buildingBlocks: [_BuildingBlock] = []
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues, alignment: Alignment) {
-        let diffResults = self.buildingBlocks.diff(other: buildingBlocks, environment: environment)
+        let diffResults = self.buildingBlocks.diff(other: buildingBlocks)
         let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
         let allDeletions = diffResults.deletion.map { ($0, self.subviews[$0]) }
         let moving = diffResults.moved.map { ($0.1, self.subviews[$0.0], buildingBlocks[$0.1]) }

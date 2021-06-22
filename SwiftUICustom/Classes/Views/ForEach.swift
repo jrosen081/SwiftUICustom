@@ -9,14 +9,6 @@ import Foundation
 
 public struct ForEach<Element, StorageType: Hashable, Content: View>: View, Expandable {
     
-    public func _isEqual(toSameType other: ForEach<Element, StorageType, Content>, environment: EnvironmentValues) -> Bool {
-        expanded().isEqual(to: other.expanded(), environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        expanded().hash(into: &hasher, environment: environment)
-    }
-    
 	let elements: [Element]
 	let mapper: (Element) -> StorageType
 	let contentMapper: (StorageType) -> TaggedView<StorageType, Content>

@@ -13,17 +13,6 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 	let stride: Float
 	let labelCreator: Label
     
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        range.hash(into: &hasher)
-        stride.hash(into: &hasher)
-        labelCreator._hash(into: &hasher, environment: environment)
-        binding.wrappedValue.hash(into: &hasher)
-    }
-    
-    public func _isEqual(toSameType other: Slider<Label, ValueLabel>, environment: EnvironmentValues) -> Bool {
-        range == other.range && stride == other.stride && labelCreator._isEqual(to: other.labelCreator, environment: environment) && binding.wrappedValue == other.binding.wrappedValue
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         let width = size.width
         return CGSize(width: width, height: max(labelCreator._requestedSize(within: size, environment: environment).height, UISlider().intrinsicContentSize.height))

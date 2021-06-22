@@ -22,14 +22,6 @@ public struct EmptyView: View {
 		// Do nothing
 	}
     
-    public func _isEqual(toSameType other: EmptyView, environment: EnvironmentValues) -> Bool {
-        return true
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        1000.hash(into: &hasher)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         return .zero
     }

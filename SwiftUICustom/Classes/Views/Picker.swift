@@ -8,15 +8,6 @@
 import Foundation
 
 public struct Picker<Label, SelectionValue, Content>: View where Label : View, SelectionValue : Hashable, Content : View {
-    public func _isEqual(toSameType other: Picker<Label, SelectionValue, Content>, environment: EnvironmentValues) -> Bool {
-        label._isEqual(to: other.label, environment: environment) && content._isEqual(to: other.content, environment: environment) && selectionValue.wrappedValue == other.selectionValue.wrappedValue
-    }
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        label._hash(into: &hasher, environment: environment)
-        selectionValue.wrappedValue.hash(into: &hasher)
-        content._hash(into: &hasher, environment: environment)
-    }
-    
     let label: Label
     let content: Content
     let selectionValue: Binding<SelectionValue>

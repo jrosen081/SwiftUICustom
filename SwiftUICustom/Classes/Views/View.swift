@@ -7,20 +7,9 @@
 
 import UIKit
 
-public protocol View: _View {
+public protocol View: _BuildingBlock {
 	associatedtype Content: View
 	var body: Content { get }
-}
-
-public protocol _View : _BuildingBlock {
-    func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool
-}
-
-extension _View {
-    public func _isEqual(to other: _BuildingBlock, environment: EnvironmentValues) -> Bool {
-        guard let other = other as? Self else { return false }
-        return self._isEqual(toSameType: other, environment: environment)
-    }
 }
 
 
@@ -41,8 +30,8 @@ public protocol _BuildingBlock {
 	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
     var _viewInfo: _ViewInfo { get }
-    func _isEqual(to other: _BuildingBlock, environment: EnvironmentValues) -> Bool
-    func _hash(into hasher: inout Hasher, environment: EnvironmentValues)
+    func _isEqual(to other: _BuildingBlock) -> Bool
+    func _hash(into hasher: inout Hasher)
     func _reset()
     func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize
 }
@@ -58,34 +47,33 @@ extension _BuildingBlock {
 
 struct DiffableBuildingBlock: Hashable {
     let buildingBlock: _BuildingBlock
-    let environmentValues: EnvironmentValues
     
     func hash(into hasher: inout Hasher) {
-        buildingBlock._hash(into: &hasher, environment: environmentValues)
+        buildingBlock._hash(into: &hasher)
     }
     
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.buildingBlock._isEqual(to: rhs.buildingBlock, environment: lhs.environmentValues)
+        lhs.buildingBlock._isEqual(to: rhs.buildingBlock)
     }
 }
 
 extension Array where Element == _BuildingBlock {
-    func isEqual(to rhs: Self, environment: EnvironmentValues) -> Bool {
+    func isEqual(to rhs: Self) -> Bool {
         let lhs = self
-        return lhs.count == rhs.count && zip(lhs, rhs).allSatisfy{ $0.0._isEqual(to: $0.1, environment: environment) }
+        return lhs.count == rhs.count && zip(lhs, rhs).allSatisfy{ $0.0._isEqual(to: $0.1) }
     }
     
     func hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        self.forEach { $0._hash(into: &hasher, environment: environment) }
+        self.forEach { $0._hash(into: &hasher) }
     }
     
-    func diff(other: Self, environment: EnvironmentValues) -> DiffReturnType {
-        var otherMap = Dictionary(grouping: other.map { DiffableBuildingBlock(buildingBlock: $0, environmentValues: environment) }.enumerated(), by: \.1)
+    func diff(other: Self) -> DiffReturnType {
+        var otherMap = Dictionary(grouping: other.map { DiffableBuildingBlock(buildingBlock: $0) }.enumerated(), by: \.1)
         var deletions = [Int]()
         var additions = [Int]()
         var moved = [(from: Int, to: Int)]()
         for (offset, value) in self.enumerated() {
-            let representable = DiffableBuildingBlock(buildingBlock: value, environmentValues: environment)
+            let representable = DiffableBuildingBlock(buildingBlock: value)
             if var locations = otherMap[representable], let index = locations.first?.offset {
                 moved.append((offset, index))
                 locations.removeFirst()
@@ -104,24 +92,11 @@ extension Array where Element == _BuildingBlock {
 typealias DiffReturnType = (deletion: [Int], additions: [Int], moved: [(Int, Int)])
 
 extension View {
-    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
-        let mirror = Mirror(reflecting: self)
-        mirror.children.map { $0.value }
-            .compactMap { $0 as? EnvironmentNeeded }
-            .forEach { $0.environment = environment }
-        let otherMirror = Mirror(reflecting: other)
-        otherMirror.children.map { $0.value }
-            .compactMap { $0 as? EnvironmentNeeded }
-            .forEach { $0.environment = environment }
-        return self.body._isEqual(to: other.body, environment: environment)
+    public func _isEqual(to other: _BuildingBlock) -> Bool {
+        return other is Self
     }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        let mirror = Mirror(reflecting: self)
-        mirror.children.map { $0.value }
-            .compactMap { $0 as? EnvironmentNeeded }
-            .forEach { $0.environment = environment }
-        return self.body._hash(into: &hasher, environment: environment)
+    public func _hash(into hasher: inout Hasher) {
+        ObjectIdentifier(type(of: self)).hash(into: &hasher)
     }
     
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
@@ -200,15 +175,7 @@ struct BuildingBlockRepresentable: View {
     func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
     }
-    
-    func _isEqual(toSameType other: BuildingBlockRepresentable, environment: EnvironmentValues) -> Bool {
-        return other.buildingBlock._isEqual(to: self, environment: environment)
-    }
         
-    func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        self.buildingBlock._hash(into: &hasher, environment: environment)
-    }
-    
     func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         return self.buildingBlock._requestedSize(within: size, environment: environment)
     }
@@ -258,14 +225,6 @@ public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         buildingBlock._redraw(view: view, controller: controller, environment: environment)
 	}
-    
-    public func _isEqual(toSameType other: _ViewModifier_Content<Modifier>, environment: EnvironmentValues) -> Bool {
-        return self.buildingBlock._isEqual(to: other.buildingBlock, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        buildingBlock._hash(into: &hasher, environment: environment)
-    }
     
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         buildingBlock._requestedSize(within: size, environment: environment)

@@ -7,15 +7,7 @@
 
 import Foundation
 
-public struct AnyView: View {
-    public func _isEqual(toSameType other: Self, environment: EnvironmentValues) -> Bool {
-        return false
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        Int.random(in: 0..<Int.max).hash(into: &hasher)
-    }
-    
+public struct AnyView: View {    
     let buildingBlock: _BuildingBlock
 	
 	public init<S: View>(_ view: S) {

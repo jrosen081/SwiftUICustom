@@ -8,15 +8,6 @@
 import Foundation
 
 public struct OnTapGestureView<Content: View>: View {
-    public func _isEqual(toSameType other: OnTapGestureView<Content>, environment: EnvironmentValues) -> Bool {
-        content._isEqual(to: other.content, environment: environment) && reload == other.reload
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        content._hash(into: &hasher, environment: environment)
-        reload.hash(into: &hasher)
-    }
-    
 	let content: Content
 	let onClick: () -> ()
     let reload: Bool

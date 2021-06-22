@@ -29,16 +29,6 @@ public struct BorderedView<Content: View>: View {
 		content._redraw(view: view, controller: controller, environment: environment)
 	}
     
-    public func _isEqual(toSameType other: BorderedView<Content>, environment: EnvironmentValues) -> Bool {
-        return self.content._isEqual(to: other, environment: environment) && width == other.width && color == other.color
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        content._hash(into: &hasher, environment: environment)
-        width.hash(into: &hasher)
-        color.hash(into: &hasher)
-    }
-    
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         content._requestedSize(within: size, environment: environment)
     }

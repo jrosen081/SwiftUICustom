@@ -30,16 +30,6 @@ public struct TransformedView<Content: View>: View {
 	let transform: CGAffineTransform
 	let anchorPoint: CGPoint
     
-    public func _isEqual(toSameType other: TransformedView<Content>, environment: EnvironmentValues) -> Bool {
-        content._isEqual(to: other.content, environment: environment) && transform == other.transform && anchorPoint == other.anchorPoint
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        content._hash(into: &hasher, environment: environment)
-        transform.hash(into: &hasher)
-        anchorPoint.hash(into: &hasher)
-    }
-	
 	public var body: Self {
 		return self
 	}

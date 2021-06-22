@@ -8,14 +8,17 @@
 import Foundation
 
 public struct Text: View {
-    public func _isEqual(toSameType other: Text, environment: EnvironmentValues) -> Bool {
-        text == other.text
+    public enum Case {
+        case lowercase
+        case uppercase
+        
+        func updateText(_ str: String) -> String {
+            switch self {
+            case .lowercase: return str.lowercased()
+            case .uppercase: return str.uppercased()
+            }
+        }
     }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        text.hash(into: &hasher)
-    }
-    
 	let text: String
 	
 	public init(_ text: String) {
@@ -34,7 +37,7 @@ public struct Text: View {
 	
 	func setupData(label: UILabel, environment: EnvironmentValues) {
 		label.translatesAutoresizingMaskIntoConstraints = false
-		label.text = text
+        label.text = environment.textCase?.updateText(text) ?? text
 		label.textAlignment = environment.multilineTextAlignment
 		label.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
         label.adjustsFontSizeToFitWidth = true
@@ -42,6 +45,7 @@ public struct Text: View {
 		label.font = environment.font
 		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
         label.numberOfLines = environment.lineLimit ?? 0
+        label.lineBreakMode = environment.truncationType
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {

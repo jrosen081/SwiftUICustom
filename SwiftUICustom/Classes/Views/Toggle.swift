@@ -11,15 +11,6 @@ public struct Toggle<Label: View>: View {
 	let creation: Label
 	let isOn: Binding<Bool>
     
-    public func _isEqual(toSameType other: Toggle<Label>, environment: EnvironmentValues) -> Bool {
-        creation._isEqual(to: other.creation, environment: environment) && isOn.wrappedValue == other.isOn.wrappedValue
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        creation._hash(into: &hasher, environment: environment)
-        isOn.wrappedValue.hash(into: &hasher)
-    }
-	
 	public init(isOn: Binding<Bool>, @ViewBuilder creation: () -> Label) {
 		self.creation = creation()
 		self.isOn = isOn

@@ -20,7 +20,7 @@ public struct Button<ButtonContent: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		var newEnvironment = EnvironmentValues(environment)
+		var newEnvironment = environment
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
         let view = environment.buttonStyle._makeBody(configuration: actualThing)._toUIView(enclosingController: enclosingController, environment: newEnvironment)
@@ -30,20 +30,12 @@ public struct Button<ButtonContent: View>: View {
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		var newEnvironment = EnvironmentValues(environment)
+		var newEnvironment = environment
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
         environment.buttonStyle._makeBody(configuration: actualThing)._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 	}
     
-    public func _isEqual(toSameType other: Button<ButtonContent>, environment: EnvironmentValues) -> Bool {
-        return content._isEqual(to: other.content, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        content._hash(into: &hasher, environment: environment)
-    }
-	
     public func _resetLinks(view: UIView, controller: UIViewController) {
         // Do nothing
     }

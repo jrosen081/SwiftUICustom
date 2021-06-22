@@ -8,17 +8,7 @@
 import Foundation
 
 public struct VStack<Content: View>: View {
-    
-    public func _isEqual(toSameType other: VStack<Content>, environment: EnvironmentValues) -> Bool {
-        self.alignment == other.alignment && self.spacing == other.spacing && self.viewCreator._isEqual(to: other.viewCreator, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        alignment.hash(into: &hasher)
-        spacing.hash(into: &hasher)
-        viewCreator._hash(into: &hasher, environment: environment)
-    }
-    
+        
     public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
         size // TODO: This
     }

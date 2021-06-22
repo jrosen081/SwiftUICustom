@@ -10,49 +10,7 @@ import Foundation
 extension NSTextAlignment: Hashable {}
 extension UIKeyboardType: Hashable {}
 
-public struct EnvironmentValues: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        lineLimit?.hash(into: &hasher)
-        lineSpacing.hash(into: &hasher)
-        minimumScaleFactor.hash(into: &hasher)
-        multilineTextAlignment.hash(into: &hasher)
-        keyboardType.hash(into: &hasher)
-        font?.hash(into: &hasher)
-        isLabelsHidden.hash(into: &hasher)
-        listStyle._tableViewStyle.hash(into: &hasher)
-        foregroundColor?.hash(into: &hasher)
-        allowsTightening.hash(into: &hasher)
-        textContentType?.hash(into: &hasher)
-        currentAnimation?.hash(into: &hasher)
-        currentTransition?.hash(into: &hasher)
-        pickerStyle._pickerStyle.hash(into: &hasher)
-        inList.hash(into: &hasher)
-        textFieldStyle._testFieldStyle.hash(into: &hasher)
-        colorScheme.hash(into: &hasher)
-        keyLookers.hash(into: &hasher)
-    }
-    
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.lineLimit == rhs.lineLimit
-            && lhs.lineSpacing == rhs.lineSpacing
-            && lhs.minimumScaleFactor == rhs.minimumScaleFactor
-            && lhs.multilineTextAlignment == rhs.multilineTextAlignment
-            && lhs.keyboardType == rhs.keyboardType
-            && lhs.font == rhs.font
-            && lhs.isLabelsHidden == rhs.isLabelsHidden
-            && lhs.listStyle._tableViewStyle == rhs.listStyle._tableViewStyle
-            && lhs.foregroundColor == rhs.foregroundColor
-            && lhs.allowsTightening == rhs.allowsTightening
-            && lhs.textContentType == rhs.textContentType
-            && lhs.currentTransition == rhs.currentTransition
-            && lhs.currentAnimation == rhs.currentAnimation
-            && lhs.pickerStyle._pickerStyle == rhs.pickerStyle._pickerStyle
-            && lhs.inList == rhs.inList
-            && lhs.textFieldStyle._testFieldStyle == rhs.textFieldStyle._testFieldStyle
-            && lhs.colorScheme == rhs.colorScheme
-            && lhs.keyLookers == rhs.keyLookers
-    }
-    
+public struct EnvironmentValues {    
 	public var lineLimit: Int? = nil {
 		didSet {
 			if let limit = lineLimit, limit < 1 {
@@ -60,6 +18,8 @@ public struct EnvironmentValues: Hashable {
 			}
 		}
 	}
+    
+    private(set) public var openUrl = OpenURLAction()
 	
 	public var lineSpacing: CGFloat = 10
 	
@@ -68,10 +28,20 @@ public struct EnvironmentValues: Hashable {
 	public var multilineTextAlignment: NSTextAlignment = .center
     
     public var keyboardType: UIKeyboardType = .default
+    
+    public var truncationType = NSLineBreakMode.byTruncatingTail
+    
+    public var disableAutocorrection: Bool? = nil
+    
+    public var textCase: Text.Case?
+    
+    public var calendar: Calendar = Calendar.autoupdatingCurrent
 
 	public var font: UIFont? = nil
     
     public var isLabelsHidden = false
+    
+    public var locale: Locale = Locale.current
     
     var listStyle: ListStyle = DefaultListStyle()
 	
@@ -103,28 +73,32 @@ public struct EnvironmentValues: Hashable {
             self[PrimitiveButtonStyleKey.self] = newValue
         }
     }
+    
+    public private(set) var presentationMode: PresentationMode = PresentationMode(isPresented: false, dismiss: {})
+    
+    public var timeZone: TimeZone = TimeZone.current
+    
+    public var horizontalSizeClass: UIUserInterfaceSizeClass? = nil
+    
+    public var verticallSizeClass: UIUserInterfaceSizeClass? = nil
 	
 	public var colorScheme: ColorScheme = .light
 	
 	func withUpdates(_ updates: (inout EnvironmentValues) -> ()) -> EnvironmentValues {
-		var value = EnvironmentValues(self)
+		var value = self
 		updates(&value)
 		return value
 	}
 	
     // TODO: Rethink this one
-	var keyLookers: [KeyLooker] = []
+    var keyLookers: [ObjectIdentifier: Any] = [:]
 	
 	subscript<K>(key: K.Type) -> K.Value where K : EnvironmentKey {
 		get {
-			(self.keyLookers.first(where: { $0.classValue is K.Type })?.actualValue as? K.Value) ?? K.defaultValue
+            self.keyLookers[ObjectIdentifier(key)] as? K.Value ?? key.defaultValue
 		}
 		set {
-			if var looker = self.keyLookers.first(where: { $0.classValue is K.Type }) {
-				looker.actualValue = newValue
-			} else {
-				self.keyLookers.append(KeyLooker(actualValue: newValue, classValue: K.self))
-			}
+            self.keyLookers[ObjectIdentifier(key)] = newValue
 		}
 	}
 }
@@ -167,29 +141,13 @@ struct KeyLooker: Hashable {
 }
 
 extension EnvironmentValues {
-	init(_ values: EnvironmentValues) {
-		self.lineLimit = values.lineLimit
-		self.lineSpacing = values.lineSpacing
-		self.minimumScaleFactor = values.minimumScaleFactor
-		self.multilineTextAlignment = values.multilineTextAlignment
-		self.font = values.font
-		self.foregroundColor = values.foregroundColor
-		self.allowsTightening = values.allowsTightening
-		self.textContentType = values.textContentType
-		self.keyLookers = values.keyLookers
-		self.currentTransition = values.currentTransition
-		self.currentAnimation = values.currentAnimation
-        self.isLabelsHidden = values.isLabelsHidden
-        self.keyboardType = values.keyboardType
-        self.listStyle = values.listStyle
-        self.pickerStyle = values.pickerStyle
-        self.inList = values.inList
-        self.colorScheme = values.colorScheme
-        self.textFieldStyle = values.textFieldStyle
-	}
-	
 	init(_ controller: UIViewController) {
 		self = EnvironmentValues()
+        self.presentationMode = PresentationMode(isPresented: controller.presentingViewController != nil) { [weak controller] in
+            controller?.dismiss(animated: true, completion: nil)
+        }
+        self.horizontalSizeClass = controller.traitCollection.horizontalSizeClass
+        self.verticallSizeClass = controller.traitCollection.verticalSizeClass
 		if #available(iOS 12.0, *) {
 			self.colorScheme = controller.traitCollection.userInterfaceStyle == .dark ? .dark : .light
 		} else {

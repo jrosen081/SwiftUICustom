@@ -12,16 +12,6 @@ public struct TextField<Label: View>: View {
 	let label: Label
     let isSecure: Bool
     
-    public func _isEqual(toSameType other: TextField<Label>, environment: EnvironmentValues) -> Bool {
-        self.label._isEqual(to: other.label, environment: environment) && self.binding.wrappedValue == other.binding.wrappedValue && self.isSecure == other.isSecure
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        binding.wrappedValue.hash(into: &hasher)
-        label._hash(into: &hasher, environment: environment)
-        isSecure.hash(into: &hasher)
-    }
-    
 	public var body: Self {
 		return self
 	}
@@ -34,6 +24,7 @@ public struct TextField<Label: View>: View {
         swiftUITextField.font = environment.font
         swiftUITextField.keyboardType = environment.keyboardType
         swiftUITextField.textContentType = environment.textContentType
+        swiftUITextField.autocorrectionType = environment.disableAutocorrection ?? false ? .no : .default
 		stackView.translatesAutoresizingMaskIntoConstraints = false
 		stackView.axis = .horizontal
         otherView.isHidden = environment.isLabelsHidden

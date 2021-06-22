@@ -9,17 +9,6 @@ import Foundation
 
 public struct DatePicker<Label: View>: View {
     
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        label._hash(into: &hasher, environment: environment)
-        components.hash(into: &hasher)
-        range.hash(into: &hasher)
-        binding.wrappedValue.hash(into: &hasher)
-    }
-    
-    public func _isEqual(toSameType other: DatePicker<Label>, environment: EnvironmentValues) -> Bool {
-        label._isEqual(to: other.label, environment: environment) && components == other.components && range == other.range && binding.wrappedValue == other.binding.wrappedValue
-    }
-    
     let label: Label
     let components: UIDatePicker.Mode
     let range: ClosedRange<Date>
@@ -44,8 +33,11 @@ public struct DatePicker<Label: View>: View {
     
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let datePicker = SwiftUIDatePicker(binding: self.binding)
+        datePicker.calendar = environment.calendar
         datePicker.minimumDate = self.range.lowerBound
         datePicker.maximumDate = self.range.upperBound
+        datePicker.locale = environment.locale
+        datePicker.timeZone = environment.timeZone
         let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
         let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: datePicker)])
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -58,7 +50,10 @@ public struct DatePicker<Label: View>: View {
         let picker = view.subviews[1] as? SwiftUIDatePicker
         picker?.minimumDate = self.range.lowerBound
         picker?.maximumDate = self.range.upperBound
+        picker?.locale = environment.locale
+        picker?.calendar = environment.calendar
         picker?.binding = self.binding
+        picker?.timeZone = environment.timeZone
         self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
     }

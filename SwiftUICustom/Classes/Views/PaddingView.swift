@@ -23,16 +23,6 @@ public struct Corner: OptionSet {
 
 public struct PaddingView<Content: View>: View {
     
-    public func _isEqual(toSameType other: PaddingView<Content>, environment: EnvironmentValues) -> Bool {
-        paddingSpace == other.paddingSpace && paddingCorners == other.paddingCorners && underlyingView._isEqual(to: other.underlyingView, environment: environment)
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        self.paddingCorners.rawValue.hash(into: &hasher)
-        self.paddingSpace.hash(into: &hasher)
-        self.underlyingView._hash(into: &hasher, environment: environment)
-    }
-    
 	let paddingCorners: Corner
 	let paddingSpace: CGFloat
 	let underlyingView: Content

@@ -310,10 +310,12 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-SwiftUICustom_Example/Pods-SwiftUICustom_Example-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Runtime/Runtime.framework",
 				"${BUILT_PRODUCTS_DIR}/SwiftUICustom/SwiftUICustom.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Runtime.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SwiftUICustom.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

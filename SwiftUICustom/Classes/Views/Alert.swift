@@ -74,19 +74,6 @@ public struct Alert: Hashable {
 }
 
 public struct AlertView<Content: View>: View {
-    
-    public func _isEqual(toSameType other: AlertView<Content>, environment: EnvironmentValues) -> Bool {
-        let lhs = self
-        let rhs = other
-        return lhs.alert == rhs.alert && lhs.content._isEqual(to: rhs, environment: environment) && lhs.binding.wrappedValue == rhs.binding.wrappedValue
-    }
-    
-    public func _hash(into hasher: inout Hasher, environment: EnvironmentValues) {
-        alert.hash(into: &hasher)
-        content._hash(into: &hasher, environment: environment)
-        binding.wrappedValue.hash(into: &hasher)
-    }
-    
 	let binding: Binding<Bool>
 	let alert: Alert
 	let content: Content
