@@ -57,7 +57,7 @@ struct SixthView: View {
 			if self.number <= 5 {
 				Button(action: {
                     self.pickerValue = "Mine"
-					withAnimation {
+                    withAnimation(animation: .easeIn(duration: 1)) {
 						self.number += 1
 					}
 				}, content: {
@@ -65,7 +65,6 @@ struct SixthView: View {
 						.transformEffect(number <= 1 ? .identity : .init(translationX: 10, y: 0))
 				})
                     .overlay(RoundedRectangle(cornerRadius: 5).stroke(lineWidth: 1))
-                    .animation(.easeIn(duration: 1))
 			} else {
 				Text("This is a big number")
 				.padding()
@@ -104,6 +103,12 @@ struct SixthView: View {
 			NavigationLink(destination: TopView(), content: {
 				Text("On to the Next")
 			})
+            
+            GroupBox(content: {
+                Text("Inside this beautiful box")
+            }, label: {
+                Label("Agreement", systemImage: "trash.slash.fill")
+            })
 		}.transition(.opacity)
 	}
 }

@@ -21,7 +21,9 @@ public struct ScrollView<Content: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let scrollView = SwiftUIScrollView(frame: .zero)
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
+        environment.currentStateNode.buildingBlock = self.viewBuilder
 		let scrollableView = self.viewBuilder._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+        environment.currentStateNode.uiView = scrollableView
 		scrollView.addSubview(scrollableView)
 		NSLayoutConstraint.activate([
 			scrollView.contentLayoutGuide.leadingAnchor.constraint(equalTo: scrollableView.leadingAnchor),
@@ -35,18 +37,7 @@ public struct ScrollView<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.viewBuilder._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size
-    }
 }
 
 class SwiftUIScrollView: UIScrollView {
-	override var intrinsicContentSize: CGSize {
-		UIView.layoutFittingExpandedSize
-	}
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return true
-	}
 }

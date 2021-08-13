@@ -9,10 +9,6 @@ import Foundation
 
 public struct VStack<Content: View>: View {
         
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size // TODO: This
-    }
-    
 	let viewCreator: Content
 	let spacing: CGFloat
 	let alignment: HorizontalAlignment
@@ -30,8 +26,8 @@ public struct VStack<Content: View>: View {
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let view = viewCreator
         let buildingBlocks = view.expanded()
-        let underlyingViews = buildingBlocks.map { $0._toUIView(enclosingController: enclosingController, environment: environment) }
-        let stackView = SwiftUIStackView(arrangedSubviews: underlyingViews, context: .vertical, buildingBlocks: buildingBlocks)
+        let stackView = SwiftUIStackView(arrangedSubviews: [], buildingBlocks: [])
+        stackView.diff(buildingBlocks: buildingBlocks, controller: enclosingController, environment: environment)
         stackView.alignment = self.alignment.stackViewAlignment
         stackView.spacing = self.spacing
         stackView.axis = .vertical

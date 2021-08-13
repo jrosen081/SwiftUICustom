@@ -46,10 +46,6 @@ public struct PrimitiveButtonStyleConfiguration {
         public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
             self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
         }
-        
-        public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-            buildingBlock._requestedSize(within: size, environment: environment)
-        }
     }
 }
 

@@ -28,22 +28,29 @@ public struct TabView<Selection: Hashable, Content: View>: View {
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let allOptions = content.expanded()
         let tabBarController = UITabBarController(nibName: nil, bundle: nil)
-        tabBarController.viewControllers = allOptions.map(BuildingBlockRepresentable.init(buildingBlock:)).map(SwiftUIController.init(swiftUIView:))
+        tabBarController.viewControllers = allOptions.map(_BuildingBlockRepresentable.init(buildingBlock:)).enumerated().map { index, view in
+            let controller = SwiftUIController.init(swiftUIView: view)
+            controller.environment = environment
+            controller.loadViewIfNeeded()
+            environment.currentStateNode.addChild(node: controller.domNode, index: index)
+            return controller
+        }
         enclosingController.addChild(tabBarController)
         tabBarController.view.translatesAutoresizingMaskIntoConstraints = false
         tabBarController.view.insetsLayoutMarginsFromSafeArea = false
+        
         return tabBarController.view
     }
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         let allOptions = content.expanded()
         guard let tabBarController = controller.children.first(where: { $0 is UITabBarController }) as? UITabBarController else { return }
-        zip(tabBarController.viewControllers!, allOptions).forEach {(controller, view) in
-            view._redraw(view: controller.view.subviews[0], controller: controller, environment: environment)
+        let nodes = environment.currentStateNode.childNodes
+        zip(zip(tabBarController.viewControllers!, allOptions), nodes).forEach {(viewControllerOptions, node) in
+            let (controller, view) = viewControllerOptions
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = node
+            view._redraw(view: controller.view.subviews[0], controller: controller, environment: newEnvironment)
         }
-    }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size
     }
 }

@@ -58,7 +58,7 @@ struct TabViewExample: View {
                         Text("12").padding().tag(12)
                         Text("55").padding().tag(55)
                         Text("44").padding().tag(44)
-                        Image(systemImage: "trash").fixedSize(width: 30, height: 50).tag(100)
+                        Image(systemImage: "trash").frame(width: 30, height: 50).tag(100)
                     }
                 }
                 Section(header: Text("Username and Password")) {
@@ -84,6 +84,14 @@ struct TabViewExample: View {
             }.tabBarItem {
                 Text("Form")
                 Image(systemImage: "rectangle")
+            }
+            
+            VStack {
+                Spacer()
+                Text("Test spacer")
+                Spacer()
+            }.tabBarItem {
+                Text("Spacer test")
             }
         }.navigationTitle("Tab View Let's GOOOO")
     }

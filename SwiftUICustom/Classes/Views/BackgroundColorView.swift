@@ -17,7 +17,9 @@ public struct BackgroundColorView<Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = SwiftUIView(frame: .zero)
+        environment.currentStateNode.buildingBlock = content
 		let contentView = content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = contentView
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.addSubview(contentView)
 		NSLayoutConstraint.activate([
@@ -32,12 +34,9 @@ public struct BackgroundColorView<Content: View>: View {
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		view.backgroundColor = self.color
+        environment.currentStateNode.environment = environment
 		self.content._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        self.content._requestedSize(within: size, environment: environment)
-    }
 }
 
 public extension View {

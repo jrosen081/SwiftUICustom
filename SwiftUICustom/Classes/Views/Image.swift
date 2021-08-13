@@ -45,14 +45,7 @@ public struct Image: View {
 			updateView(imageView, environment: environment)
 		}
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        return image.size
-    }
 }
 
 extension UIImageView {
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return true
-	}
 }

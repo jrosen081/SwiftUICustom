@@ -21,16 +21,6 @@ public struct OverlayView<Under: View, Over: View>: View {
     
 }
 
-class OverlayUIKitView: SwiftUIView {
-    override var intrinsicContentSize: CGSize {
-        return self.subviews[0].intrinsicContentSize
-    }
-    
-    override func willExpand(in context: ExpandingContext) -> Bool {
-        return self.subviews[0].willExpand(in: context)
-    }
-}
-
 public extension View {
     func overlay<V: View>(_ over: V, alignment: Alignment = .center) -> OverlayView<Self, V> {
         return OverlayView(under: self, over: over, alignment: alignment)

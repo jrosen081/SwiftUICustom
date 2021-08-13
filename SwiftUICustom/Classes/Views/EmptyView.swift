@@ -21,10 +21,6 @@ public struct EmptyView: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		// Do nothing
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        return .zero
-    }
 }
 
 class ShrinkingView: UIView {

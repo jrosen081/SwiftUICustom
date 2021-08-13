@@ -53,27 +53,11 @@ public struct Text: View {
 		setupData(label: swiftUILabel.label, environment: environment)
 	}
 	
-    public func _resetLinks(view: UIView, controller: UIViewController) {
-        // Do nothing
-    }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        return (text as NSString).boundingRect(with: size, options: [], attributes: [.font: environment.font ?? UIFont.systemFont(ofSize: UIFont.systemFontSize)], context: .none).size
-    }
-	
 }
 
 internal class SwiftUILabel: SwiftUIView {
 	let label: UILabel
-    
-    override var intrinsicContentSize: CGSize {
-        let newLabel = UILabel(frame: .zero)
-        newLabel.text = label.text
-        newLabel.font = label.font
-        newLabel.textAlignment = label.textAlignment
-        return newLabel.intrinsicContentSize
-    }
-	
+    	
 	init(label view: UILabel) {
 		self.label = view
 		super.init(frame: .zero)

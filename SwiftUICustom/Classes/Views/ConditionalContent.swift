@@ -7,8 +7,6 @@
 
 import Foundation
 
-
-
 public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
     enum ActualContent {
 		case first(TrueContent)
@@ -25,16 +23,25 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 		let conditionalContainer = ConditionalContainer(frame: .zero)
 		conditionalContainer.translatesAutoresizingMaskIntoConstraints = false
 		let underlyingView: UIView
+        var newEnvironment = environment
 		switch self.actualContent {
 		case .first(let view):
-			underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
+            let newNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: view)
+            newEnvironment.currentStateNode = newNode
+			underlyingView = view._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+            newNode.uiView = underlyingView
+            environment.currentStateNode.addChild(node: newNode, index: 0)
 			conditionalContainer.isTrue = true
 		case .second(let view):
-            underlyingView = view._toUIView(enclosingController: enclosingController, environment: environment)
+            let newNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: view)
+            newEnvironment.currentStateNode = newNode
+            underlyingView = view._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+            newNode.uiView = underlyingView
+            environment.currentStateNode.addChild(node: newNode, index: 0)
 			conditionalContainer.isTrue = false
 		}
 		conditionalContainer.addSubview(underlyingView)
-		conditionalContainer.setupFullConstraints(conditionalContainer, underlyingView, usingGreaterThan: true)
+		conditionalContainer.setupFullConstraints(conditionalContainer, underlyingView, usingGreaterThan: false)
 		return conditionalContainer
 	}
 	
@@ -43,25 +50,31 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 		
 		let whenFinished: () -> ()
 		let transitions: (AnyTransition) -> ()
-		
+        var newEnvironment = environment
 		switch (self.actualContent, conditional.isTrue) {
 		case (.first(let first), true):
-			first._redraw(view: conditional.subviews[0], controller: controller, environment: environment)
+            newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
+			first._redraw(view: conditional.subviews[0], controller: controller, environment: newEnvironment)
 			return
 		case (.first(let first), false):
 			conditional.isTrue = true
-			var newValue = first._toUIView(enclosingController: controller, environment: environment)
+            let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: first)
+            newEnvironment.currentStateNode = newNode
+            var newValue = first._toUIView(enclosingController: controller, environment: newEnvironment)
+            environment.currentStateNode.childNodes[0] = newNode
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false
 				newValue = conditional.subviews[0]
 				first._redraw(view: newValue, controller: controller, environment: environment)
 			}
+            newNode.uiView = newValue
 			whenFinished = {
 				conditional.subviews.filter { $0 != newValue }.forEach { $0.removeFromSuperview() }
+                conditional.sizeToFit()
 			}
 			conditional.addSubview(newValue)
-			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: true)
+			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: false)
 			conditional.bringSubviewToFront(newValue)
 			if let transition = environment.currentTransition, environment.currentAnimation != nil, applyTransition {
 				transition.performTransition(newValue, controller.view.bounds.size, true)
@@ -73,18 +86,23 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			}
 		case(.second(let second), true):
 			conditional.isTrue = false
-			var newValue = second._toUIView(enclosingController: controller, environment: environment)
+            let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: second)
+            newEnvironment.currentStateNode = newNode
+            var newValue = second._toUIView(enclosingController: controller, environment: newEnvironment)
+            environment.currentStateNode.childNodes[0] = newNode
 			var applyTransition = true
 			if conditional.subviews.count == 2 {
 				applyTransition = false
 				newValue = conditional.subviews[0]
 				second._redraw(view: newValue, controller: controller, environment: environment)
 			}
+            newNode.uiView = newValue
 			whenFinished = {
 				conditional.subviews.filter { $0 != newValue }.forEach { $0.removeFromSuperview() }
+                conditional.sizeToFit()
 			}
 			conditional.addSubview(newValue)
-			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: true)
+			conditional.setupFullConstraints(conditional, newValue, usingGreaterThan: false)
 			conditional.bringSubviewToFront(newValue)
 			if let transition = environment.currentTransition, environment.currentAnimation != nil, applyTransition {
 				transition.performTransition(newValue, controller.view.bounds.size, true)
@@ -95,7 +113,8 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 				newValue.transform = .identity
 			}
 		case (.second(let second), false):
-			second._redraw(view: conditional.subviews[0], controller: controller, environment: environment)
+            newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
+			second._redraw(view: conditional.subviews[0], controller: controller, environment: newEnvironment)
 			return
 		}
 		
@@ -114,13 +133,6 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			whenFinished()
 		}
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        switch self.actualContent {
-        case .first(let first): return first._requestedSize(within: size, environment: environment)
-        case .second(let second): return second._requestedSize(within: size, environment: environment)
-        }
-    }
 }
 
 class ConditionalContainer: SwiftUIView {

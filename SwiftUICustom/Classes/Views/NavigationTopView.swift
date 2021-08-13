@@ -21,7 +21,10 @@ public struct NavigationTopView<Content: View>: View {
 		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
             enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
 		}
-		return self.content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.buildingBlock = self.content
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
+        return view
 	}
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -30,10 +33,6 @@ public struct NavigationTopView<Content: View>: View {
             controller.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
         }
         self.content._redraw(view: view, controller: controller, environment: environment)
-    }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment)
     }
 }
 

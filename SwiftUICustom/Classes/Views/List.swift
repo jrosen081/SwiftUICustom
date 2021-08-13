@@ -22,9 +22,10 @@ public struct List<Content: View>: View {
 		var newEnvironment: EnvironmentValues = environment
         newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-        let tableView = SwiftUITableView(buildingBlocks: self.viewCreator.expanded().toSections, style: environment.listStyle._tableViewStyle)
+        let tableView = SwiftUITableView(style: environment.listStyle._tableViewStyle, buildingBlocks: self.viewCreator.expanded().toSections, environment: environment, controller: enclosingController)
         tableView.viewController = enclosingController
         tableView.environment = newEnvironment
+        
 		return tableView
 	}
 	
@@ -40,23 +41,6 @@ public struct List<Content: View>: View {
 		}
 	}
     
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size
-    }
-}
-
-struct ReferenceList<Content: View>: View {
-    let viewCreator: () -> Content
-    
-    init(@ViewBuilder _ creator: @escaping () -> Content) {
-        self.viewCreator = creator
-    }
-    
-    var body: List<Content> {
-        return List{
-            self.viewCreator()
-        }
-    }
 }
 
 extension Array where Element == _BuildingBlock {
@@ -81,24 +65,67 @@ extension Array where Element == _BuildingBlock {
     }
 }
 
-class SwiftUITableView: UITableView {
-	
-	override var intrinsicContentSize: CGSize {
-		return UIView.layoutFittingExpandedSize
-	}
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return true
-	}
-	var buildingBlocks: [SectionProtocol]
-	
-	var tableViewClickedResponses: [IndexPath: () -> ()] = [:]
+private struct CellGetter: EnvironmentKey {
+    static var defaultValue: SwiftUITableViewCell? { return nil }
+}
+
+extension EnvironmentValues {
+    var cell: SwiftUITableViewCell? {
+        get {
+            self[CellGetter.self]
+        }
+        
+        set {
+            self[CellGetter.self] = newValue
+        }
+    }
+}
+
+private class ListDOMNode: DOMNode {
+    var allChildren: [UIView] = []
     
-    var environment = EnvironmentValues()
+    override var uiView: UIView? {
+        didSet {
+            allChildren = []
+            if let view = uiView {
+                allChildren = [view]
+                var subviews = view.subviews
+                while !subviews.isEmpty {
+                    allChildren.append(contentsOf: subviews)
+                    subviews = subviews.flatMap(\.subviews)
+                }
+            }
+        }
+    }
+}
+
+class SwiftUITableView: UITableView {
+    
+    lazy var internalRefreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(self.refresh), for: .valueChanged)
+        refreshControl.translatesAutoresizingMaskIntoConstraints = false
+        return refreshControl
+    }()
+    
+    override var intrinsicContentSize: CGSize {
+        return UIView.layoutFittingExpandedSize
+    }
+    
+	var buildingBlocks: [SectionProtocol]
+    
+    fileprivate var listNodes = [[ListDOMNode]]()
+	    
+    var environment = EnvironmentValues() {
+        didSet {
+            self.refreshControl = environment.refreshAction == nil ? nil : self.internalRefreshControl
+        }
+    }
     
     var actualEnvironment: EnvironmentValues {
         return environment.withUpdates({
             $0.inList = true
+            $0.refreshAction = nil
         })
     }
     
@@ -108,48 +135,75 @@ class SwiftUITableView: UITableView {
         return self.viewController ?? UIViewController()
     }
     
+    @objc func refresh() {
+        environment.refreshAction? { [weak self] in
+            self?.refreshControl?.endRefreshing()
+        }
+    }
+    
+    // TODO: This
     func diff(buildingBlocks: [SectionProtocol], controller: UIViewController, environment: EnvironmentValues) {
-//        self.performBatchUpdates({
-//            if self.buildingBlocks.count < buildingBlocks.count {
-//                self.insertSections(IndexSet(self.buildingBlocks.count ..< buildingBlocks.count), with: .automatic)
-//            } else if self.buildingBlocks.count > buildingBlocks.count {
-//                self.deleteSections(IndexSet(buildingBlocks.count ..< self.buildingBlocks.count), with: .automatic)
-//            }
-//            zip(self.buildingBlocks.enumerated(), buildingBlocks).forEach { oldSectionInfo, newSection in
-//                let (index, oldSection) = oldSectionInfo
-//                let changes = oldSection.buildingBlocks.diff(other: newSection.buildingBlocks, environment: environment)
-//                self.deleteRows(at: changes.deletion.map { IndexPath(row: $0, section: index) }, with: .automatic)
-//                self.insertRows(at: changes.additions.map { IndexPath(row: $0, section: index) }, with: .automatic)
-//                changes.moved.forEach { (old, new) in
-//                    guard old != new else { return }
-//                    self.moveRow(at: IndexPath(row: old, section: index), to: IndexPath(row: new, section: index))
-//                }
-//            }
-//        }) { _ in
-//            self.buildingBlocks = buildingBlocks
-//            if let visibleRows = self.indexPathsForVisibleRows {
-//                visibleRows.forEach {
-//                    guard let cell = self.cellForRow(at: $0) as? SwiftUITableViewCell, let view = cell.view else { return }
-//                    buildingBlocks[$0.section].buildingBlocks[$0.row]._redraw(view: view, controller: controller, environment: environment)
-//                }
-//            } else {
-//                self.reloadData()
-//            }
-//        }
-        // This does diff correctly, but there are weird sizing things, so punting until I redo the layout system
-        self.buildingBlocks = buildingBlocks
-        self.reloadData()
+        self.performBatchUpdates({
+            if self.buildingBlocks.count < buildingBlocks.count {
+                self.insertSections(IndexSet(self.buildingBlocks.count ..< buildingBlocks.count), with: .automatic)
+                self.listNodes.append(contentsOf: (self.buildingBlocks.count ..< buildingBlocks.count).map {_ in [ListDOMNode]() })
+            } else if self.buildingBlocks.count > buildingBlocks.count {
+                self.deleteSections(IndexSet(buildingBlocks.count ..< self.buildingBlocks.count), with: .automatic)
+                self.listNodes.removeLast(self.buildingBlocks.count - buildingBlocks.count)
+            }
+            zip(self.buildingBlocks.enumerated(), buildingBlocks).forEach { oldSectionInfo, newSection in
+                let (index, oldSection) = oldSectionInfo
+                let changes = oldSection.buildingBlocks.diff(other: newSection.buildingBlocks)
+                self.deleteRows(at: changes.deletion.map { IndexPath(row: $0, section: index) }, with: .automatic)
+                changes.deletion.sorted().reversed().forEach { value in
+                    self.listNodes[index].remove(at: value)
+                }
+                self.insertRows(at: changes.additions.map { IndexPath(row: $0, section: index) }, with: .automatic)
+                changes.additions.sorted().forEach { value in
+                    let node = ListDOMNode(environment: environment, viewController: viewController, buildingBlock: self.buildingBlocks[index].buildingBlocks[value])
+                    if value == self.listNodes[index].count {
+                        self.listNodes[index].append(node)
+                    } else {
+                        self.listNodes[index].insert(node, at: value)
+                    }
+                }
+                changes.moved.forEach { (old, new) in
+                    guard old != new else { return }
+                    self.moveRow(at: IndexPath(row: old, section: index), to: IndexPath(row: new, section: index))
+                    self.listNodes[index].swapAt(old, new)
+                }
+            }
+            self.buildingBlocks = buildingBlocks
+        }) { _ in
+            if let visibleRows = self.indexPathsForVisibleRows {
+                for row in visibleRows {
+                    if let cell = self.cellForRow(at: row) as? SwiftUITableViewCell, let view = cell.view {
+                        var environment = self.actualEnvironment
+                        environment.cell = cell
+                        let node = self.listNodes[row.section][row.row]
+                        environment.currentStateNode = node
+                        self.buildingBlocks[row.section].buildingBlocks[row.row]._redraw(view: view, controller: controller, environment: environment)
+                    }
+                }
+            }
+        }
     }
 	
-    init(buildingBlocks: [SectionProtocol], style: UITableView.Style) {
+    init(style: UITableView.Style, buildingBlocks: [SectionProtocol], environment: EnvironmentValues, controller: UIViewController) {
 		self.buildingBlocks = buildingBlocks
 		super.init(frame: .zero, style: style)
+        self.listNodes = self.buildingBlocks.map { section in
+            return section.buildingBlocks.map { view in
+                ListDOMNode(environment: environment, viewController: controller, buildingBlock: view)
+            }
+        }
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.dataSource = self
 		self.delegate = self
 		self.estimatedRowHeight = 85.0
 		self.rowHeight = UITableView.automaticDimension
 		self.register(SwiftUITableViewCell.self, forCellReuseIdentifier: "SwiftUI")
+        self.refreshControl = environment.refreshAction == nil ? nil : self.internalRefreshControl
 	}
 	
 	required init?(coder: NSCoder) {
@@ -186,7 +240,9 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].headerView?._toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
+        var environment = self.actualEnvironment
+        environment.currentStateNode = DOMNode(environment: environment, viewController: nil, buildingBlock: EmptyView())
+        return (self.buildingBlocks[section].headerView?._toUIView(enclosingController: usableController, environment: environment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -195,7 +251,9 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return (self.buildingBlocks[section].footerView?._toUIView(enclosingController: usableController, environment: actualEnvironment)).map({ underlyingView in
+        var environment = self.actualEnvironment
+        environment.currentStateNode = DOMNode(environment: environment, viewController: nil, buildingBlock: EmptyView())
+        return (self.buildingBlocks[section].footerView?._toUIView(enclosingController: usableController, environment: environment)).map({ underlyingView in
             let sectionHeader = HeaderFooterView(frame: .zero)
             sectionHeader.contentView.addSubview(underlyingView)
             sectionHeader.setupFullConstraints(sectionHeader.contentView, underlyingView)
@@ -208,31 +266,38 @@ extension SwiftUITableView: UITableViewDataSource {
 	}
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row]._toUIView(enclosingController: usableController, environment: self.actualEnvironment)
-		guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
-		if let onClick = view.insideList(width: self.frame.width) {
-			self.tableViewClickedResponses[indexPath] = onClick
-			cell.view = view
-            view.isUserInteractionEnabled = false
-			return cell
-		}
-//		if view.willExpand(in: .horizontal) {
-			cell.view = view
-//			return cell
-//		}
-//		cell.view = HStack {
-//			UIViewWrapper(view: view)
-//			Spacer()
-//        }.__toUIView(enclosingController: UIViewController(), environment: self.actualEnvironment)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
+        var environment = self.actualEnvironment
+        environment.cell = cell
+        let domNode = self.listNodes[indexPath.section][indexPath.row]
+        domNode.environment = environment
+        environment.currentStateNode = domNode
+        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row]._toUIView(enclosingController: usableController, environment: environment)
+        domNode.uiView = view
+        cell.view = view
+        if cell.onClick != nil {
+            cell.view?.isUserInteractionEnabled = false
+        }
 		return cell
 	}
 }
 
 extension SwiftUITableView: UITableViewDelegate {
 	func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-		self.tableViewClickedResponses[indexPath]?()
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return }
+        cell.onClick?()
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
+    
+    @available(iOS 13.0, *)
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell,
+              let menuItems = cell.menuItems as? [UIMenuElement],
+              !menuItems.isEmpty else { return nil }
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+            return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: menuItems)
+        }
+    }
 }
 
 class SwiftUITableViewCell: UITableViewCell {
@@ -247,18 +312,23 @@ class SwiftUITableViewCell: UITableViewCell {
         self.contentView.addSubview(view)
         return view
     }()
+    
+    var onClick: (() -> ())? = nil
+    
+    var menuItems: [Any]? = nil
 	
 	var view: UIView? {
 		didSet {
 			if let view = self.view {
-                let tableViewCell = self.baseView
+                let tableViewCell = self.contentView
 				tableViewCell.addSubview(view)
 				NSLayoutConstraint.activate([
-					view.leadingAnchor.constraint(equalTo: tableViewCell.leadingAnchor),
-					view.trailingAnchor.constraint(equalTo: tableViewCell.trailingAnchor),
+                    view.leadingAnchor.constraint(equalTo: tableViewCell.leadingAnchor, constant: 5),
+					view.trailingAnchor.constraint(lessThanOrEqualTo: tableViewCell.trailingAnchor),
 					view.topAnchor.constraint(equalTo: tableViewCell.topAnchor),
 					view.bottomAnchor.constraint(equalTo: tableViewCell.bottomAnchor)
 				])
+                tableViewCell.sizeToFit()
 			}
 		}
 	}
@@ -267,6 +337,8 @@ class SwiftUITableViewCell: UITableViewCell {
 		super.prepareForReuse()
 		self.view?.removeFromSuperview()
 		self.view = nil
+        self.onClick = nil
+        self.menuItems = nil
 	}
 	
 	required init?(coder: NSCoder) {

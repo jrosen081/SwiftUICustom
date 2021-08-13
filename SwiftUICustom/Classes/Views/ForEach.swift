@@ -7,49 +7,46 @@
 
 import Foundation
 
-public struct ForEach<Element, StorageType: Hashable, Content: View>: View, Expandable {
+public struct ForEach<Element, ID: Hashable, Content: View>: View, Expandable {
     
 	let elements: [Element]
-	let mapper: (Element) -> StorageType
-	let contentMapper: (StorageType) -> TaggedView<StorageType, Content>
+	let mapper: (Element) -> ID
+	let contentMapper: (Element, ID) -> TaggedView<ID, Content>
 	
-	public init(_ elements: [Element], id: @escaping (Element) -> StorageType, @ViewBuilder _ contentMapper: @escaping (StorageType) -> Content) {
+	public init(_ elements: [Element], id: @escaping (Element) -> ID, @ViewBuilder _ contentMapper: @escaping (Element) -> Content) {
 		self.elements = elements
 		self.mapper = id
 		self.contentMapper = {
-            contentMapper($0).tag($0)
+            contentMapper($0).tag($1)
         }
 	}
+    
+    public init(_ elements: [Element], id: KeyPath<Element, ID>, @ViewBuilder _ contentMapper: @escaping (Element) -> Content) {
+        self.elements = elements
+        self.mapper = { $0[keyPath: id] }
+        self.contentMapper = {
+            contentMapper($0).tag($1)
+        }
+    }
+
 	
 	func expanded() -> [_BuildingBlock] {
-		return elements.map(mapper).map(contentMapper)
-	}
-	
-	public var body: Self {
-		return self
-	}
-	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		return InternalLazyCollatedView(arrayValues: self.elements.map(mapper)) {
-			self.contentMapper($0)._toUIView(enclosingController: enclosingController, environment: environment)
-		}
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		guard let collated = view as? InternalCollatedView else { return }
-		zip(elements, collated.underlyingViews).forEach { element, uiview in
-			contentMapper(mapper(element))._redraw(view: uiview, controller: controller, environment: environment)
-			
-		}
+        return elements.map { contentMapper($0, mapper($0)) }
 	}
     
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        VStack { self }._requestedSize(within: size, environment: environment)
+    public var _viewInfo: _ViewInfo {
+        return _ViewInfo(isBase: true, baseBlock: self, layoutPriority: .inBetween)
     }
+	
+	public var body: VStack<TupleView<([_BuildingBlock])>> {
+        VStack {
+            self.expanded()
+        }
+	}
 }
 
-public extension ForEach where Element : Equatable, StorageType == Element {
-	init(_ elements: [Element], @ViewBuilder _ contentMapper: @escaping (StorageType) -> Content) {
+public extension ForEach where Element : Hashable, ID == Element {
+	init(_ elements: [Element], @ViewBuilder _ contentMapper: @escaping (ID) -> Content) {
 		self = ForEach(elements, id: {(element: Element) -> Element in element }, contentMapper)
 	}
 }

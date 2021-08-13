@@ -7,23 +7,17 @@
 
 import Foundation
 
-public enum PickerStyleType: Hashable {
-    case wheel, form
-}
-
 public protocol PickerStyle {
-    var _pickerStyle: PickerStyleType { get }
-    func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock
-    func _redraw<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues)
+    func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock
+    func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues)
 }
 
 public struct WheelPickerStyle: PickerStyle {
-    public var _pickerStyle: PickerStyleType = .wheel
-    public func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
+    public func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
         return UIViewWrapper(view: defaultView)
     }
     
-    public func _redraw<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+    public func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
         let expanded = picker.content.expanded()
         let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is Selection})
         let binding: Binding<Int> = Binding(get: {
@@ -43,56 +37,59 @@ public struct WheelPickerStyle: PickerStyle {
 public typealias DefaultPickerStyle = WheelPickerStyle
 
 
-struct FormPickerStyle: PickerStyle {
-    var _pickerStyle: PickerStyleType = .form
-    func _updatePicker<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
-        let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
-        let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!
-        return NavigationLink(destination: ReferenceList {
-            allOptions.map { option in
-                HStack {
-                    BuildingBlockRepresentable(buildingBlock: option).onTapGestureReloading {
-                        guard let value = option.taggedValue as? Selection else { return }
-                        picker.selectionValue.wrappedValue = value
-                    }
-                    Spacer()
-                    if option.taggedValue as? Selection == picker.selectionValue.wrappedValue {
-                        CheckMark().stroke(lineWidth: 2).fixedSize(width: 15, height: 20).foregroundColor(.systemBlue).padding(edges: .trailing, paddingSpace: 5)
+private struct SelectableView<V: View>: View {
+    let child: V
+    let isSelected: Bool
+    let select: () -> Void
+    @Environment(\.cell) var cell
+    
+    var body: OnChangeView<Bool, OnAppearView<OnTapGestureView<V>>> {
+        child.onTapGesture(select).onAppear {
+            cell?.accessoryType = isSelected ? .checkmark : .none
+        }.onChange(of: isSelected) { isSelected in
+            cell?.accessoryType = isSelected ? .checkmark : .none
+        }
+    }
+}
+
+private struct SelectableViewList<Selection: Hashable>: View {
+    @Binding var selection: Selection
+    let allViews: [_BuildingBlock & Taggable]
+    
+    var body: List<ForEach<_BuildingBlock & Taggable, AnyHashable, SelectableView<_BuildingBlockRepresentable>>> {
+        List {
+            ForEach(allViews, id: \.taggedValue) { view in
+                SelectableView(child: _BuildingBlockRepresentable(buildingBlock: view), isSelected: AnyHashable(selection) == view.taggedValue) {
+                    if let value = view.taggedValue.base as? Selection {
+                        selection = value
                     }
                 }
-                
             }
-        }, content: {
+        }
+    }
+}
+
+struct FormPickerStyle: PickerStyle {
+    func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
+        let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
+        let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!
+        return NavigationLink(destination: SelectableViewList(selection: picker.selectionValue, allViews: allOptions), content: {
             HStack {
                 picker.label
                 Spacer()
-                BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
+                _BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
             }
         })
     }
     
-    func _redraw<Label: View, Selection: Equatable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
+    func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
         let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
         let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!
-        NavigationLink(destination: List {
-            allOptions.map { option in
-                HStack {
-                    BuildingBlockRepresentable(buildingBlock: option).onTapGestureReloading {
-                        guard let value = option.taggedValue as? Selection else { return }
-                        picker.selectionValue.wrappedValue = value
-                    }
-                    Spacer()
-                    if option.taggedValue as? Selection == picker.selectionValue.wrappedValue {
-                        CheckMark().stroke(lineWidth: 2).fixedSize(width: 10, height: 20).foregroundColor(.systemBlue).padding(edges: .trailing, paddingSpace: 5)
-                    }
-                }
-                
-            }
-        }, content: {
+        NavigationLink(destination: SelectableViewList(selection: picker.selectionValue, allViews: allOptions), content: {
             HStack {
                 picker.label
                 Spacer()
-                BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
+                _BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
             }
         })._redraw(view: defaultView, controller: controller, environment: environment)
     }

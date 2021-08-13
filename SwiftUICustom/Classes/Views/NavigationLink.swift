@@ -23,43 +23,59 @@ public struct NavigationLink<Content: View, Destination: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = environment
         weak var controller: UIViewController? = enclosingController
-        let buttonControl: NavigationButtonLink
-        if !environment.inList {
-            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-            buttonControl = NavigationButtonLink(view: self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
-                controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
-            }
-
-        } else {
-            buttonControl = NavigationButtonLink(view: HStack {
-                self.content
-                Spacer()
-                RightArrow().stroke(lineWidth: 1).foregroundColor(environment.defaultForegroundColor).fixedSize(width: 10, height: 20).padding(edges: .trailing, paddingSpace: 5)
-            }.padding()._toUIView(enclosingController: enclosingController, environment: newEnvironment), environment: newEnvironment) {
-                controller?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
-            }
+        let contentDOMNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.content)
+        newEnvironment.currentStateNode = contentDOMNode
+        environment.currentStateNode.addChild(node: contentDOMNode, index: 0)
+        let newDomNode = DOMNode(environment: environment, viewController: nil, buildingBlock: self.destination)
+        environment.currentStateNode.addChild(node: newDomNode, index: 1)
+        let contentView = self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        environment.currentStateNode.uiView = contentView
+        let pushViewController = {
+            let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: newDomNode)
+            newDomNode.viewController = internalController
+            controller?.navigationController?.pushViewController(internalController, animated: true)
         }
-				return buttonControl
+        
+        environment.currentStateNode.buildingBlock = self.content
+        if let cell = environment.cell {
+            cell.accessoryType = .disclosureIndicator
+            cell.onClick = pushViewController
+        } else {
+            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+        }
+        let cell = NavigationButtonLink(view: contentView, environment: newEnvironment, onClick: pushViewController)
+        cell.isUserInteractionEnabled = environment.cell == nil
+        return cell
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         weak var usableController: UIViewController? = controller
 		var newEnvironment = environment
-        if !environment.inList {
-            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-            self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+        newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
+        if let cell = environment.cell {
+            cell.accessoryType = .disclosureIndicator
         } else {
-            self.content._redraw(view: view.subviews[0].subviews[0], controller: controller, environment: environment)
+            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+
         }
+        self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
 		guard let navigationButton = view as? NavigationButtonLink else { return }
-		navigationButton.onClick = {
-            usableController?.navigationController?.pushViewController(SwiftUIInternalController(swiftUIView: self.destination, environment: environment), animated: true)
-		}
+        navigationButton.onClick = {
+            let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: environment.currentStateNode.childNodes[1])
+            usableController?.navigationController?.pushViewController(internalController, animated: true)
+        }
+        
+        environment.cell?.onClick = navigationButton.onClick
+        
+        if let navController = controller.navigationController,
+           let index = navController.index(of: controller),
+           navController.viewControllers.count > index + 1,
+           let controller = navController.viewControllers[index + 1] as? SwiftUIInternalController<Destination> {
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = controller.domNode
+            self.destination._redraw(view: controller.view.subviews[0], controller: controller, environment: newEnvironment)
+        }
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment)
-    }
 }
 
 class NavigationButtonLink: ButtonView {
@@ -73,9 +89,23 @@ class NavigationButtonLink: ButtonView {
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
-	
-	override func insideList(width: CGFloat) -> (() -> ())? {
-		self.isUserInteractionEnabled = false
-		return self.onClick
-	}
+}
+
+private extension UINavigationController {
+    func index(of controller: UIViewController) -> Int? {
+        for (offset, enumeratedController) in self.viewControllers.enumerated() {
+            if enumeratedController == controller {
+                return offset
+            } else if enumeratedController.children.contains(controller: controller) {
+                return offset
+            }
+        }
+        return nil
+    }
+}
+
+private extension Array where Element == UIViewController {
+    func contains(controller usableController: Element) -> Bool {
+        return self.contains(where: { controller in controller == usableController || controller.children.contains(controller: usableController) })
+    }
 }

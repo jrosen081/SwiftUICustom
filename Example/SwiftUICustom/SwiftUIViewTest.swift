@@ -8,21 +8,28 @@
 
 import SwiftUI
 
+struct StateHoldingView: View {
+    @State private var value = 0
+    
+    var body: some View {
+        Text("\(value)").onTapGesture {
+            value += 1
+        }.font(.title)
+    }
+}
+
 @available(iOS 13.0.0, *)
 struct SwiftUIViewTest: View {
+    @State private var values = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     var body: some View {
         VStack {
-            Text("Hi")
-            Spacer()
-            GeometryReader { proxy in
-                Text("hi")
+            ForEach(values, id: \.self) { _ in
+                StateHoldingView()
             }
-            Text("this")
-            HStack { Spacer() }
-            Text("other")
-            GeometryReader { proxy in
-                Color.green
-                Text("This")
+            Button(action: {
+                self.values.shuffle()
+            }) {
+                Text("Shuffle")
             }
         }
     }

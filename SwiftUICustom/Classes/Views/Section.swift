@@ -67,8 +67,4 @@ public struct Section<Parent: View, Content: View, Footer: View>: View, SectionP
     var buildingBlocks: [_BuildingBlock] {
         return content.expanded()
     }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment)
-    }
 }

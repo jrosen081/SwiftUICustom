@@ -11,19 +11,18 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 	let presentingView: PresentingView
 	let contentCreator: Content
 	let binding: Binding<Bool>
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        presentingView._requestedSize(within: size, environment: environment)
-    }
 	
 	public var body: Self {
 		return self
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        environment.currentStateNode.buildingBlock = self.presentingView
 		let view = self.presentingView._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
 		if (self.binding.wrappedValue) {
 			let controller = SwiftUIController(swiftUIView: self.contentCreator)
+            controller.environment = environment
 			controller.isShowing = self.binding
 			enclosingController.present(controller, animated: true)
 		}
@@ -35,10 +34,12 @@ public struct PopoverView<PresentingView: View, Content: View>: View {
 		if (!binding.wrappedValue) {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
 		} else if let presented = controller.presentedViewController as? SwiftUIController<Content> {
+            presented.environment = environment
             presented.swiftUIView = self.contentCreator
 		} else {
 			controller.presentedViewController?.dismiss(animated: true, completion: nil)
 			let internalController = SwiftUIController(swiftUIView: self.contentCreator)
+            internalController.environment = environment
 			internalController.isShowing = self.binding
 			controller.present(internalController, animated: true)
 		}

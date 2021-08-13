@@ -10,23 +10,33 @@ import Foundation
 public struct Button<ButtonContent: View>: View {
 	let content: ButtonContent
 	let onClick: () -> ()
+    var updateControl: (ButtonView) -> Void = {_ in }
 	
 	public init(action: @escaping () -> (), @ViewBuilder content: () -> ButtonContent) {
 		self.content = content()
 		self.onClick = action
 	}
-	public var body: ButtonContent {
-        return self.content
+	public var body: Self {
+        return self
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var newEnvironment = environment
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
-        let view = environment.buttonStyle._makeBody(configuration: actualThing)._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        let base = environment.buttonStyle._makeBody(configuration: actualThing)
+        environment.currentStateNode.buildingBlock = base
+        let view = base._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        environment.currentStateNode.uiView = view
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.isUserInteractionEnabled = false
-		return ButtonView(view: view, onClick: self.onClick)
+		let button = ButtonView(view: view, onClick: self.onClick)
+        updateControl(button)
+        if let cell = environment.cell {
+            cell.onClick = self.onClick
+            button.isUserInteractionEnabled = false
+        }
+        return button
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -34,26 +44,25 @@ public struct Button<ButtonContent: View>: View {
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? UIColor.systemBlue
         let actualThing = PrimitiveButtonStyleConfiguration(label: PrimitiveButtonStyleConfiguration.Label(buildingBlock: self.content), onClick: onClick, isNavigationLink: false)
         environment.buttonStyle._makeBody(configuration: actualThing)._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
+        if let cell = environment.cell {
+            cell.onClick = self.onClick
+        }
+        guard let button = view as? ButtonView else { return }
+        updateControl(button)
 	}
-    
-    public func _resetLinks(view: UIView, controller: UIViewController) {
-        // Do nothing
-    }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment)
-    }
 }
 
-class ButtonView: SwiftUIView {
+protocol MenuCreator {
+    @available(iOS 13, *)
+    var menu: UIContextMenuConfiguration? { get }
+}
+
+class ButtonView: UIButton {
 	var view: UIView
 	var onClick: () -> ()
 	var inList: Bool = false
 	var alphaToChangeTo: CGFloat = 0.3
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return view.willExpand(in: context)
-	}
+    var menuCreator: MenuCreator?
 	
 	init(view: UIView, onClick: @escaping () -> ()) {
 		self.view = view
@@ -75,13 +84,7 @@ class ButtonView: SwiftUIView {
 		self.setupFullConstraints(self.view, self)
 
 	}
-	
-	override func insideList(width: CGFloat) -> (() -> ())? {
-		self.isUserInteractionEnabled = false
-		self.inList = true
-		return self.onClick
-	}
-	
+    
 	override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
 		self.view.alpha = self.alphaToChangeTo
 		return super.beginTracking(touch, with: event)
@@ -108,24 +111,6 @@ class ButtonView: SwiftUIView {
 	
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
-	}
-	
-	@objc func buttonClicked(tap: UITapGestureRecognizer) {
-		switch tap.state {
-		case .began:
-			view.alpha = 0.3
-		case .cancelled, .failed:
-			view.alpha = 1
-		case .ended:
-			view.alpha = 1
-			self.onClick()
-		default:
-			break
-		}
-	}
-
-	static func == (lhs: ButtonView, rhs: ButtonView) -> Bool {
-		return lhs.view == rhs.view
 	}
     
     override var intrinsicContentSize: CGSize {

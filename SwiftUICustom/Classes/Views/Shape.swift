@@ -37,10 +37,6 @@ public extension Shape {
 	func fill() -> FilledView<Self> {
 		return FilledView(shape: self)
 	}
-    
-    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size
-    }
 }
 
 extension Path: Shape {
@@ -108,11 +104,6 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 
 internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	var isFilled: Bool = false
-	var givenIntrinsicContentSize: CGSize? = nil {
-		didSet {
-			invalidateIntrinsicContentSize()
-		}
-	}
     
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         if self.isFilled {
@@ -121,15 +112,7 @@ internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
             return false
         }
     }
-	
-	override var intrinsicContentSize: CGSize {
-		givenIntrinsicContentSize ?? UIView.layoutFittingExpandedSize
-	}
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return self.givenIntrinsicContentSize == nil || self.givenIntrinsicContentSize == UIView.layoutFittingExpandedSize
-	}
-	
+    
 	override var tintColor: UIColor! {
 		didSet {
 			if isFilled {
@@ -157,6 +140,10 @@ internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 		super.init(frame: .zero)
 		self.layer.addSublayer(self.shapeLayer)
 		self.translatesAutoresizingMaskIntoConstraints = false
+        setContentHuggingPriority(.init(249), for: .horizontal)
+        setContentHuggingPriority(.init(249), for: .vertical)
+        setContentCompressionResistancePriority(.init(249), for: .horizontal)
+        setContentCompressionResistancePriority(.init(249), for: .vertical)
 	}
 	
 	override func layoutSubviews() {
@@ -169,7 +156,7 @@ internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	}
 }
 
-extension UIBezierPath {
+public extension UIBezierPath {
 	convenience init(_ creator: (inout UIBezierPath) -> ()) {
 		var path = UIBezierPath()
 		creator(&path)

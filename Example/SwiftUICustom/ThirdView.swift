@@ -19,11 +19,17 @@ struct ThirdView: View {
 	var body: some View {
 		VStack {
 			List {
-                Image("arrow").fixedSize(width: 30, height: 40)
+                Image("arrow").frame(width: 30, height: 40)
                 HStack {
                     Toggle(isOn: $forJoe) {
                         Text("This one is for Joe and is a really long thing")
                     }
+                }.contextMenu {
+                    Button(action: {
+                        forJoe.toggle()
+                    }, content: {
+                        Text("Toggle")
+                    })
                 }
                 Section(header: Text("Header").padding().foregroundColor(.systemGreen), footer: Text("Footer")) {
                     ForEach(Array(0..<15)) {_ in
@@ -31,7 +37,7 @@ struct ThirdView: View {
                     }
                 }
 				Text("My name is Jack").padding()
-				Button(action: {}, content: { Text("Test this") }).padding()
+				Button(action: {print("Hi")}, content: { Text("Test this") }).padding()
 				ForEach(Array(0..<15)) {
 					Text("The current element is \($0)").padding()
 				}.navigationTitle("This is a list")
@@ -41,12 +47,22 @@ struct ThirdView: View {
 				if isOn {
 					Text("The switch is on")
 				}
+                ForEach(Array(0..<15)) {_ in
+                    CheckThis()
+                }
+                Label("My name", systemImage: "person")
             }
             SecureField("The value is \(self.secure)", text: self.$secure)
 			Toggle(isOn: $isOn) {
 				Text(isOn ? "Toggling this will hide the row above" : "Toggling this will show the row above").border(.systemBackground).padding().foregroundColor(.systemYellow)
-			}.padding().foregroundColor(.systemGreen)
+            }.padding().foregroundColor(.systemGreen)
 		}.background(.red)
         .listStyle(InsetGroupedListStyle())
+        .refreshable { completion in
+            print("Refreshing")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                completion()
+            }
+        }
 	}
 }

@@ -32,8 +32,6 @@ public protocol _BuildingBlock {
     var _viewInfo: _ViewInfo { get }
     func _isEqual(to other: _BuildingBlock) -> Bool
     func _hash(into hasher: inout Hasher)
-    func _reset()
-    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize
 }
 
 extension _BuildingBlock {
@@ -98,46 +96,30 @@ extension View {
     public func _hash(into hasher: inout Hasher) {
         ObjectIdentifier(type(of: self)).hash(into: &hasher)
     }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        self.body._requestedSize(within: size, environment: environment)
-    }
-    
-    public func _reset() {
-        if self.body is Self {
-            return
-        }
-        let mirror = Mirror(reflecting: self)
-        mirror.children.map { $0.value }
-            .compactMap { $0 as? Redrawable }
-            .forEach {
-                $0.reset()
-            }
-        self.body._reset()
-    }
-    
+        
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.body._redraw(view: view, controller: controller, environment: environment)
+        let stateNode = _StateNode(view: self, node: environment.currentStateNode)
+        environment.currentStateNode.environment = environment
+        let newNode = environment.currentStateNode.childNodes[0]
+        var newEnvironment = environment
+        newEnvironment.currentStateNode = newNode
+        stateNode.body._redraw(view: view, controller: controller, environment: newEnvironment)
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let mirror = Mirror(reflecting: self)
-		mirror.children.map { $0.value }
-			.compactMap { $0 as? EnvironmentNeeded }
-			.forEach { $0.environment = environment }
-		if let controller = enclosingController as? UpdateDelegate {
-			mirror.children.map { $0.value }
-				.compactMap { $0 as? Redrawable }
-				.forEach {
-          $0.addListener(controller)
-          Redrawables.redrawables.append(WeakRedrawable(redrawable: $0))
-      }
-		}
-		return self.body._toUIView(enclosingController: enclosingController, environment: environment)
+        let node = environment.currentStateNode
+        let stateNode = _StateNode(view: self, node: node)
+        let newNode = node.node(at: 0) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: stateNode.body)
+        node.addChild(node: newNode, index: 0)
+        var newEnvironment = environment
+        newEnvironment.currentStateNode = newNode
+		let view = stateNode.body._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        node.uiView = view
+        return view
 	}
     
-    private var _isBase: Bool {
-        return self.body is Self
+    internal var _isBase: Bool {
+        return Content.self == Self.self
     }
     
     private var _baseBlock: _BuildingBlock {
@@ -161,33 +143,29 @@ extension View {
     }
 }
 
-struct BuildingBlockRepresentable: View {
+public struct _BuildingBlockRepresentable: View {
     let buildingBlock: _BuildingBlock
     
-    var body: Self {
+    public var body: Self {
         self
     }
     
-    func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        self.buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
+    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        environment.currentStateNode.buildingBlock = buildingBlock
+        let view = self.buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
+        return view
     }
     
-    func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+    public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
     }
-        
-    func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        return self.buildingBlock._requestedSize(within: size, environment: environment)
-    }
-    
 }
 
 public func withAnimation<Result>(animation: Animation = .default, operations: () throws -> Result) rethrows -> Result {
-  let drawables = Redrawables.redrawables.compactMap { $0.redrawable }
-  drawables.forEach { $0.stopRedrawing() }
-  let value = try operations()
-  drawables.forEach { $0.performAnimation(animation: animation) }
-  return value
+    RunLoopInteractor.shared.updateAnimation(animation)
+    let value = try operations()
+    return value
 }
 
 public extension View {
@@ -219,14 +197,13 @@ public struct _ViewModifier_Content<Modifier: ViewModifier>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        return buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.buildingBlock = buildingBlock
+        let view = buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
+        return view
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         buildingBlock._redraw(view: view, controller: controller, environment: environment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        buildingBlock._requestedSize(within: size, environment: environment)
-    }
 }

@@ -38,8 +38,10 @@ public struct DatePicker<Label: View>: View {
         datePicker.maximumDate = self.range.upperBound
         datePicker.locale = environment.locale
         datePicker.timeZone = environment.timeZone
+        environment.currentStateNode.buildingBlock = self.label
         let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
-        let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: datePicker)])
+        environment.currentStateNode.uiView = label
+        let stack = SwiftUIStackView(arrangedSubviews: [label, datePicker], buildingBlocks: [self.label, UIViewWrapper(view: datePicker)])
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.spacing = 5
         label.isHidden = environment.isLabelsHidden
@@ -57,19 +59,9 @@ public struct DatePicker<Label: View>: View {
         self.label._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
     }
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        let width = size.width
-        let datePicker = UIDatePicker()
-        return CGSize(width: width, height: datePicker.intrinsicContentSize.height)
-    }
 }
 
 class SwiftUIDatePicker: UIDatePicker {
-    
-    override func willExpand(in context: ExpandingContext) -> Bool {
-        return context == .horizontal
-    }
     
     var binding: Binding<Date> {
         didSet {

@@ -33,32 +33,41 @@ public struct ZStack<Content: View>: View {
 		guard let zstackView = view as? ZStackView else { return }
         zstackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment, alignment: alignment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        return expanded().map { $0._requestedSize(within: size, environment: environment) }.reduce(CGSize.zero, max(size1:size2:))
-    }
-    
-    private func max(size1: CGSize, size2: CGSize) -> CGSize {
-        return CGSize(width: Swift.max(size1.width, size2.width), height: Swift.max(size1.height, size2.height))
-    }
 }
 
 class ZStackView: SwiftUIView {
     var buildingBlocks: [_BuildingBlock] = []
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues, alignment: Alignment) {
+        let currentNode = environment.currentStateNode
+        let allChildren = currentNode.childNodes
         let diffResults = self.buildingBlocks.diff(other: buildingBlocks)
-        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
+        let allAdditions = diffResults.additions.map { (index: Int) -> (Int, UIView, _BuildingBlock, DOMNode) in
+            let domNode = DOMNode(environment: environment, viewController: controller, buildingBlock: buildingBlocks[index])
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = domNode
+            let view = buildingBlocks[index]._toUIView(enclosingController: controller, environment: newEnvironment)
+            domNode.uiView = view
+            return (index, view, buildingBlocks[index], domNode)
+        }
         let allDeletions = diffResults.deletion.map { ($0, self.subviews[$0]) }
-        let moving = diffResults.moved.map { ($0.1, self.subviews[$0.0], buildingBlocks[$0.1]) }
+        let moving = diffResults.moved.map { ($0.1, self.subviews[$0.0], buildingBlocks[$0.1], allChildren[$0.0]) }
         allDeletions.forEach { $0.1.removeFromSuperview() }
         let operationsToPerform = (allAdditions + moving).sorted(by: { $0.0 < $1.0 })
-        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock) in
+        var newChildren: [DOMNode] = []
+        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock, node) in
+            let shouldRedraw = uiView.superview != nil
             uiView.removeFromSuperview()
             self.insertSubview(uiView, at: indexToInsert)
             self.setupSubview(underlyingView: uiView, alignment: alignment)
-            buildingBlock._redraw(view: uiView, controller: controller, environment: environment)
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = node
+            newChildren.append(node)
+            if shouldRedraw {
+                buildingBlock._redraw(view: uiView, controller: controller, environment: environment)
+            }
         }
+        currentNode.childNodes = newChildren
         self.buildingBlocks = buildingBlocks
     }
     

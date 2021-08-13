@@ -17,7 +17,9 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let clippedView = ClippedView(shapeGeneric: self.shape)
+        environment.currentStateNode.buildingBlock = self.content
 		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
 		clippedView.addSubview(view)
 		clippedView.setupFullConstraints(clippedView, view)
 		return clippedView
@@ -28,10 +30,6 @@ public struct ClipShapedView<ShapeGeneric: Shape, Content: View>: View {
 		self.content._redraw(view: clippedView.subviews[0], controller: controller, environment: environment)
 		clippedView.shapeGeneric = self.shape
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment)
-    }
 }
 
 class ClippedView<ShapeGeneric: Shape>: SwiftUIView {

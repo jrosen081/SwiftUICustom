@@ -16,21 +16,22 @@ public struct EnvironmentUpdatingView<Content: View>: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let updates = environment.withUpdates(self.updates)
-		if #available(iOS 13.0, *) {
-			enclosingController.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
-			enclosingController.navigationController?.overrideUserInterfaceStyle = updates.colorScheme == .dark ? .dark : .light
-		}
-		return self.content._toUIView(enclosingController: enclosingController, environment: updates)
+		var updates = environment.withUpdates(self.updates)
+        let newNode = DOMNode(environment: updates, viewController: enclosingController, buildingBlock: self.content)
+        environment.currentStateNode.addChild(node: newNode, index: 0)
+        updates.currentStateNode = newNode
+		let view = self.content._toUIView(enclosingController: enclosingController, environment: updates)
+        newNode.uiView = view
+        return view
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.content._redraw(view: view, controller: controller, environment: environment.withUpdates(self.updates))
+        let node = environment.currentStateNode.childNodes[0]
+        var newEnvironment = environment.withUpdates(self.updates)
+        node.environment = newEnvironment
+        newEnvironment.currentStateNode = node
+		self.content._redraw(view: view, controller: controller, environment: newEnvironment)
 	}
-        
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        content._requestedSize(within: size, environment: environment.withUpdates(updates))
-    }
 }
 
 public extension View {

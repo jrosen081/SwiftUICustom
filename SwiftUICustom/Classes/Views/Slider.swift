@@ -12,11 +12,6 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 	let range: ClosedRange<Float>
 	let stride: Float
 	let labelCreator: Label
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        let width = size.width
-        return CGSize(width: width, height: max(labelCreator._requestedSize(within: size, environment: environment).height, UISlider().intrinsicContentSize.height))
-    }
 	
 	public init<V>(value: Binding<V>, in bounds: ClosedRange<V> = 0...1, label: () -> Label) where V : BinaryFloatingPoint, V.Stride : BinaryFloatingPoint, ValueLabel == EmptyView {
 		self.range = ClosedRange(uncheckedBounds: (lower: Float(bounds.lowerBound), upper: Float(bounds.upperBound)))
@@ -32,28 +27,14 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
 		self.labelCreator = label()
 	}
 	
-	public var body: Self {
-		return self
+	public var body: HStack<TupleView<(Label, Spacer, SliderRepresentable)>> {
+        HStack {
+            self.labelCreator
+            Spacer()
+            SliderRepresentable(binding: binding, range: range)
+        }
 	}
-	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let slider = SwiftUISlider(binding: self.binding, closedRange: self.range)
-		slider.tintColor = environment.foregroundColor
-		let label = self.labelCreator._toUIView(enclosingController: enclosingController, environment: environment)
-        let horizontalStack = SwiftUIStackView(arrangedSubviews: [label, slider], context: .horizontal, buildingBlocks: [self.labelCreator, UIViewWrapper(view: slider)])
-		horizontalStack.axis = .horizontal
-		horizontalStack.translatesAutoresizingMaskIntoConstraints = false
-		horizontalStack.spacing = 5
-        label.isHidden = environment.isLabelsHidden
-		return horizontalStack
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.labelCreator._redraw(view: view.subviews[0], controller: controller, environment: environment)
-        view.subviews[0].isHidden = environment.isLabelsHidden
-		guard let slider = view.subviews[1] as? UISlider else { return }
-		slider.tintColor = environment.foregroundColor
-	}
+
 }
 
 extension Binding where T: BinaryFloatingPoint {
@@ -75,16 +56,29 @@ extension BinaryFloatingPoint {
 	}
 }
 
-class SwiftUISlider: UISlider {
+public struct SliderRepresentable: UIViewRepresentable {
+    @Binding var binding: Float
+    let range: ClosedRange<Float>
+    public typealias UIViewType = _SwiftUISlider
+    
+    public func makeUIView(context: Context) -> _SwiftUISlider {
+        let slider = _SwiftUISlider(binding: $binding, closedRange: range)
+        let environment = context.environment
+        slider.tintColor = environment.foregroundColor
+        return slider
+    }
+    
+    public func updateUIView(_ view: _SwiftUISlider, context: Context) {
+        let environment = context.environment
+        view.tintColor = environment.foregroundColor
+        view.maximumValue = self.range.upperBound
+        view.minimumValue = self.range.lowerBound
+        view.value = binding
+    }
+}
+
+public class _SwiftUISlider: UISlider {
 	let binding: Binding<Float>
-	
-	override var intrinsicContentSize: CGSize {
-		return CGSize(width: UIView.layoutFittingExpandedSize.width, height: super.intrinsicContentSize.height)
-	}
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return context == .horizontal
-	}
 	
 	init(binding: Binding<Float>, closedRange: ClosedRange<Float>) {
 		self.binding = binding

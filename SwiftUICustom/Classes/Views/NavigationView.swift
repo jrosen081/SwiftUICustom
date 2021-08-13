@@ -22,9 +22,13 @@ public struct NavigationView<Body: View>: View {
 		let controller = InternalNavigationController(nibName: nil, bundle: nil)
         controller.navigationBar.prefersLargeTitles = true
         enclosingController.addChild(controller)
-        controller.viewControllers = [SwiftUIInternalController(swiftUIView: self.viewBuilder, environment: environment)]
+        environment.currentStateNode.buildingBlock = self.viewBuilder
+        let internalController = SwiftUIInternalController(swiftUIView: self.viewBuilder, environment: environment, domNode: environment.currentStateNode)
+        environment.currentStateNode.viewController = internalController
+        controller.viewControllers = [internalController]
         controller.view.translatesAutoresizingMaskIntoConstraints = false
         controller.view.insetsLayoutMarginsFromSafeArea = false
+        environment.currentStateNode.uiView = controller.view.subviews[0]
         return controller.view
 	}
 	
@@ -32,24 +36,12 @@ public struct NavigationView<Body: View>: View {
         guard let navigationController = controller.children.first as? UINavigationController else { return }
         guard let actualController = navigationController.viewControllers.first as? SwiftUIInternalController<Body> else { return }
         actualController.swiftUIView = self.viewBuilder
+        var newEnvironment = environment
+        newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
         actualController.environment = environment
         self.viewBuilder._redraw(view: actualController.view.subviews[0], controller: actualController, environment: environment)
 	}
 }
 
 class InternalNavigationController: UINavigationController {
-}
-
-class NavigationInternalView: UIView {
-    let navigationController: UINavigationController
-    
-    init(navigationController: UINavigationController) {
-        self.navigationController = navigationController
-        super.init(frame: .zero)
-        self.translatesAutoresizingMaskIntoConstraints = false
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
 }

@@ -86,11 +86,14 @@ public struct AlertView<Content: View>: View {
 		if binding.wrappedValue {
 			enclosingController.present(self.alert.toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
 		}
-		
-		return content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.buildingBlock = content
+		let view = content._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
+        return view
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        environment.currentStateNode.environment = environment
 		self.body._redraw(view: view, controller: controller, environment: environment)
 		if binding.wrappedValue {
 			controller.present(self.alert.toController(callback: { self.binding.wrappedValue = false }), animated: true, completion: nil)
@@ -104,14 +107,3 @@ public extension View {
 	}
 }
 
-class UpdateDelegateImpl: UpdateDelegate {
-	func updateData(with: Animation?) {
-		self.updated()
-	}
-	
-	let updated: () -> ()
-	
-	init(updated: @escaping () -> ()) {
-		self.updated = updated
-	}
-}

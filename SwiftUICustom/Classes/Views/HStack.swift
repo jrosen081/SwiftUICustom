@@ -25,8 +25,8 @@ public struct HStack<Content: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let view = viewCreator
         let buildingBlocks = view.expanded()
-        let underlyingViews = buildingBlocks.map { $0._toUIView(enclosingController: enclosingController, environment: environment) }
-		let stackView = SwiftUIStackView(arrangedSubviews: underlyingViews, context: .horizontal, buildingBlocks: buildingBlocks)
+		let stackView = SwiftUIStackView(arrangedSubviews: [], buildingBlocks: [])
+        stackView.diff(buildingBlocks: buildingBlocks, controller: enclosingController, environment: environment)
 		stackView.alignment = self.alignment.stackViewAlignment
 		stackView.spacing = self.spacing
 		stackView.axis = .horizontal
@@ -39,10 +39,6 @@ public struct HStack<Content: View>: View {
         guard let stackView = view as? SwiftUIStackView else { return }
         stackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        size // TODO: this
-    }
 }
 
 extension Array where Element == _BuildingBlock {
@@ -56,76 +52,48 @@ extension Array where Element == _BuildingBlock {
 	}
 }
 
+// TODO: This
 class SwiftUIStackView: UIStackView {
     var buildingBlocks: [_BuildingBlock]
-    let context: ExpandingContext
     
     func diff(buildingBlocks: [_BuildingBlock], controller: UIViewController, environment: EnvironmentValues) {
+        let currentNode = environment.currentStateNode
+        let allChildren = currentNode.childNodes
         let diffResults = self.buildingBlocks.diff(other: buildingBlocks)
-        let allAdditions = diffResults.additions.map { ($0, buildingBlocks[$0]._toUIView(enclosingController: controller, environment: environment), buildingBlocks[$0]) }
         let allDeletions = diffResults.deletion.map { ($0, self.arrangedSubviews[$0]) }
-        let moving = diffResults.moved.map { ($0.1, self.arrangedSubviews[$0.0], buildingBlocks[$0.1]) }
+        let moving = diffResults.moved.map { ($0.1, self.arrangedSubviews[$0.0], buildingBlocks[$0.1], allChildren[$0.0]) }
         allDeletions.forEach { $0.1.removeFromSuperview() }
+        let allAdditions = diffResults.additions.map { (index: Int) -> (Int, UIView, _BuildingBlock, DOMNode) in
+            let domNode = DOMNode(environment: environment, viewController: controller, buildingBlock: buildingBlocks[index])
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = domNode
+            let view = buildingBlocks[index]._toUIView(enclosingController: controller, environment: newEnvironment)
+            domNode.uiView = view
+            return (index, view, buildingBlocks[index], domNode)
+        }
         let operationsToPerform = (allAdditions + moving).sorted(by: { $0.0 < $1.0 })
-        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock) in
+        var newChildren: [DOMNode] = []
+        operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock, node) in
             self.removeArrangedSubview(uiView)
             self.insertArrangedSubview(uiView, at: indexToInsert)
-            buildingBlock._redraw(view: uiView, controller: controller, environment: environment)
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = node
+            newChildren.append(node)
+            buildingBlock._redraw(view: uiView, controller: controller, environment: newEnvironment)
         }
+        currentNode.childNodes = newChildren
         self.buildingBlocks = buildingBlocks
     }
-    
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return self.arrangedSubviews.contains(where: { $0.willExpand(in: context)} )
-	}
 	
-	override var intrinsicContentSize: CGSize {
-        let expandedSign = UIView.layoutFittingExpandedSize.width
-		return self.arrangedSubviews.map(\.intrinsicContentSize)
-			.reduce(CGSize.zero, {
-                if self.context == .horizontal {
-                    if $0.width == expandedSign || $1.width == expandedSign {
-                        return CGSize(width: expandedSign, height: max($0.height, $1.height))
-                    }
-                    return CGSize(width: $0.width + $1.width, height: max($0.height, $1.height))
-                } else {
-                    if $0.height == expandedSign || $1.height == expandedSign {
-                        return CGSize(width: max($0.width, $1.width), height: expandedSign)
-                    }
-                    return CGSize(width: max($0.width, $1.width), height: $0.height + $1.height)
-                }
-			})
-	}
-	
-    init(arrangedSubviews: [UIView], context: ExpandingContext, buildingBlocks: [_BuildingBlock]) {
+    init(arrangedSubviews: [UIView], buildingBlocks: [_BuildingBlock]) {
         self.buildingBlocks = buildingBlocks
-        self.context = context
 		super.init(frame: .zero)
-		let actualViews = arrangedSubviews.flatMap {
-			($0 as? InternalLazyCollatedView)?.arrangedSubviews ?? [$0]
-		}
+		let actualViews = arrangedSubviews
 		actualViews.forEach {
 			self.addArrangedSubview($0)
-			if let horizontal = $0 as? ExpandingView {
-				horizontal.context = [context]
-			}
 		}
-		
-		// All Expanding Views need to have the same size
-		_ = actualViews.compactMap { $0 as? ExpandingView }
-			.reduce(nil, { (view: UIView?, expandingView) -> UIView? in
-				if let view = view {
-					view.heightAnchor.constraint(equalTo: expandingView.heightAnchor).isActive = true
-					view.widthAnchor.constraint(equalTo: expandingView.widthAnchor).isActive = true
-				}
-				return expandingView
-			})
-		
-		// If there is no expanding views, fill proportionally, else fill
-		if !self.willExpand(in: context) {
-			self.distribution = .fillProportionally
-		}
-	}
+        self.distribution = .fillProportionally
+    }
 	
 	required init(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")

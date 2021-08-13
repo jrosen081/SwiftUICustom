@@ -81,8 +81,34 @@ public struct EnvironmentValues {
     public var horizontalSizeClass: UIUserInterfaceSizeClass? = nil
     
     public var verticallSizeClass: UIUserInterfaceSizeClass? = nil
+    
+    private var _currentStateNode: DOMNode? = nil
+    
+    var currentStateNode: DOMNode {
+        get {
+            _currentStateNode ?? {
+                fatalError()
+            }()
+        }
+        set {
+            _currentStateNode = newValue
+            _currentStateNode?.environment = self
+        }
+    }
+    
+    var labelStyleFunc: (LabelStyleConfiguration) -> _BuildingBlock = DefaultLabelStyle().asFunc
+    
+    var setColorScheme = false
+    
+    public var refreshAction: RefreshAction?
+    
+    var boxStyle: BoxStyle = BoxStyle(style: DefaultGroupBoxStyle())
 	
-	public var colorScheme: ColorScheme = .light
+    public var colorScheme: ColorScheme = .light {
+        didSet {
+            setColorScheme = true
+        }
+    }
 	
 	func withUpdates(_ updates: (inout EnvironmentValues) -> ()) -> EnvironmentValues {
 		var value = self
@@ -90,8 +116,11 @@ public struct EnvironmentValues {
 		return value
 	}
 	
-    // TODO: Rethink this one
     var keyLookers: [ObjectIdentifier: Any] = [:]
+    
+    subscript<K>(identifier: ObjectIdentifier, defaultValue: K) -> K {
+        return self.keyLookers[identifier] as? K ?? defaultValue
+    }
 	
 	subscript<K>(key: K.Type) -> K.Value where K : EnvironmentKey {
 		get {
@@ -118,25 +147,6 @@ struct PrimitiveButtonStyleKey: EnvironmentKey {
 struct ListStyleKey: EnvironmentKey {
     static var defaultValue: ListStyle {
         return DefaultListStyle()
-    }
-}
-
-struct KeyLooker: Hashable {
-	var actualValue: Any
-	var classValue: Any
-	
-	init(actualValue: Any, classValue: Any) {
-		self.actualValue = actualValue
-		self.classValue = classValue
-	}
-    
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        return true
-    }
-    
-    // TODO: Uhh let's get back to this one again
-    func hash(into hasher: inout Hasher) {
-        ObjectIdentifier(Self.self).hash(into: &hasher)
     }
 }
 

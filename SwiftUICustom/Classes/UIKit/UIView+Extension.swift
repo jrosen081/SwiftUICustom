@@ -29,16 +29,6 @@ extension UIView {
 	@objc func asTopLevelView() -> UIView {
 		return self
 	}
-	
-	@discardableResult
-	@objc func insideList(width: CGFloat) -> (() -> ())? {
-		let values = self.subviews.map { $0.insideList(width: width) }
-		return values.first(where: { $0 != nil}) ?? nil
-	}
-	
-	@objc func willExpand(in context: ExpandingContext) -> Bool {
-		return false
-	}
 }
 
 extension CGSize {

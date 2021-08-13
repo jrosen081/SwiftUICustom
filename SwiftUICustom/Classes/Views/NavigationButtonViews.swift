@@ -17,34 +17,72 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        var environment = environment
+        environment.labelStyleFunc = IconOnlyLabelStyle().asFunc
+        let leftNode = environment.currentStateNode.node(at: 0) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.leftItem ?? EmptyView())
 		if let leftItem = self.leftItem {
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = leftNode
 			let buttonItem = UIBarButtonItem(customView: leftItem._toUIView(enclosingController: enclosingController, environment: environment))
+            leftNode.uiView = buttonItem.customView!
 			enclosingController.navigationItem.leftBarButtonItem = buttonItem
 		}
-		
+        let rightNode = environment.currentStateNode.node(at: 1) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.rightItem ?? EmptyView())
 		if let rightItem = self.rightItem {
+            var newEnvironment = environment
+            newEnvironment.currentStateNode = rightNode
 			let buttonItem = UIBarButtonItem(customView: rightItem._toUIView(enclosingController: enclosingController, environment: environment))
+            rightNode.uiView = buttonItem.customView!
 			enclosingController.navigationItem.rightBarButtonItem = buttonItem
 		}
-		
-		return self.actualView._toUIView(enclosingController: enclosingController, environment: environment)
+        let actualViewNode = environment.currentStateNode.node(at: 2) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.actualView)
+        var newEnvironment = environment
+        newEnvironment.currentStateNode = actualViewNode
+		let view = self.actualView._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        actualViewNode.uiView = view
+        environment.currentStateNode.childNodes = [leftNode, rightNode, actualViewNode]
+        return view
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.actualView._redraw(view: view, controller: controller, environment: environment)
+        var newEnvironment = environment
+        newEnvironment.currentStateNode = environment.currentStateNode.childNodes[2]
+        newEnvironment.labelStyleFunc = IconOnlyLabelStyle().asFunc
+		self.actualView._redraw(view: view, controller: controller, environment: newEnvironment)
 		
-		if let leftItem = self.leftItem, let barItem = controller.navigationItem.leftBarButtonItem?.customView {
-			leftItem._redraw(view: barItem, controller: controller, environment: environment)
-		}
+		if let leftItem = self.leftItem {
+            if let barItem = controller.navigationItem.leftBarButtonItem?.customView {
+                newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
+                leftItem._redraw(view: barItem, controller: controller, environment: newEnvironment)
+            } else {
+                let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: leftItem)
+                newEnvironment.currentStateNode = newNode
+                environment.currentStateNode.childNodes[0] = newNode
+                let view = leftItem._toUIView(enclosingController: controller, environment: newEnvironment)
+                newNode.uiView = view
+                controller.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: view)
+            }
+        } else {
+            controller.navigationItem.leftBarButtonItem = nil
+        }
 		
-		if let rightItem = self.rightItem, let barItem = controller.navigationItem.rightBarButtonItem?.customView {
-			rightItem._redraw(view: barItem, controller: controller, environment: environment)
-		}
+        if let rightItem = self.rightItem {
+            if let barItem = controller.navigationItem.rightBarButtonItem?.customView {
+                newEnvironment.currentStateNode = environment.currentStateNode.childNodes[1]
+                rightItem._redraw(view: barItem, controller: controller, environment: newEnvironment)
+            } else {
+                let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: rightItem)
+                newEnvironment.currentStateNode = newNode
+                environment.currentStateNode.childNodes[1] = newNode
+                let view = rightItem._toUIView(enclosingController: controller, environment: newEnvironment)
+                newNode.uiView = view
+                controller.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: view)
+
+            }
+        } else {
+            controller.navigationItem.rightBarButtonItem = nil
+        }
 	}
-        
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        actualView._requestedSize(within: size, environment: environment)
-    }
 }
 
 public extension View {

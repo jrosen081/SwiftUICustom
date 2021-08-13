@@ -18,8 +18,10 @@ public struct TextField<Label: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let swiftUITextField = SwiftUITextField(binding: self.binding)
-		let otherView = self.label.padding()._toUIView(enclosingController: enclosingController, environment: environment)
-        let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], context: .horizontal, buildingBlocks: [self.label, UIViewWrapper(view: swiftUITextField)])
+        environment.currentStateNode.buildingBlock = self.label
+		let otherView = self.label._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = otherView
+        let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], buildingBlocks: [self.label, UIViewWrapper(view: swiftUITextField)])
 		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
         swiftUITextField.font = environment.font
         swiftUITextField.keyboardType = environment.keyboardType
@@ -38,13 +40,18 @@ public struct TextField<Label: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.label.padding()._redraw(view: view.subviews[0], controller: controller, environment: environment)
         view.subviews[0].isHidden = environment.isLabelsHidden
+        guard let swiftUITextField = view.subviews[1] as? SwiftUITextField else { return }
+        if let text = self.label as? Text {
+            environment.textFieldStyle._updateTextField(swiftUITextField, label: text)
+        }
+        swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
+        swiftUITextField.font = environment.font
+        swiftUITextField.keyboardType = environment.keyboardType
+        swiftUITextField.textContentType = environment.textContentType
+        swiftUITextField.autocorrectionType = environment.disableAutocorrection ?? false ? .no : .default
+        swiftUITextField.isSecureTextEntry = self.isSecure
+        swiftUITextField.text = binding.wrappedValue
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        let fullWidth = size.width
-        let height = Text(binding.wrappedValue).lineLimit(1)._requestedSize(within: size, environment: environment).height
-        return CGSize(width: fullWidth, height: height)
-    }
 }
 
 public extension TextField {
@@ -70,16 +77,10 @@ public extension TextField {
     }
 }
 
-class SwiftUITextField: UITextField, UITextFieldDelegate, UpdateDelegate {
-	override var intrinsicContentSize: CGSize {
-		return CGSize(width: UIView.layoutFittingExpandedSize.width, height: super.intrinsicContentSize.height)
-	}
-	
-	override func willExpand(in context: ExpandingContext) -> Bool {
-		return context == .horizontal
-	}
-	
+public class SwiftUITextField: UITextField, UITextFieldDelegate {
 	let binding: Binding<String>
+    
+    
 	
 	init(binding: Binding<String>) {
 		self.binding = binding
@@ -88,20 +89,14 @@ class SwiftUITextField: UITextField, UITextFieldDelegate, UpdateDelegate {
 		self.text = binding.wrappedValue
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.addTarget(self, action: #selector(self.changedData), for: .editingChanged)
+        setContentHuggingPriority(.init(100), for: .horizontal)
 	}
 	
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
-	
-	func updateData(with animation: Animation?) {
-		DispatchQueue.main.async {
-			self.text = self.binding.wrappedValue
-		}
-	}
-	
-	@objc func changedData() {
-		guard let text = self.text else { return }
-		self.binding.wrappedValue = text
-	}
+	    
+    @objc func changedData() {
+        self.binding.wrappedValue = self.text!
+    }
 }

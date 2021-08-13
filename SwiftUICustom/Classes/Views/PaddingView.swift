@@ -34,33 +34,24 @@ public struct PaddingView<Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let paddingView = PaddingUIView()
+        environment.currentStateNode.buildingBlock = self.underlyingView
 		let underlyingUIView = self.underlyingView._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = underlyingUIView
 		paddingView.addSubview(underlyingUIView)
 		paddingView.translatesAutoresizingMaskIntoConstraints = false
 		paddingView.bottomAnchor.constraint(equalTo: underlyingUIView.bottomAnchor, constant: paddingCorners.contains(.bottom) ? self.paddingSpace : 0).isActive = true
 		paddingView.topAnchor.constraint(equalTo: underlyingUIView.topAnchor, constant: paddingCorners.contains(.top) ? -self.paddingSpace : 0).isActive = true
 		paddingView.leadingAnchor.constraint(equalTo: underlyingUIView.leadingAnchor, constant: paddingCorners.contains(.leading) ? -self.paddingSpace : 0).isActive = true
 		paddingView.trailingAnchor.constraint(equalTo: underlyingUIView.trailingAnchor, constant: paddingCorners.contains(.trailing) ? self.paddingSpace : 0).isActive = true
-        paddingView.extraSize = CGSize(width: (paddingCorners.contains(.leading).toInt + paddingCorners.contains(.trailing).toInt) * self.paddingSpace, height: (paddingCorners.contains(.top).toInt + paddingCorners.contains(.bottom).toInt) * self.paddingSpace)
 		return paddingView
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.underlyingView._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        let space = CGSize(width: size.width - paddingSpace, height: size.height - paddingSpace)
-        let childSpace = underlyingView._requestedSize(within: space, environment: environment)
-        return CGSize(width: childSpace.width + paddingSpace, height: childSpace.height + paddingSpace)
-    }
 }
 
 class PaddingUIView: SwiftUIView {
-    var extraSize = CGSize.zero
-    override var intrinsicContentSize: CGSize {
-        return super.intrinsicContentSize + extraSize
-    }
 }
 
 extension Bool {

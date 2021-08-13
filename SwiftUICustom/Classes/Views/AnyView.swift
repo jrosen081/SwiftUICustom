@@ -19,7 +19,9 @@ public struct AnyView: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
+        environment.currentStateNode.buildingBlock = buildingBlock
         let view = buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
+        environment.currentStateNode.uiView = view
 		insertView(from: SwiftUIView(), view)
 		return view
 	}
@@ -37,10 +39,10 @@ public struct AnyView: View {
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        insertView(from: view, buildingBlock._toUIView(enclosingController: controller, environment: environment))
+        environment.currentStateNode.buildingBlock = buildingBlock
+        environment.currentStateNode.environment = environment
+        let internalView = buildingBlock._toUIView(enclosingController: controller, environment: environment)
+        environment.currentStateNode.uiView = internalView
+        insertView(from: view, internalView)
 	}
-    
-    public func _requestedSize(within size: CGSize, environment: EnvironmentValues) -> CGSize {
-        buildingBlock._requestedSize(within: size, environment: environment)
-    }
 }
