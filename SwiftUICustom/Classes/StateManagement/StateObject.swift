@@ -56,7 +56,7 @@ public struct StateObject<Object: ObservableObject>: DynamicProperty {
         }
         self.storage = .stored(value)
         value.publisher.listenForChanges(identifier: ObjectIdentifier(node)) { [weak node] in
-            node?.update(value: value, index: index)
+            node?.update(value: value, index: index, shouldRedraw: true)
         }
     }
     

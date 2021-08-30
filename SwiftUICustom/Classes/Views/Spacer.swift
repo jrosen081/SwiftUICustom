@@ -25,16 +25,21 @@ public struct Spacer: View {
 
 internal class ExpandingView: UIView {
     
-//    override var intrinsicContentSize: CGSize {
-//        UIView.layoutFittingExpandedSize
-//    }
+    override func systemLayoutSizeFitting(_ targetSize: CGSize) -> CGSize {
+        targetSize
+    }
     
+    override func systemLayoutSizeFitting(_ targetSize: CGSize, withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority, verticalFittingPriority: UILayoutPriority) -> CGSize {
+        targetSize
+    }
     
 	init() {
 		super.init(frame: .zero)
 		self.translatesAutoresizingMaskIntoConstraints = false
 		setContentCompressionResistancePriority(.init(1), for: .horizontal)
 		setContentCompressionResistancePriority(.init(1), for: .vertical)
+        setContentHuggingPriority(.init(1), for: .horizontal)
+        setContentHuggingPriority(.init(1), for: .vertical)
 	}
 	
 	required init?(coder: NSCoder) {

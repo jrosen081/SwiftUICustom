@@ -20,7 +20,7 @@ public protocol ObservableObject : AnyObject {
 }
 
 class Publisher: ObservablePublisher, Updater {
-    func update(value: Any, index: Int) {
+    func update(value: Any, index: Int, shouldRedraw: Bool) {
         self.send()
         self.values[index] = value
     }
@@ -112,7 +112,7 @@ internal class ObjectHolder: Updater {
         self.onUpdate = onUpdate
     }
     
-    func update(value: Any, index: Int) {
+    func update(value: Any, index: Int, shouldRedraw: Bool) {
         self.values[index] = value
         onUpdate(self)
     }
@@ -145,7 +145,7 @@ public struct ObservedObject<Object: ObservableObject>: DynamicProperty {
         }
         publisher.listenForChanges(identifier: ObjectIdentifier(node)) { [weak publisher] in
             guard let publisher = publisher else { return }
-            node.update(value: publisher, index: index)
+            node.update(value: publisher, index: index, shouldRedraw: true)
         }
     }
     

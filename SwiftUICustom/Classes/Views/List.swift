@@ -22,7 +22,14 @@ public struct List<Content: View>: View {
 		var newEnvironment: EnvironmentValues = environment
         newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-        let tableView = SwiftUITableView(style: environment.listStyle._tableViewStyle, buildingBlocks: self.viewCreator.expanded().toSections, environment: environment, controller: enclosingController)
+        let sectionNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: EmptyView())
+        let tableView = SwiftUITableView(style: environment.listStyle._tableViewStyle,
+                                         buildingBlocks: self.viewCreator._makeSequence(currentNode: environment.currentStateNode)
+                                            .expanded(node: environment.currentStateNode)
+                                            .map(\.0.buildingBlock).toSections(baseNode: sectionNode),
+                                         environment: environment,
+                                         controller: enclosingController)
+        tableView.sectionCreationNode = sectionNode
         tableView.viewController = enclosingController
         tableView.environment = newEnvironment
         
@@ -37,29 +44,46 @@ public struct List<Content: View>: View {
 			let view = self.viewCreator
             tableView.environment = environment
             tableView.viewController = controller
-			tableView.diff(buildingBlocks: view.expanded().toSections, controller: controller, environment: environment)
+            tableView.diff(buildingBlocks: view._makeSequence(currentNode: environment.currentStateNode)
+                            .expanded(node: environment.currentStateNode)
+                            .map(\.0.buildingBlock).toSections(baseNode: tableView.sectionCreationNode), controller: controller, environment: environment)
 		}
 	}
     
 }
 
 extension Array where Element == _BuildingBlock {
-    var toSections: [SectionProtocol] {
+    func toSections(baseNode: DOMNode) -> [SectionProtocol] {
         var sections: [SectionProtocol] = []
-        var nonSectionedElements: [_BuildingBlock] = []
+        var currentNode = baseNode.values.first as? DOMNode ?? DOMNode(environment: baseNode.environment, viewController: baseNode.viewController, buildingBlock: EmptyView())
+        baseNode.update(value: currentNode, index: 0)
+        var nonSectionedElements: [(_BuildingBlock, DOMNode)] = []
         for element in self {
             if let section = element as? SectionProtocol {
                 if !nonSectionedElements.isEmpty {
                     sections.append(UngroupedSection(buildingBlocks: nonSectionedElements))
                     nonSectionedElements = []
+                    currentNode = baseNode.safeGet(valueAtIndex: sections.count) as? DOMNode ?? DOMNode(environment: baseNode.environment, viewController: baseNode.viewController, buildingBlock: EmptyView())
+                    baseNode.update(value: currentNode, index: sections.count)
                 }
                 sections.append(section)
+                currentNode = baseNode.safeGet(valueAtIndex: sections.count) as? DOMNode ?? DOMNode(environment: baseNode.environment, viewController: baseNode.viewController, buildingBlock: EmptyView())
+                baseNode.update(value: currentNode, index: sections.count)
             } else {
-                nonSectionedElements.append(element)
+                let childNode: DOMNode
+                if currentNode.childNodes.count > nonSectionedElements.count {
+                    childNode = currentNode.childNodes[nonSectionedElements.count]
+                } else {
+                    childNode = DOMNode(environment: baseNode.environment, viewController: baseNode.viewController, buildingBlock: element)
+                    baseNode.addChild(node: childNode, index: nonSectionedElements.count)
+                }
+                nonSectionedElements.append((element, childNode))
             }
         }
         if !nonSectionedElements.isEmpty {
             sections.append(UngroupedSection(buildingBlocks: nonSectionedElements))
+            currentNode = baseNode.safeGet(valueAtIndex: sections.count) as? DOMNode ?? DOMNode(environment: baseNode.environment, viewController: baseNode.viewController, buildingBlock: EmptyView())
+            baseNode.update(value: currentNode, index: sections.count)
         }
         return sections
     }
@@ -82,20 +106,16 @@ extension EnvironmentValues {
 }
 
 private class ListDOMNode: DOMNode {
-    var allChildren: [UIView] = []
-    
-    override var uiView: UIView? {
+    override var shouldRestartValue: Bool {
         didSet {
-            allChildren = []
-            if let view = uiView {
-                allChildren = [view]
-                var subviews = view.subviews
-                while !subviews.isEmpty {
-                    allChildren.append(contentsOf: subviews)
-                    subviews = subviews.flatMap(\.subviews)
-                }
+            if shouldRestartValue {
+                self.shouldRestartValue = false
             }
         }
+    }
+    
+    override class func makeNode(environment: EnvironmentValues, viewController: UIViewController?, buildingBlock: _BuildingBlock) -> DOMNode {
+        ListDOMNode(environment: environment, viewController: viewController, buildingBlock: buildingBlock)
     }
 }
 
@@ -113,8 +133,9 @@ class SwiftUITableView: UITableView {
     }
     
 	var buildingBlocks: [SectionProtocol]
+    var sectionCreationNode: DOMNode!
     
-    fileprivate var listNodes = [[ListDOMNode]]()
+    fileprivate var sectionNodes = [ListDOMNode]()
 	    
     var environment = EnvironmentValues() {
         didSet {
@@ -146,56 +167,41 @@ class SwiftUITableView: UITableView {
         self.performBatchUpdates({
             if self.buildingBlocks.count < buildingBlocks.count {
                 self.insertSections(IndexSet(self.buildingBlocks.count ..< buildingBlocks.count), with: .automatic)
-                self.listNodes.append(contentsOf: (self.buildingBlocks.count ..< buildingBlocks.count).map {_ in [ListDOMNode]() })
+                self.sectionNodes.append(contentsOf: (self.buildingBlocks.count ..< buildingBlocks.count).map {_ in ListDOMNode(environment: environment, viewController: controller, buildingBlock: Section({ EmptyView() })) })
             } else if self.buildingBlocks.count > buildingBlocks.count {
                 self.deleteSections(IndexSet(buildingBlocks.count ..< self.buildingBlocks.count), with: .automatic)
-                self.listNodes.removeLast(self.buildingBlocks.count - buildingBlocks.count)
+                self.sectionNodes.removeLast(self.buildingBlocks.count - buildingBlocks.count)
             }
             zip(self.buildingBlocks.enumerated(), buildingBlocks).forEach { oldSectionInfo, newSection in
                 let (index, oldSection) = oldSectionInfo
-                let changes = oldSection.buildingBlocks.diff(other: newSection.buildingBlocks)
+                let changes = oldSection.buildingBlocks(topNode: self.sectionNodes[index]).map(\.0).diff(other: newSection.buildingBlocks(topNode: self.sectionNodes[index]).map(\.0))
                 self.deleteRows(at: changes.deletion.map { IndexPath(row: $0, section: index) }, with: .automatic)
-                changes.deletion.sorted().reversed().forEach { value in
-                    self.listNodes[index].remove(at: value)
-                }
                 self.insertRows(at: changes.additions.map { IndexPath(row: $0, section: index) }, with: .automatic)
-                changes.additions.sorted().forEach { value in
-                    let node = ListDOMNode(environment: environment, viewController: viewController, buildingBlock: self.buildingBlocks[index].buildingBlocks[value])
-                    if value == self.listNodes[index].count {
-                        self.listNodes[index].append(node)
-                    } else {
-                        self.listNodes[index].insert(node, at: value)
-                    }
-                }
                 changes.moved.forEach { (old, new) in
                     guard old != new else { return }
                     self.moveRow(at: IndexPath(row: old, section: index), to: IndexPath(row: new, section: index))
-                    self.listNodes[index].swapAt(old, new)
                 }
             }
             self.buildingBlocks = buildingBlocks
         }) { _ in
-            if let visibleRows = self.indexPathsForVisibleRows {
-                for row in visibleRows {
-                    if let cell = self.cellForRow(at: row) as? SwiftUITableViewCell, let view = cell.view {
-                        var environment = self.actualEnvironment
-                        environment.cell = cell
-                        let node = self.listNodes[row.section][row.row]
-                        environment.currentStateNode = node
-                        self.buildingBlocks[row.section].buildingBlocks[row.row]._redraw(view: view, controller: controller, environment: environment)
-                    }
-                }
-            }
+//            if let visibleRows = self.indexPathsForVisibleRows {
+//                for row in visibleRows {
+//                    if let cell = self.cellForRow(at: row) as? SwiftUITableViewCell, let view = cell.view {
+//                        var environment = self.actualEnvironment
+//                        environment.cell = cell
+//                        environment.currentStateNode = node
+//                        self.buildingBlocks[row.section].buildingBlocks[row.row]._redraw(view: view, controller: controller, environment: environment)
+//                    }
+//                }
+//            }
         }
     }
 	
     init(style: UITableView.Style, buildingBlocks: [SectionProtocol], environment: EnvironmentValues, controller: UIViewController) {
 		self.buildingBlocks = buildingBlocks
 		super.init(frame: .zero, style: style)
-        self.listNodes = self.buildingBlocks.map { section in
-            return section.buildingBlocks.map { view in
-                ListDOMNode(environment: environment, viewController: controller, buildingBlock: view)
-            }
+        self.sectionNodes = self.buildingBlocks.map { section in
+            ListDOMNode(environment: environment, viewController: controller, buildingBlock: EmptyView())
         }
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.dataSource = self
@@ -262,17 +268,34 @@ extension SwiftUITableView: UITableViewDataSource {
     }
     
 	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.buildingBlocks[section].buildingBlocks.count
+        return self.buildingBlocks[section].buildingBlocks(topNode: self.sectionNodes[section]).count
 	}
+    
+    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let cell = cell as? SwiftUITableViewCell else { return }
+        cell.view?.removeFromSuperview()
+        cell.view = nil
+        cell.menuItems = nil
+        cell.onClick = nil
+    }
+    
+    func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return false }
+        return cell.onClick != nil
+    }
 	
 	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "SwiftUI") as? SwiftUITableViewCell else { return UITableViewCell() }
+        cell.view?.removeFromSuperview()
+        cell.view = nil
+        cell.menuItems = nil
+        cell.onClick = nil
         var environment = self.actualEnvironment
         environment.cell = cell
-        let domNode = self.listNodes[indexPath.section][indexPath.row]
+        let (swiftUIView, domNode) = self.buildingBlocks[indexPath.section].buildingBlocks(topNode: self.sectionNodes[indexPath.section])[indexPath.row]
         domNode.environment = environment
         environment.currentStateNode = domNode
-        let view = self.buildingBlocks[indexPath.section].buildingBlocks[indexPath.row]._toUIView(enclosingController: usableController, environment: environment)
+        let view = swiftUIView._toUIView(enclosingController: usableController, environment: environment)
         domNode.uiView = view
         cell.view = view
         if cell.onClick != nil {
@@ -301,23 +324,16 @@ extension SwiftUITableView: UITableViewDelegate {
 }
 
 class SwiftUITableViewCell: UITableViewCell {
-	
-	override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-		super.init(style: style, reuseIdentifier: reuseIdentifier)
-	}
     
-    lazy var baseView: UIView = {
-        let view = UIView(frame: self.contentView.frame)
-        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        self.contentView.addSubview(view)
-        return view
-    }()
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    }
     
     var onClick: (() -> ())? = nil
     
     var menuItems: [Any]? = nil
 	
-	var view: UIView? {
+	weak var view: UIView? {
 		didSet {
 			if let view = self.view {
                 let tableViewCell = self.contentView
@@ -331,14 +347,6 @@ class SwiftUITableViewCell: UITableViewCell {
                 tableViewCell.sizeToFit()
 			}
 		}
-	}
-	
-	override func prepareForReuse() {
-		super.prepareForReuse()
-		self.view?.removeFromSuperview()
-		self.view = nil
-        self.onClick = nil
-        self.menuItems = nil
 	}
 	
 	required init?(coder: NSCoder) {

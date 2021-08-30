@@ -17,6 +17,10 @@ public struct EquatableView<Content: View & Equatable>: View {
         guard let other = other as? Self else { return false }
         return other.content == self.content
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: { _, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension View where Self: Equatable {

@@ -35,8 +35,10 @@ public class SwiftUIInternalController<Content: View>: UIViewController {
         newEnvironment.cell = nil
 		return newEnvironment
 	}
+    
+    var onDeallocate: (() -> Void)?
 	
-    public init(swiftUIView: Content, environment: EnvironmentValues, domNode: DOMNode?) {
+    init(swiftUIView: Content, environment: EnvironmentValues, domNode: DOMNode?) {
 		self.swiftUIView = swiftUIView
 		self.environment = environment
         self.domNode = domNode ?? DOMNode(environment: environment, viewController: nil, buildingBlock: swiftUIView)
@@ -53,10 +55,12 @@ public class SwiftUIInternalController<Content: View>: UIViewController {
         var environment = self.actualEnvironment
         environment.currentStateNode = self.domNode
 		let underlyingView = self.swiftUIView._toUIView(enclosingController: self, environment: environment)
-		showView(underlyingView.asTopLevelView())
+		showView(underlyingView)
     }
     
     deinit {
+        self.onDeallocate?()
+        NotificationCenter.default.post(name: swiftUIControllerDeallocatedNotification, object: self)
         print("Bye bye")
     }
 
@@ -103,3 +107,5 @@ public class SwiftUIInternalController<Content: View>: UIViewController {
         
     }
 }
+
+let swiftUIControllerDeallocatedNotification = NSNotification.Name("SwiftUIControllerDeallocated")

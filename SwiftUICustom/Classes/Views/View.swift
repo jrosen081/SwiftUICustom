@@ -26,12 +26,22 @@ public struct _ViewInfo {
     let layoutPriority: LayoutPriority
 }
 
+public struct _ViewSequence {
+    let count: Int
+    let viewGetter: (Int, DOMNode) -> (_BuildingBlockRepresentable, DOMNode)
+    
+    func expanded(node: DOMNode) -> [(_BuildingBlockRepresentable, DOMNode)] {
+        return (0..<count).map { viewGetter($0, node) }
+    }
+}
+
 public protocol _BuildingBlock {
 	func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView
 	func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues)
     var _viewInfo: _ViewInfo { get }
     func _isEqual(to other: _BuildingBlock) -> Bool
     func _hash(into hasher: inout Hasher)
+    func _makeSequence(currentNode: DOMNode) -> _ViewSequence
 }
 
 extension _BuildingBlock {
@@ -40,6 +50,31 @@ extension _BuildingBlock {
     }
     var _baseBlock: _BuildingBlock {
         return _viewInfo.baseBlock
+    }
+    
+    var textValue: String? {
+        if let text = self as? Text {
+            return text.text
+        }
+        
+        if let label = self as? Label<Text, Image>, case let .titleIcon(title, _) = label.storage {
+            return title.text
+        }
+        
+        return nil
+    }
+    
+    var imageValue: UIImage? {
+        if let image = self as? Image {
+            return image.image
+        }
+        
+        if let label = self as? Label<Text, Image>, case let .titleIcon(_, image) = label.storage {
+            return image.image
+        }
+        
+        return nil
+
     }
 }
 
@@ -109,42 +144,61 @@ extension View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let node = environment.currentStateNode
         let stateNode = _StateNode(view: self, node: node)
-        let newNode = node.node(at: 0) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: stateNode.body)
+        let body = stateNode.body
+        let newNode = node.node(at: 0) ?? type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: body)
         node.addChild(node: newNode, index: 0)
         var newEnvironment = environment
         newEnvironment.currentStateNode = newNode
-		let view = stateNode.body._toUIView(enclosingController: enclosingController, environment: newEnvironment)
+        node.viewController = enclosingController
+		let view = body._toUIView(enclosingController: enclosingController, environment: newEnvironment)
         node.uiView = view
         return view
 	}
     
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        if self._isBase {
+            return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+        } else {
+            let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment, viewController: currentNode.viewController, buildingBlock: self)
+            childNode.environment = currentNode.environment
+            currentNode.addChild(node: childNode, index: 0)
+            childNode.onViewChange = {[weak currentNode] view in
+                currentNode?.uiView = view
+            }
+            let childSequence = _StateNode(view: self, node: currentNode).body._makeSequence(currentNode: childNode)
+            return _ViewSequence(count: childSequence.count) { index, node in
+                precondition(node === currentNode)
+                precondition(childNode === node.node(at: 0)!)
+                let newNode = node.childNodes[0]
+                newNode.environment = currentNode.environment
+                return childSequence.viewGetter(index, newNode)
+            }
+        }
+    }
+    
     internal var _isBase: Bool {
-        return Content.self == Self.self
+        return Content.self == Self.self || Content.self == Never.self
     }
     
     private var _baseBlock: _BuildingBlock {
-        return self.body
+        return Content.self == Never.self ? self : self.body
     }
     
     public var _viewInfo: _ViewInfo {
         return _ViewInfo(isBase: _isBase, baseBlock: _baseBlock, layoutPriority: .lowest)
     }
-    
-    
-    func expanded() -> [_BuildingBlock] {
-        return ((self as? BuildingBlockCreator)?.toBuildingBlocks() ?? [self])
-            .flatMap { (view) -> [_BuildingBlock] in
-                var content = view
-                while !content._isBase {
-                    content = content._baseBlock
-                }
-                return (content as? Expandable)?.expanded() ?? [view]
-            }
-    }
 }
 
 public struct _BuildingBlockRepresentable: View {
     let buildingBlock: _BuildingBlock
+    
+    var text: String? {
+        return buildingBlock.textValue
+    }
+    
+    var image: UIImage? {
+        return buildingBlock.imageValue
+    }
     
     public var body: Self {
         self
@@ -159,6 +213,15 @@ public struct _BuildingBlockRepresentable: View {
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         self.buildingBlock._redraw(view: view, controller: controller, environment: environment)
+    }
+    
+    public func _isEqual(to other: _BuildingBlock) -> Bool {
+        guard let other = other as? Self else { return false }
+        return other.buildingBlock._isEqual(to: self.buildingBlock)
+    }
+    
+    public func _hash(into hasher: inout Hasher) {
+        self.buildingBlock._hash(into: &hasher)
     }
 }
 

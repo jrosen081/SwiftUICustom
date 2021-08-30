@@ -8,29 +8,19 @@
 import Foundation
 
 public protocol PickerStyle {
-    func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock
-    func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues)
+    func _makePickerView<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>) -> _BuildingBlockRepresentable
 }
 
 public struct WheelPickerStyle: PickerStyle {
-    public func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
-        return UIViewWrapper(view: defaultView)
-    }
-    
-    public func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        let expanded = picker.content.expanded()
-        let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is Selection})
-        let binding: Binding<Int> = Binding(get: {
-            return allOptions.firstIndex(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? 0
-        }, set: {index in
-            guard let taggedValue = allOptions[index].taggedValue as? Selection else { return }
-            picker.selectionValue.wrappedValue = taggedValue
-        })
-        guard let actualView = defaultView.subviews.first, let pickerView = actualView.subviews[1] as? SwiftUIPicker else { return }
-        pickerView.binding = binding
-        pickerView.allOptions = allOptions
-        picker.label._redraw(view: actualView.subviews[0], controller: controller, environment: environment)
-        actualView.subviews[0].isHidden = environment.isLabelsHidden
+    public func _makePickerView<Label, Selection, Content>(picker: Picker<Label, Selection, Content>) -> _BuildingBlockRepresentable where Label : View, Selection : Hashable, Content : View {
+        let value = HStack {
+            if !picker.environment.isLabelsHidden {
+                picker.label
+                Spacer()
+            }
+            UIPickerRepresentable(content: picker.content, selectionValue: picker.selectionValue)
+        }
+        return _BuildingBlockRepresentable(buildingBlock: value)
     }
 }
 
@@ -70,28 +60,36 @@ private struct SelectableViewList<Selection: Hashable>: View {
 }
 
 struct FormPickerStyle: PickerStyle {
-    func _updatePicker<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView) -> _BuildingBlock {
-        let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
-        let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!
-        return NavigationLink(destination: SelectableViewList(selection: picker.selectionValue, allViews: allOptions), content: {
-            HStack {
-                picker.label
-                Spacer()
-                _BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
-            }
-        })
-    }
     
-    func _redraw<Label: View, Selection: Hashable, Content: View>(picker: Picker<Label, Selection, Content>, defaultView: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        let allOptions = picker.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable })
+    func _makePickerView<Label, Selection, Content>(picker: Picker<Label, Selection, Content>) -> _BuildingBlockRepresentable where Label : View, Selection : Hashable, Content : View {
+        let allOptions = picker.content._makeSequence(currentNode: picker.environment.currentStateNode)
+            .expanded(node: picker.environment.currentStateNode)
+            .map(\.0.buildingBlock)
+            .compactMap({  $0 as? _BuildingBlock & Taggable })
         let actualOption = allOptions.first(where: { $0.taggedValue as? Selection == picker.selectionValue.wrappedValue }) ?? allOptions.first!
-        NavigationLink(destination: SelectableViewList(selection: picker.selectionValue, allViews: allOptions), content: {
+        let actual =
             HStack {
-                picker.label
-                Spacer()
-                _BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
+                if !picker.environment.isLabelsHidden {
+                    picker.label
+                    Spacer()
+                }
+                NavigationLink(destination: SelectableViewList(selection: picker.selectionValue, allViews: allOptions), content: {
+                    HStack {
+                        picker.label
+                        Spacer()
+                        _BuildingBlockRepresentable(buildingBlock: actualOption).padding(edges: .trailing, paddingSpace: 5)
+                    }
+                })
             }
-        })._redraw(view: defaultView, controller: controller, environment: environment)
+        return _BuildingBlockRepresentable(buildingBlock: actual)
+    }
+}
+
+@available(iOS 14, *)
+public struct MenuPickerStyle: PickerStyle {
+    public func _makePickerView<Label, Selection, Content>(picker: Picker<Label, Selection, Content>) -> _BuildingBlockRepresentable where Label : View, Selection : Hashable, Content : View {
+        let menu = Menu({ picker }, label: { picker.label })
+        return _BuildingBlockRepresentable(buildingBlock: menu)
     }
 }
 

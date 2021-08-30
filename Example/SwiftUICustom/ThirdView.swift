@@ -9,17 +9,32 @@
 import Foundation
 import SwiftUICustom
 
+private struct ForEachStruct: View {
+    @State private var allOptions = [0, 1, 2]
+    
+    
+    var body: ForEach<Int, Int, OnTapGestureView<Text>> {
+        ForEach(allOptions, id: \.self) { _ in
+            Text("Add option")
+                .onTapGesture {
+                    allOptions.append(10)
+                }
+        }
+    }
+}
+
 @available(iOS 13.0.0, *)
 struct ThirdView: View {
 	
 	@State var isOn: Bool = true
     @State var forJoe: Bool = true
     @State var secure: String = ""
+    @FocusState private var isOnText: Bool
 
 	var body: some View {
 		VStack {
 			List {
-                Image("arrow").frame(width: 30, height: 40)
+                ForEachStruct()
                 HStack {
                     Toggle(isOn: $forJoe) {
                         Text("This one is for Joe and is a really long thing")
@@ -50,9 +65,12 @@ struct ThirdView: View {
                 ForEach(Array(0..<15)) {_ in
                     CheckThis()
                 }
-                Label("My name", systemImage: "person")
+                Label("My name", systemImage: "person").onTapGesture {
+                    self.isOnText.toggle()
+                }
             }
             SecureField("The value is \(self.secure)", text: self.$secure)
+                .focused($isOnText)
 			Toggle(isOn: $isOn) {
 				Text(isOn ? "Toggling this will hide the row above" : "Toggling this will show the row above").border(.systemBackground).padding().foregroundColor(.systemYellow)
             }.padding().foregroundColor(.systemGreen)

@@ -32,7 +32,7 @@ public struct Text: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		let label = UILabel(frame: .zero)
 		setupData(label: label, environment: environment)
-		return SwiftUILabel(label: label)
+		return label
 	}
 	
 	func setupData(label: UILabel, environment: EnvironmentValues) {
@@ -46,11 +46,16 @@ public struct Text: View {
 		label.allowsDefaultTighteningForTruncation = environment.allowsTightening
         label.numberOfLines = environment.lineLimit ?? 0
         label.lineBreakMode = environment.truncationType
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentHuggingPriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        label.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		guard let swiftUILabel = view as? SwiftUILabel else { return }
-		setupData(label: swiftUILabel.label, environment: environment)
+		guard let swiftUILabel = view as? UILabel else { return }
+		setupData(label: swiftUILabel, environment: environment)
 	}
 	
 }

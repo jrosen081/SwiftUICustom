@@ -12,40 +12,53 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
     let content: Content
     let selectionValue: Binding<SelectionValue>
     
+    @Environment(\.pickerStyle) private var pickerStyle
+    @Environment(\.self) var environment
+    
     public init<S>(_ title: S, selection: Binding<SelectionValue>, @ViewBuilder content: () -> Content) where S : StringProtocol, Label == Text {
         self.label = Text(String(title))
         self.selectionValue = selection
         self.content = content()
     }
     
-    public var body: Self {
-        return self
+    public var body: _BuildingBlockRepresentable {
+        pickerStyle._makePickerView(picker: self)
     }
+}
+
+struct UIPickerRepresentable<Content: View, SelectionValue: Hashable>: UIViewRepresentable {
+    typealias UIViewType = SwiftUIPicker
+    let content: Content
+    @Binding var selectionValue: SelectionValue
+    @Environment(\.currentStateNode) var node
     
-    public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let expanded = self.content.expanded()
+    func makeUIView(context: Context) -> SwiftUIPicker {
+        let expanded = self.content._makeSequence(currentNode: node).expanded(node: node).map(\.0.buildingBlock)
         let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is SelectionValue})
         let binding: Binding<Int> = Binding(get: {
-            return allOptions.firstIndex(where: { $0.taggedValue as? SelectionValue == self.selectionValue.wrappedValue }) ?? 0
+            return allOptions.firstIndex(where: { $0.taggedValue as? SelectionValue == self.selectionValue }) ?? 0
         }, set: {index in
             guard let taggedValue = allOptions[index].taggedValue as? SelectionValue else { return }
-            self.selectionValue.wrappedValue = taggedValue
+            self.selectionValue = taggedValue
         })
         let picker = SwiftUIPicker(binding: binding, stringOptions: allOptions)
-        picker.environment = environment
+        picker.environment = context.environment
         picker.allOptions = allOptions
-        environment.currentStateNode.buildingBlock = self.label
-        let label = self.label._toUIView(enclosingController: enclosingController, environment: environment)
-        environment.currentStateNode.uiView = label
-        let stackView = SwiftUIStackView(arrangedSubviews: [label, picker], buildingBlocks: [self.label, UIViewWrapper(view: picker)])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.spacing = 5
-        label.isHidden = environment.isLabelsHidden
-        return environment.pickerStyle._updatePicker(picker: self, defaultView: stackView)._toUIView(enclosingController: enclosingController, environment: environment)
+        return picker
     }
     
-    public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        environment.pickerStyle._redraw(picker: self, defaultView: view, controller: controller, environment: environment)
+    func updateUIView(_ picker: SwiftUIPicker, context: Context) {
+        let expanded = self.content._makeSequence(currentNode: node).expanded(node: node).map(\.0.buildingBlock)
+        let allOptions = expanded.compactMap { $0 as? Taggable & _BuildingBlock}.filter({ $0.taggedValue is SelectionValue})
+        let binding: Binding<Int> = Binding(get: {
+            return allOptions.firstIndex(where: { $0.taggedValue as? SelectionValue == self.selectionValue }) ?? 0
+        }, set: {index in
+            guard let taggedValue = allOptions[index].taggedValue as? SelectionValue else { return }
+            self.selectionValue = taggedValue
+        })
+        picker.binding = binding
+        picker.environment = context.environment
+        picker.allOptions = allOptions
     }
 }
 

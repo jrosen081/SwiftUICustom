@@ -45,6 +45,9 @@ public struct SecondScreen: View {
 				NavigationLink(destination: ThirdView()) {
 					Text("On to the next one")
 				}.padding()
+                .onDisappear {
+                    print("HELLO")
+                }
 			}
 //            AsyncImage(url: URL(string: "https://storage.googleapis.com/gd-wagtail-prod-assets/original_images/evolving_google_identity_2x1.jpg"))
 			ForEach(currentValues, id: \.int) { value in
@@ -64,6 +67,7 @@ public struct SecondScreen: View {
 
 struct CheckThis: View {
     @State var value = 1
+    @Environment(\.self) var environment
     
     var body: OnTapGestureView<Text> {
         Text("Value: \(value)")

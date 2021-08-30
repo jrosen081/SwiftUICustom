@@ -26,12 +26,11 @@ public struct TabView<Selection: Hashable, Content: View>: View {
     }
     
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let allOptions = content.expanded()
+        let allOptions = content._makeSequence(currentNode: environment.currentStateNode).expanded(node: environment.currentStateNode)
         let tabBarController = UITabBarController(nibName: nil, bundle: nil)
-        tabBarController.viewControllers = allOptions.map(_BuildingBlockRepresentable.init(buildingBlock:)).enumerated().map { index, view in
-            let controller = SwiftUIController.init(swiftUIView: view)
+        tabBarController.viewControllers = allOptions.enumerated().map { index, view in
+            let controller = SwiftUIInternalController.init(swiftUIView: view.0, environment: view.1.environment, domNode: view.1)
             controller.environment = environment
-            controller.loadViewIfNeeded()
             environment.currentStateNode.addChild(node: controller.domNode, index: index)
             return controller
         }
@@ -43,14 +42,11 @@ public struct TabView<Selection: Hashable, Content: View>: View {
     }
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        let allOptions = content.expanded()
-        guard let tabBarController = controller.children.first(where: { $0 is UITabBarController }) as? UITabBarController else { return }
-        let nodes = environment.currentStateNode.childNodes
-        zip(zip(tabBarController.viewControllers!, allOptions), nodes).forEach {(viewControllerOptions, node) in
-            let (controller, view) = viewControllerOptions
-            var newEnvironment = environment
-            newEnvironment.currentStateNode = node
-            view._redraw(view: controller.view.subviews[0], controller: controller, environment: newEnvironment)
+        let allOptions = content._makeSequence(currentNode: environment.currentStateNode).expanded(node: environment.currentStateNode)
+        allOptions.forEach { view, node in
+            node.buildingBlock = view
+            node.environment = environment
+            node.redraw(animation: environment.currentAnimation)
         }
     }
 }

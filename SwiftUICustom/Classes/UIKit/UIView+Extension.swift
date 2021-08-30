@@ -25,10 +25,6 @@ extension UIView {
 			])
 		}
 	}
-	
-	@objc func asTopLevelView() -> UIView {
-		return self
-	}
 }
 
 extension CGSize {

@@ -14,6 +14,7 @@ public protocol UIViewControllerRepresentable: View where Self.Content == Never 
     func makeUIViewController(context: Self.Context) -> Self.UIViewControllerType
     func updateUIViewController(_ uiViewController: Self.UIViewControllerType, context: Self.Context)
     func makeCoordinator() -> Self.Coordinator
+    static func dismantleViewController(_ uiViewController: Self.UIViewControllerType)
 }
 
 public extension UIViewControllerRepresentable where Coordinator == Void {
@@ -32,8 +33,11 @@ public extension UIViewControllerRepresentable {
         let coordinator = self.makeCoordinator()
         let myViewController = self.makeUIViewController(context: Self.Context(environment: environment, coordinator: coordinator))
         let mainView = ControllerRepresentableView<Self>(coordinator: coordinator, controller: myViewController)
+        myViewController.view.translatesAutoresizingMaskIntoConstraints = false
         mainView.addSubview(myViewController.view)
         mainView.setupFullConstraints(mainView, myViewController.view)
+        enclosingController.addChild(myViewController)
+        return mainView
     }
     
     func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
@@ -41,6 +45,8 @@ public extension UIViewControllerRepresentable {
         let `self` = _StateNode(view: self, node: environment.currentStateNode).updatedValue()
         self.updateUIViewController(view.controller, context: Context(environment: environment, coordinator: view.coordinator))
     }
+    
+    static func dismantleViewController(_ uiViewController: Self.UIViewControllerType) { }
 }
 
 public struct UIViewControllerRepresentableContext<Representable> where Representable : UIViewControllerRepresentable {
@@ -56,6 +62,12 @@ class ControllerRepresentableView<Repr: UIViewControllerRepresentable>: UIView {
         self.coordinator = coordinator
         self.controller = controller
         super.init(frame: .zero)
+        self.translatesAutoresizingMaskIntoConstraints = false
+    }
+    
+    override func removeFromSuperview() {
+        Repr.dismantleViewController(self.controller)
+        super.removeFromSuperview()
     }
     
     required init?(coder: NSCoder) {

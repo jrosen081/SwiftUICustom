@@ -11,6 +11,7 @@ import Foundation
 public struct Menu<Label: View, MenuItems: View>: View {
     let label: Label
     let menuItems: MenuItems
+    @Environment(\.currentStateNode) var node
     
     public init(@ViewBuilder _ menuItems: () -> MenuItems, @ViewBuilder label: () -> Label) {
         self.label = label()
@@ -22,7 +23,7 @@ public struct Menu<Label: View, MenuItems: View>: View {
             label
         })
         button.updateControl = { control in
-            control.menu = UIMenu(title: "", image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: false))
+            control.menu = UIMenu(title: "", image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: false, domNode: node))
             control.showsMenuAsPrimaryAction = true
         }
         return button

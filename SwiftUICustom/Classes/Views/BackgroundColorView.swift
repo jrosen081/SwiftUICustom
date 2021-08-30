@@ -40,7 +40,7 @@ public struct BackgroundColorView<Content: View>: View {
 }
 
 public extension View {
-	func background(_ color: UIColor) -> BackgroundColorView<Self> {
-		return BackgroundColorView(color: color, content: self)
+	func background(_ color: Color) -> BackgroundColorView<Self> {
+        return BackgroundColorView(color: color.uiColor, content: self)
 	}
 }

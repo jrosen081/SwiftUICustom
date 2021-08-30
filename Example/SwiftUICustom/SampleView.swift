@@ -17,6 +17,7 @@ struct SampleView: View {
 	@ObservedObject var model = ExampleModel()
 	@State var textCount = 1
 	var values = ["HI", "BYE"]
+    @Environment(\.scenePhase) private var scenePhase
 	
 	var body: some View {
 		NavigationView {
@@ -30,7 +31,7 @@ struct SampleView: View {
                         }
                 }.onChange(of: currentCount) {
                     print("\($0) is the new value")
-                }
+                }.onChange(of: scenePhase) { print(String(describing: $0)) }
 				HStack {
 					Text("Hi")
 						.padding(edges: [.trailing])
@@ -41,7 +42,7 @@ struct SampleView: View {
                         }
 					NavigationLink(destination: SecondScreen(count: $currentCount)) {
 						Text("Bye")
-						}.padding().background(.systemGreen)
+						}.padding().background(.green)
 				}.padding()
 				Spacer()
                 Button {

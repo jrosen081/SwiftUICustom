@@ -8,10 +8,10 @@
 import Foundation
 
 public struct Image: View {
-	let image: UIImage
+	let image: UIImage?
 	
 	public init(_ name: String, bundle: Bundle? = nil) {
-		self.image = UIImage(named: name, in: bundle, compatibleWith: nil) ?? UIImage()
+		self.image = UIImage(named: name, in: bundle, compatibleWith: nil)
 	}
 	
 	public init(uiImage: UIImage) {
@@ -20,7 +20,7 @@ public struct Image: View {
     
     @available(iOS 13, *)
     public init(systemImage: String) {
-        self.image = UIImage(systemName: systemImage) ?? UIImage()
+        self.image = UIImage(systemName: systemImage)
     }
 	
 	public var body: Self {
@@ -34,7 +34,7 @@ public struct Image: View {
 	}
 	
 	func updateView(_ imageView: UIImageView, environment: EnvironmentValues) {
-		imageView.image = self.image.withRenderingMode(.alwaysTemplate)
+		imageView.image = self.image?.withRenderingMode(.alwaysTemplate)
 		imageView.translatesAutoresizingMaskIntoConstraints = false
 		imageView.contentMode = .scaleAspectFit
 		imageView.tintColor = environment.foregroundColor

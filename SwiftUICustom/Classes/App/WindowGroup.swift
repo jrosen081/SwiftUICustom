@@ -31,12 +31,14 @@ public struct WindowGroup<ViewType: View>: Scene {
     }
     
     public static func _startScene(delegate: UIWindowSceneDelegate, self object: WindowGroup<ViewType>, domNode: DOMNode) -> UIViewController {
-        let controller = SwiftUIController(swiftUIView: object.view)
+        let controller = SwiftUIInternalController(swiftUIView: object.view, environment: domNode.environment, domNode: nil)
         return controller
     }
     
     public static func _updateScene(delegate: UIWindowSceneDelegate, self: WindowGroup<ViewType>, domNode: DOMNode, controller: UIViewController) {
-        guard let controller = controller as? SwiftUIController<ViewType> else { return }
+        guard let controller = controller as? SwiftUIInternalController<ViewType> else { return }
+        controller.environment = domNode.environment
+        controller.swiftUIView = self.view
         controller.updateData(with: nil)
     }
 }

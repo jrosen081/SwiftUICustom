@@ -19,30 +19,30 @@ public struct AnyView: View {
 	}
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        environment.currentStateNode.buildingBlock = buildingBlock
+        let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: buildingBlock)
+        var environment = environment
+        environment.currentStateNode = newNode
         let view = buildingBlock._toUIView(enclosingController: enclosingController, environment: environment)
-        environment.currentStateNode.uiView = view
-		insertView(from: SwiftUIView(), view)
-		return view
+        newNode.uiView = view
+        let holdingView = SwiftUIView()
+		insertView(from: holdingView, view)
+		return holdingView
 	}
 	
 	func insertView(from normalView: UIView, _ view: UIView) {
+        normalView.translatesAutoresizingMaskIntoConstraints = false
 		normalView.subviews.forEach { $0.removeFromSuperview() }
 		view.translatesAutoresizingMaskIntoConstraints = false
 		normalView.addSubview(view)
-		NSLayoutConstraint.activate([
-			view.bottomAnchor.constraint(equalTo: normalView.bottomAnchor),
-			view.leadingAnchor.constraint(equalTo: normalView.leadingAnchor),
-			view.trailingAnchor.constraint(equalTo: normalView.trailingAnchor),
-			view.topAnchor.constraint(equalTo: normalView.topAnchor)
-		])
+        normalView.setupFullConstraints(normalView, view)
 	}
 	
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        environment.currentStateNode.buildingBlock = buildingBlock
-        environment.currentStateNode.environment = environment
+        let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: controller, buildingBlock: buildingBlock)
+        var environment = environment
+        environment.currentStateNode = newNode
         let internalView = buildingBlock._toUIView(enclosingController: controller, environment: environment)
-        environment.currentStateNode.uiView = internalView
+        newNode.uiView = internalView
         insertView(from: view, internalView)
 	}
 }

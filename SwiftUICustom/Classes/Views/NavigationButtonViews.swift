@@ -19,7 +19,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         var environment = environment
         environment.labelStyleFunc = IconOnlyLabelStyle().asFunc
-        let leftNode = environment.currentStateNode.node(at: 0) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.leftItem ?? EmptyView())
+        let leftNode = environment.currentStateNode.node(at: 0) ?? type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: self.leftItem ?? EmptyView())
 		if let leftItem = self.leftItem {
             var newEnvironment = environment
             newEnvironment.currentStateNode = leftNode
@@ -27,7 +27,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
             leftNode.uiView = buttonItem.customView!
 			enclosingController.navigationItem.leftBarButtonItem = buttonItem
 		}
-        let rightNode = environment.currentStateNode.node(at: 1) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.rightItem ?? EmptyView())
+        let rightNode = environment.currentStateNode.node(at: 1) ?? type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: self.rightItem ?? EmptyView())
 		if let rightItem = self.rightItem {
             var newEnvironment = environment
             newEnvironment.currentStateNode = rightNode
@@ -35,7 +35,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
             rightNode.uiView = buttonItem.customView!
 			enclosingController.navigationItem.rightBarButtonItem = buttonItem
 		}
-        let actualViewNode = environment.currentStateNode.node(at: 2) ?? DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.actualView)
+        let actualViewNode = environment.currentStateNode.node(at: 2) ?? type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: self.actualView)
         var newEnvironment = environment
         newEnvironment.currentStateNode = actualViewNode
 		let view = self.actualView._toUIView(enclosingController: enclosingController, environment: newEnvironment)
@@ -55,7 +55,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
                 newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
                 leftItem._redraw(view: barItem, controller: controller, environment: newEnvironment)
             } else {
-                let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: leftItem)
+                let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: controller, buildingBlock: leftItem)
                 newEnvironment.currentStateNode = newNode
                 environment.currentStateNode.childNodes[0] = newNode
                 let view = leftItem._toUIView(enclosingController: controller, environment: newEnvironment)
@@ -71,7 +71,7 @@ public struct NavigationButtonViews<Left: View, Right: View, Content: View>: Vie
                 newEnvironment.currentStateNode = environment.currentStateNode.childNodes[1]
                 rightItem._redraw(view: barItem, controller: controller, environment: newEnvironment)
             } else {
-                let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: rightItem)
+                let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: controller, buildingBlock: rightItem)
                 newEnvironment.currentStateNode = newNode
                 environment.currentStateNode.childNodes[1] = newNode
                 let view = rightItem._toUIView(enclosingController: controller, environment: newEnvironment)

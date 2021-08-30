@@ -10,6 +10,7 @@ import Foundation
 let globalViewController = UIViewController()
 
 var globalApp: Any? = nil
+var globalDOMNode: DOMNode!
 
 @available(iOS 13, *)
 var sceneGetter: AnyScene? = nil
@@ -33,7 +34,7 @@ private struct AppWrapper<A: App>: View {
         allScenes.forEach { scene in
             guard let delegate = scene.delegate as? InternalSceneDelegate else { return }
             scene.windows.compactMap(\.rootViewController).forEach { controller in // Where do I get this node, maybe a global scope?
-                type(of: sceneState)._updateScene(delegate: delegate, self: sceneState, domNode: delegate.domNode, controller: controller)
+                delegate.redrawScene(environment: environment, scene: AnyScene(scene: sceneState))
             }
         }
     }
@@ -53,7 +54,7 @@ extension App {
     public static func main() {
         let app = Self.init()
         globalApp = app
-        let globalDOMNode = DOMNode(environment: EnvironmentValues(), viewController: globalViewController, buildingBlock: AppWrapper(app: app))
+        globalDOMNode = DOMNode(environment: EnvironmentValues().withUpdates { $0.scenePhase = .active }, viewController: globalViewController, buildingBlock: AppWrapper(app: app))
         globalDOMNode.uiView = globalViewController.view
         sceneGetter = AnyScene(app, node: globalDOMNode)
         AppDelegate<Self>.main()
@@ -73,6 +74,12 @@ class AppDelegate<AppType: App>: NSObject, UIApplicationDelegate, DelegateInsert
         guard let appValue = globalApp as? AppType else { return false }
         self.app = appValue
         _ = _StateNode(view: appValue, node: DOMNode(environment: EnvironmentValues(), viewController: nil, buildingBlock: EmptyView())).scene // Sets up the uiapplication delegate
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.didActivateNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.willDeactivateNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.didDisconnectNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.willConnectNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(sceneChanges), name: UIScene.willEnterForegroundNotification, object: nil)
         return delegate?.application?(application, willFinishLaunchingWithOptions: launchOptions) ?? true
     }
     
@@ -82,6 +89,20 @@ class AppDelegate<AppType: App>: NSObject, UIApplicationDelegate, DelegateInsert
         config.delegateClass = delegateClass
         config.sceneClass = UIWindowScene.self
         return config
+    }
+    
+    @objc func sceneChanges() {
+        RunLoopInteractor.shared.add { animation in
+            var environment = globalDOMNode.environment
+            let allScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            if allScenes.isEmpty {
+                environment.scenePhase = .background
+            } else {
+                environment.scenePhase = allScenes.map(\.activationState).contains(.foregroundActive) ? .active : .inactive
+            }
+            globalDOMNode.environment = environment
+            globalDOMNode.redraw(animation: animation)
+        }
     }
     
     override func responds(to aSelector: Selector!) -> Bool {

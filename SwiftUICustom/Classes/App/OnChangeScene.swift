@@ -19,6 +19,7 @@ struct OnChangeScene<S: Scene, Value: Equatable>: Scene {
         let currentValue = _StateNode(view: self, node: domNode)
         let body = currentValue.s
         let newNode = domNode.childNodes.first ?? self.makeNode(parentNode: domNode, body: body, delegate: delegate)
+        newNode.environment = domNode.environment
         domNode.values.append(self.value)
         let controller = type(of: body)._startScene(delegate: delegate, self: body, domNode: newNode)
         newNode.viewController = controller
@@ -30,13 +31,14 @@ struct OnChangeScene<S: Scene, Value: Equatable>: Scene {
         let currentValue = _StateNode(view: self, node: domNode)
         let body = currentValue.s
         let node = domNode.childNodes[0]
+        node.environment = domNode.environment
         type(of: body)._updateScene(delegate: delegate, self: body, domNode: node, controller: controller)
         if domNode.get(valueAtIndex: 0) as! Value != self.value {
             DispatchQueue.main.async {
                 self.callback(self.value)
             }
         }
-        domNode.update(value: self.value, index: 0)
+        domNode.values[0] = self.value
     }
 }
 

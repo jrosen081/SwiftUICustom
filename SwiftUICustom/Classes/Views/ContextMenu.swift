@@ -21,6 +21,7 @@ public struct ContextMenu<Content: View, Menu: View>: View {
     let content: Content
     let menu: Menu
     @Environment(\.cell) var cell
+    @Environment(\.currentStateNode) var currentNode
     @State private var interactionDelegate: InteractionDelegate = InteractionDelegate()
     
     public init(_ view: Content, menu: Menu) {
@@ -42,38 +43,38 @@ public struct ContextMenu<Content: View, Menu: View>: View {
     }
     
     private var menuItems: [UIMenuElement] {
-        menu.menuItems(selected: false)
+        menu.menuItems(selected: false, domNode: currentNode)
     }
 }
 
 @available(iOS 13, *)
 extension View {
-    func menuItems(selected: Bool) -> [UIMenuElement] {
-        let expanding = self.expanded()
-        return expanding.compactMap { $0 as? MenuItemAccessable }.compactMap { $0.toItem(selected: selected) }
+    func menuItems(selected: Bool, domNode: DOMNode) -> [UIMenuElement] {
+        let expanding = self._makeSequence(currentNode: domNode).expanded(node: domNode).map(\.0.buildingBlock)
+        return expanding.compactMap { $0 as? MenuItemAccessable & _BuildingBlock }.compactMap { $0.toItem(selected: selected, domNode: DOMNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: $0)) }
 
     }
 }
 
 @available(iOS 13, *)
 private protocol MenuItemAccessable {
-    func toItem(selected: Bool) -> UIMenuElement?
+    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement?
 }
 
 @available(iOS 14, *)
 extension Menu: MenuItemAccessable {
-    func toItem(selected: Bool) -> UIMenuElement? {
+    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
         guard let title = self.label as? Text else { return nil }
-        return UIMenu(title: title.text, image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: selected))
+        return UIMenu(title: title.text, image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: selected, domNode: domNode))
     }
 }
 
 @available(iOS 13, *)
 extension Button: MenuItemAccessable {
-    func toItem(selected: Bool) -> UIMenuElement? {
-        let items = self.content.expanded()
-        guard let title = items.lazy.compactMap({ $0 as? Text }).first?.text else { return nil }
-        let image = items.lazy.compactMap { $0 as? Image }.first?.image
+    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+        let items = self.content._makeSequence(currentNode: domNode).expanded(node: domNode).map(\.0)
+        guard let title = items.compactMap(\.text).first else { return nil }
+        let image = items.compactMap(\.image).first
         let action = UIAction(title: title, image: image, identifier: nil, discoverabilityTitle: nil, attributes: [], state: selected ? .on : .off) { _ in
             self.onClick()
         }
@@ -83,19 +84,28 @@ extension Button: MenuItemAccessable {
 
 @available(iOS 13, *)
 extension Section: MenuItemAccessable {
-    func toItem(selected: Bool) -> UIMenuElement? {
-        return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: self.content.menuItems(selected: selected))
+    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+        return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: self.content.menuItems(selected: selected, domNode: domNode))
 
     }
 }
 
 @available(iOS 13, *)
-// TODO: THIS CORRECTLy
 extension Picker: MenuItemAccessable {
-    func toItem(selected: Bool) -> UIMenuElement? {
-        let allOptions = self.content.expanded().compactMap({  $0 as? _BuildingBlock & Taggable & MenuItemAccessable })
+    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+        let allOptions = self.content
+            ._makeSequence(currentNode: domNode)
+            .expanded(node: domNode)
+            .map(\.0.buildingBlock)
+            .compactMap({  $0 as? _BuildingBlock & Taggable & MenuItemAccessable })
         let allPickerOptions = allOptions.compactMap {
-            $0.toItem(selected: $0.taggedValue == AnyHashable(self.selectionValue.wrappedValue))
+            let isSelected = $0.taggedValue == AnyHashable(self.selectionValue.wrappedValue)
+            guard let item = $0.toItem(selected: isSelected, domNode: DOMNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: $0)) else { return nil }
+            return (item, isSelected, $0.taggedValue)
+        }.map { (element: UIMenuElement, selected: Bool, tag: AnyHashable) in
+            UIAction(title: element.title, image: element.image, identifier: nil, discoverabilityTitle: nil, attributes: [], state: selected ? .on : .off) { _ in
+                self.selectionValue.wrappedValue = tag.base as! SelectionValue
+            }
         }
         return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: allPickerOptions)
     }

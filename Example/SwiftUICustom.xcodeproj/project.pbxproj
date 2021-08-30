@@ -21,6 +21,7 @@
 		A0A2CBAE24FE9EB30096397C /* ThirdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A2CBAD24FE9EB30096397C /* ThirdView.swift */; };
 		A0A2CBB224FEB9F60096397C /* FourthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A2CBB124FEB9F60096397C /* FourthView.swift */; };
 		A0A2CBBA25043A0A0096397C /* FifthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A2CBB925043A0A0096397C /* FifthView.swift */; };
+		A0A6220226D7671900D4F28F /* DocumentStuff.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A6220126D7671900D4F28F /* DocumentStuff.swift */; };
 		E4BD3C7720B736647403F5AC /* Pods_SwiftUICustom_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B2D4EA16126E0AF9B598AD4 /* Pods_SwiftUICustom_Tests.framework */; };
 /* End PBXBuildFile section */
 
@@ -57,6 +58,7 @@
 		A0A2CBAD24FE9EB30096397C /* ThirdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThirdView.swift; sourceTree = "<group>"; };
 		A0A2CBB124FEB9F60096397C /* FourthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FourthView.swift; sourceTree = "<group>"; };
 		A0A2CBB925043A0A0096397C /* FifthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FifthView.swift; sourceTree = "<group>"; };
+		A0A6220126D7671900D4F28F /* DocumentStuff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentStuff.swift; sourceTree = "<group>"; };
 		A151D6AB852AA5EA06163FFB /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		D98C0E0BBA192506256C787F /* Pods-SwiftUICustom_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftUICustom_Example.release.xcconfig"; path = "Target Support Files/Pods-SwiftUICustom_Example/Pods-SwiftUICustom_Example.release.xcconfig"; sourceTree = "<group>"; };
 		DC172ED3992F3B7A1C415801 /* Pods_SwiftUICustom_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftUICustom_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -140,6 +142,7 @@
 				A035CDE3250AB85200DC1DE7 /* GreenView.swift */,
 				A02C66C3252FD27E00107A90 /* TabViewExample.swift */,
 				A08EC8AF26819BEA00BD995D /* EntryPoint.swift */,
+				A0A6220126D7671900D4F28F /* DocumentStuff.swift */,
 			);
 			name = "Example for SwiftUICustom";
 			path = SwiftUICustom;
@@ -352,6 +355,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0A6220226D7671900D4F28F /* DocumentStuff.swift in Sources */,
 				A0A2CBAE24FE9EB30096397C /* ThirdView.swift in Sources */,
 				A08EC8B026819BEA00BD995D /* EntryPoint.swift in Sources */,
 				A0A1E99F24F9F44D00AE5EF3 /* SampleView.swift in Sources */,

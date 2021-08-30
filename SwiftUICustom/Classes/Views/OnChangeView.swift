@@ -17,7 +17,7 @@ public struct OnChangeView<V: Equatable, Content: View>: View {
     }
     
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-        let newNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.content)
+        let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: self.content)
         var newEnvironment = environment
         newEnvironment.currentStateNode = newNode
         let view = content._toUIView(enclosingController: enclosingController, environment: newEnvironment)

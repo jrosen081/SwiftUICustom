@@ -11,46 +11,16 @@ public struct TextField<Label: View>: View {
 	let binding: Binding<String>
 	let label: Label
     let isSecure: Bool
+    @Environment(\.isLabelsHidden) var labelIsHidden
     
-	public var body: Self {
-		return self
-	}
-	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		let swiftUITextField = SwiftUITextField(binding: self.binding)
-        environment.currentStateNode.buildingBlock = self.label
-		let otherView = self.label._toUIView(enclosingController: enclosingController, environment: environment)
-        environment.currentStateNode.uiView = otherView
-        let stackView = SwiftUIStackView(arrangedSubviews: [otherView, swiftUITextField], buildingBlocks: [self.label, UIViewWrapper(view: swiftUITextField)])
-		swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
-        swiftUITextField.font = environment.font
-        swiftUITextField.keyboardType = environment.keyboardType
-        swiftUITextField.textContentType = environment.textContentType
-        swiftUITextField.autocorrectionType = environment.disableAutocorrection ?? false ? .no : .default
-		stackView.translatesAutoresizingMaskIntoConstraints = false
-		stackView.axis = .horizontal
-        otherView.isHidden = environment.isLabelsHidden
-        if let text = self.label as? Text {
-            environment.textFieldStyle._updateTextField(swiftUITextField, label: text)
+	public var body: HStack<TupleView<(ConditionalContent<TupleView<(Label, Spacer)>, EmptyView>, TextFieldRepresentable)>> {
+        HStack {
+            if !labelIsHidden {
+                label
+                Spacer()
+            }
+            TextFieldRepresentable(text: binding, isSecure: isSecure)
         }
-        swiftUITextField.isSecureTextEntry = self.isSecure
-		return stackView
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-		self.label.padding()._redraw(view: view.subviews[0], controller: controller, environment: environment)
-        view.subviews[0].isHidden = environment.isLabelsHidden
-        guard let swiftUITextField = view.subviews[1] as? SwiftUITextField else { return }
-        if let text = self.label as? Text {
-            environment.textFieldStyle._updateTextField(swiftUITextField, label: text)
-        }
-        swiftUITextField.textColor = environment.foregroundColor ?? environment.defaultForegroundColor
-        swiftUITextField.font = environment.font
-        swiftUITextField.keyboardType = environment.keyboardType
-        swiftUITextField.textContentType = environment.textContentType
-        swiftUITextField.autocorrectionType = environment.disableAutocorrection ?? false ? .no : .default
-        swiftUITextField.isSecureTextEntry = self.isSecure
-        swiftUITextField.text = binding.wrappedValue
 	}
 }
 
@@ -77,9 +47,39 @@ public extension TextField {
     }
 }
 
-public class SwiftUITextField: UITextField, UITextFieldDelegate {
-	let binding: Binding<String>
+public struct TextFieldRepresentable: UIViewRepresentable {
+    public typealias UIViewType = SwiftUITextField
     
+    @Binding var text: String
+    let isSecure: Bool
+    
+    public func makeUIView(context: Context) -> SwiftUITextField {
+        let field = SwiftUITextField(binding: $text)
+        field.isSecureTextEntry = isSecure
+        updateFocus(context: context, textField: field)
+        return field
+    }
+    
+    public func updateUIView(_ view: SwiftUITextField, context: Context) {
+        view.binding = $text
+        view.text = text
+        updateFocus(context: context, textField: view)
+        view.isSecureTextEntry = isSecure
+    }
+    
+    private func updateFocus(context: Context, textField: SwiftUITextField) {
+        if context.environment.isForcedFocus, !textField.isFirstResponder {
+            textField.becomeFirstResponder()
+        } else if !context.environment.isForcedFocus, textField.isFirstResponder {
+            textField.endEditing(true)
+        }
+        textField.onFirstResponderChange = context.environment.onFocusChange
+    }
+}
+
+public class SwiftUITextField: UITextField, UITextFieldDelegate {
+	var binding: Binding<String>
+    var onFirstResponderChange: (Bool) -> Void = {_ in }
     
 	
 	init(binding: Binding<String>) {
@@ -89,6 +89,7 @@ public class SwiftUITextField: UITextField, UITextFieldDelegate {
 		self.text = binding.wrappedValue
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.addTarget(self, action: #selector(self.changedData), for: .editingChanged)
+        self.delegate = self
         setContentHuggingPriority(.init(100), for: .horizontal)
 	}
 	
@@ -98,5 +99,13 @@ public class SwiftUITextField: UITextField, UITextFieldDelegate {
 	    
     @objc func changedData() {
         self.binding.wrappedValue = self.text!
+    }
+    
+    public func textFieldDidEndEditing(_ textField: UITextField) {
+        onFirstResponderChange(false)
+    }
+    
+    public func textFieldDidBeginEditing(_ textField: UITextField) {
+        onFirstResponderChange(true)
     }
 }

@@ -19,12 +19,12 @@ public struct TabBarUpdatingView<Content: View, TabBarItem: View>: View {
         environment.currentStateNode.buildingBlock = underlyingView
         let underlyingUIView = underlyingView._toUIView(enclosingController: enclosingController, environment: environment)
         environment.currentStateNode.uiView = underlyingUIView
-        let allOptions = tabBarItem.expanded()
-        if let image = allOptions.first(where: { $0 is Image }) as? Image {
-            enclosingController.tabBarItem.image = image.image
+        let allOptions = tabBarItem._makeSequence(currentNode: environment.currentStateNode).expanded(node: environment.currentStateNode).map(\.0)
+        if let image = allOptions.compactMap(\.image).first {
+            enclosingController.tabBarItem.image = image
         }
-        if let text = allOptions.first(where: { $0 is Text }) as? Text {
-            enclosingController.tabBarItem.title = text.text
+        if let text = allOptions.compactMap(\.text).first {
+            enclosingController.tabBarItem.title = text
         }
         enclosingController.tabBarItem.image?.draw(in: CGRect(x: 0, y: 0, width: 30, height: 30))
         return underlyingUIView
@@ -32,12 +32,12 @@ public struct TabBarUpdatingView<Content: View, TabBarItem: View>: View {
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         underlyingView._redraw(view: view, controller: controller, environment: environment)
-        let allOptions = tabBarItem.expanded()
-        if let image = allOptions.first(where: { $0 is Image }) as? Image {
-            controller.tabBarItem.image = image.image
+        let allOptions = tabBarItem._makeSequence(currentNode: environment.currentStateNode).expanded(node: environment.currentStateNode).map(\.0)
+        if let image = allOptions.compactMap(\.image).first {
+            controller.tabBarItem.image = image
         }
-        if let text = allOptions.first(where: { $0 is Text }) as? Text {
-            controller.tabBarItem.title = text.text
+        if let text = allOptions.compactMap(\.text).first {
+            controller.tabBarItem.title = text
         }
     }
 }

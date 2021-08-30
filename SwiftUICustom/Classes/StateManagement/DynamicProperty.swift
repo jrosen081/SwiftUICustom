@@ -16,7 +16,7 @@ public extension DynamicProperty {
      mutating func update(with node: DOMNode, index: Int) {
         let domNode: DOMNode
         if node.values.count <= index {
-            let internalNode = DOMNode(environment: node.environment, viewController: node.viewController, buildingBlock: node.buildingBlock)
+            let internalNode = type(of: node).makeNode(environment: node.environment, viewController: node.viewController, buildingBlock: node.buildingBlock)
             node.values.append(internalNode)
             domNode = internalNode
         } else {

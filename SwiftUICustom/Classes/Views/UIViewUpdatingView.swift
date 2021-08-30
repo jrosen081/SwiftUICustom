@@ -9,7 +9,7 @@ import Foundation
 
 public struct UIViewWrappingView<Content: View>: View {
     let content: Content
-    let updater: (UIView) -> Void
+    let updater: (SwiftUIView) -> Void
     var addConstraints: (UIView, UIView) -> Void = { $0.setupFullConstraints($0, $1) }
     public var body: Self {
         return self
@@ -28,6 +28,7 @@ public struct UIViewWrappingView<Content: View>: View {
     }
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
+        guard let view = view as? SwiftUIView else { return }
         view.constraints.forEach { $0.isActive = false }
         content._redraw(view: view.subviews[0], controller: controller, environment: environment)
         updater(view)

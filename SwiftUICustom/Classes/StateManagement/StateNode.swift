@@ -4,12 +4,24 @@ import Runtime
 
 
 protocol Updater {
-    func update(value: Any, index: Int)
+    func update(value: Any, index: Int, shouldRedraw: Bool)
     func get(valueAtIndex: Int) -> Any
 }
 
-public class DOMNode: Updater {
-    weak var internalUIView: UIView?
+public class DOMNode: NSObject, Updater {
+    weak var internalUIView: UIView? {
+        didSet {
+            self.shouldRestartValue = false
+            onViewChange?(internalUIView)
+        }
+    }
+
+    @objc func listenForDeallocations(notification: Notification) {
+        DispatchQueue.main.async {
+            self.shouldRestartValue = self.viewController == nil
+        }
+    }
+
     var uiView: UIView? {
         get {
             internalUIView
@@ -18,35 +30,46 @@ public class DOMNode: Updater {
             internalUIView = internalUIView ?? newValue
         }
     }
+    
+    var shouldRestartValue: Bool = true
     var values: [Any] = []
     var environment: EnvironmentValues
     weak var viewController: UIViewController?
     var buildingBlock: _BuildingBlock
     var childNodes: [DOMNode] = []
     
+    var onViewChange: ((UIView?) -> Void)?
+    
     init(environment: EnvironmentValues, viewController: UIViewController?, buildingBlock: _BuildingBlock) {
         self.environment = environment
         self.viewController = viewController
         self.buildingBlock = buildingBlock
+        super.init()
+        NotificationCenter.default.addObserver(self, selector: #selector(listenForDeallocations), name: swiftUIControllerDeallocatedNotification, object: nil)
     }
     
     func get(valueAtIndex: Int) -> Any {
         return self.values[valueAtIndex]
     }
     
-    func update(value: Any, index: Int) {
+    func safeGet(valueAtIndex: Int) -> Any? {
+        if self.values.count > valueAtIndex {
+            return get(valueAtIndex: valueAtIndex)
+        } else {
+            return nil
+        }
+    }
+    
+    func update(value: Any, index: Int, shouldRedraw: Bool = false) {
         if self.values.count == index {
             values.append(index)
         } else {
             self.values[index] = value
         }
-        
-        RunLoopInteractor.shared.add(operation: { animation in
-            guard let controller = self.viewController, let uiview = self.uiView else { return }
-            var newEnvironment = self.environment
-            newEnvironment.currentStateNode = self
-            newEnvironment.currentAnimation = animation
-            self.buildingBlock._redraw(view: uiview, controller: controller, environment: newEnvironment)
+        guard shouldRedraw else { return }
+        RunLoopInteractor.shared.add(operation: { [weak self] animation in
+            print("Updating node \(ObjectIdentifier(self!)) with updated value \(value)")
+            self?.redraw(animation: animation)
         })
     }
     
@@ -62,7 +85,24 @@ public class DOMNode: Updater {
         guard self.childNodes.count > index else { return nil }
         return childNodes[index]
     }
+    
+    func redraw(animation: Animation?) {
+        guard let controller = self.viewController, let uiview = self.uiView else {
+            return
+        }
+        var newEnvironment = self.environment
+        newEnvironment.currentStateNode = self
+        newEnvironment.currentAnimation = animation
+        self.buildingBlock._redraw(view: uiview, controller: controller, environment: newEnvironment)
+    }
+    
+    class func makeNode(environment: EnvironmentValues, viewController: UIViewController?, buildingBlock: _BuildingBlock) -> DOMNode {
+        return DOMNode(environment: environment, viewController: viewController, buildingBlock: buildingBlock)
+    }
 }
+
+private protocol OptionalType {}
+extension Optional: OptionalType {}
 
 @dynamicMemberLookup
 struct _StateNode<V> {
@@ -75,13 +115,13 @@ struct _StateNode<V> {
         self.node = node
         let children = Mirror(reflecting: view).children
         self.mappedNodes = children.compactMap { label, value -> (String, DynamicProperty)? in
-            guard let val = label, let dynamic = value as? DynamicProperty else { return nil }
+            guard let val = label, let dynamic = value as? DynamicProperty, (value as? OptionalType) == nil else { return nil }
             return (val, dynamic)
         }
     }
     
     func updatedValue() -> V {
-        guard let info = try? typeInfo(of: V.self) else { fatalError() }
+        guard let info = try? typeInfo(of: type(of: view).self) else { fatalError() }
         var newView = view
         for (offset, node) in mappedNodes.enumerated() {
             var property = node.value

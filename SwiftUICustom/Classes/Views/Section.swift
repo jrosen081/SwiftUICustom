@@ -10,34 +10,37 @@ import Foundation
 protocol SectionProtocol {
     var headerView: _BuildingBlock? { get }
     var footerView: _BuildingBlock? { get }
-    var buildingBlocks: [_BuildingBlock] { get }
+    func buildingBlocks(topNode: DOMNode) -> [(_BuildingBlock, DOMNode)]
 }
 
 struct UngroupedSection: SectionProtocol {
-    let buildingBlocks: [_BuildingBlock]
+    let buildingBlocks: [(_BuildingBlock, DOMNode)]
+    func buildingBlocks(topNode: DOMNode) -> [(_BuildingBlock, DOMNode)] {
+        buildingBlocks
+    }
     let headerView: _BuildingBlock? = nil
     let footerView: _BuildingBlock? = nil
 }
 
 public struct Section<Parent: View, Content: View, Footer: View>: View, SectionProtocol {
-    let header: Parent
+    let header: Parent?
     let content: Content
-    let footer: Footer
+    let footer: Footer?
     
     public init(@ViewBuilder _ content: () -> Content) where Parent == EmptyView, Footer == EmptyView {
-        self.header = EmptyView()
-        self.footer = EmptyView()
+        self.header = nil
+        self.footer = nil
         self.content = content()
     }
     
     public init(header: Parent, @ViewBuilder _ content: () -> Content) where Footer == EmptyView {
         self.header = header
-        self.footer = EmptyView()
+        self.footer = nil
         self.content = content()
     }
     
     public init(footer: Footer, @ViewBuilder _ content: () -> Content) where Parent == EmptyView {
-        self.header = EmptyView()
+        self.header = nil
         self.footer = footer
         self.content = content()
     }
@@ -64,7 +67,7 @@ public struct Section<Parent: View, Content: View, Footer: View>: View, SectionP
         return footer
     }
     
-    var buildingBlocks: [_BuildingBlock] {
-        return content.expanded()
+    func buildingBlocks(topNode: DOMNode) -> [(_BuildingBlock, DOMNode)] {
+        self.content._makeSequence(currentNode: topNode).expanded(node: topNode)
     }
 }

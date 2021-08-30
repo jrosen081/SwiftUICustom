@@ -15,7 +15,7 @@ public struct EnvironmentObject<Value: ObservableObject>: DynamicProperty {
         }
         self.environment = node.environment
         environment[EnvironmentObjectGetter<Value>.self].publisher.listenForChanges(identifier: ObjectIdentifier(node)) {
-            node.update(value: 0, index: index)
+            node.update(value: 0, index: index, shouldRedraw: true)
         }
     }
     

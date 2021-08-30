@@ -7,16 +7,10 @@
 
 import Foundation
 
-protocol BuildingBlockCreator {
-	func toBuildingBlocks() -> [_BuildingBlock]
-}
-
-protocol Expandable {
-	func expanded() -> [_BuildingBlock]
-}
-
-public struct TupleView<T>: BuildingBlockCreator {
+public struct TupleView<T>{
 	var value: T
+    
+    @Environment(\.currentStateNode) var currentNode
 	
 	public init(value: T) {
 		self.value = value
@@ -54,4 +48,42 @@ public struct TupleView<T>: BuildingBlockCreator {
 		}
 		return buildingBlocks
 	}
+}
+
+extension TupleView : View, _BuildingBlock {
+    public var body: ForEach<Int, Int, _BuildingBlockRepresentable> {
+        let expanded = self._makeSequence(currentNode: currentNode)
+        return ForEach(Array(0..<expanded.count)) { index in
+            expanded.viewGetter(index, currentNode).0
+        }
+    }
+    
+    public func _makeSequence(currentNode domNode: DOMNode) -> _ViewSequence {
+        let allViewSequences = toBuildingBlocks().enumerated()
+            .map { (offset, view) -> _ViewSequence in
+            let childNode: DOMNode
+            if domNode.childNodes.count > offset {
+                childNode = domNode.childNodes[offset]
+            } else {
+                childNode = type(of: domNode).makeNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: view)
+                domNode.addChild(node: childNode, index: offset)
+            }
+            childNode.environment = domNode.environment
+            return view._makeSequence(currentNode: childNode)
+        }
+        return _ViewSequence(count: allViewSequences.map(\.count).reduce(0, +)) { index, node in
+            precondition(node === domNode, "How is this possible")
+            var indexToUse = index
+            var loopCount = 0
+            for viewSequence in allViewSequences {
+                if indexToUse < viewSequence.count {
+                    return viewSequence.viewGetter(indexToUse, node.childNodes[loopCount])
+                } else {
+                    indexToUse -= viewSequence.count
+                }
+                loopCount += 1
+            }
+            fatalError("Bad count")
+        }
+    }
 }

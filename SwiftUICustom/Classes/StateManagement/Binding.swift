@@ -8,6 +8,7 @@
 import Foundation
 
 @propertyWrapper
+@dynamicMemberLookup
 public struct Binding<T>: DynamicProperty {
 	var get: () -> T
 	var set: (T) -> ()
@@ -48,5 +49,13 @@ public struct Binding<T>: DynamicProperty {
         if node.values.count <= index {
             node.values.append(0)
         }
+    }
+    
+    public subscript<K>(dynamicMember key: WritableKeyPath<T, K>) -> Binding<K> {
+        Binding<K>(get: {
+            self.wrappedValue[keyPath: key]
+        }, set: {
+            self.wrappedValue[keyPath: key] = $0
+        })
     }
 }

@@ -17,7 +17,7 @@ public struct EnvironmentUpdatingView<Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		var updates = environment.withUpdates(self.updates)
-        let newNode = DOMNode(environment: updates, viewController: enclosingController, buildingBlock: self.content)
+        let newNode = environment.currentStateNode.childNodes.first ?? type(of: environment.currentStateNode).makeNode(environment: updates, viewController: enclosingController, buildingBlock: self.content)
         environment.currentStateNode.addChild(node: newNode, index: 0)
         updates.currentStateNode = newNode
 		let view = self.content._toUIView(enclosingController: enclosingController, environment: updates)
@@ -32,6 +32,14 @@ public struct EnvironmentUpdatingView<Content: View>: View {
         newEnvironment.currentStateNode = node
 		self.content._redraw(view: view, controller: controller, environment: newEnvironment)
 	}
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment.withUpdates(updates), viewController: currentNode.viewController, buildingBlock: self.content)
+        currentNode.addChild(node: childNode, index: 0)
+        childNode.environment = currentNode.environment.withUpdates(updates)
+        return self.content._makeSequence(currentNode: childNode)
+        
+    }
 }
 
 public extension View {

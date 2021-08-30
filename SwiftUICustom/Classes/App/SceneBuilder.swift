@@ -70,6 +70,7 @@ public struct SceneTupleView<Value>: Scene {
             } else {
                 childNode = self.makeNode(parentNode: domNode, body: scene, delegate: delegate, index: offset)
             }
+            childNode.environment = domNode.environment
             return scene._asSequence(domNode: childNode, delegate: delegate)
         }
         return SceneSequence(count: allSceneSequences.map(\.count).reduce(0, +)) { index, node, delegate in

@@ -12,9 +12,9 @@ import SwiftUICustom
 class Delegate: NSObject, UIApplicationDelegate {
 }
 
-
 struct FakeScene: Scene {
     @State var value = 0
+    @Environment(\.scenePhase) var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -34,6 +34,11 @@ struct MyApp: App {
     @StateObject var checkThis = ExampleModel()
     
     var scene: some Scene {
+//        if #available(iOS 14, *) {
+//            return FakeDocumentScene()
+//        } else {
+//            fatalError()
+//        }
         FakeScene()
         .onChange(of: checkThis.value) {
             print($0)

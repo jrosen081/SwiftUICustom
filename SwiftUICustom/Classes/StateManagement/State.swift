@@ -15,6 +15,10 @@ public struct State<T>: DynamicProperty {
 	public init(wrappedValue: T) {
 		self.underlyingValue = wrappedValue
 	}
+    
+    public init(initialValue: T) {
+        self.underlyingValue = initialValue
+    }
 	
 	public var wrappedValue: T {
 		get {
@@ -35,7 +39,7 @@ public struct State<T>: DynamicProperty {
     
     public mutating func update(with node: DOMNode, index: Int) {
         self.location = Location(index: index, node: node)
-        if node.uiView == nil {
+        if node.shouldRestartValue {
             if node.values.count <= index {
                 node.values.append(underlyingValue)
             } else {

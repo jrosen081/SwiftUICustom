@@ -34,11 +34,11 @@ public struct LabelStyleConfiguration {
 }
 
 public struct Label<Title, Icon>: View where Title : View, Icon : View {
-    private enum Storage {
+    enum Storage {
         case titleIcon(Title, Icon)
         case configuration(LabelStyleConfiguration)
     }
-    private let storage: Storage
+    let storage: Storage
     @Environment(\.labelStyleFunc) var labelStyle
     
     public init<S>(_ title: S, image name: String) where S : StringProtocol, Title == Text, Icon == Image {

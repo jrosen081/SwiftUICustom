@@ -17,12 +17,12 @@ public struct Toggle<Label: View>: View {
 		self.isOn = isOn
 	}
 	
-	public var body: HStack<TupleView<(ConditionalContent<Label, EmptyView>, Spacer, SwitchRepresentable)>> {
+	public var body: HStack<TupleView<(ConditionalContent<TupleView<(Label, Spacer)>, EmptyView>, SwitchRepresentable)>> {
         HStack {
             if !labelsHidden {
                 creation
+                Spacer()
             }
-            Spacer()
             SwitchRepresentable(isOn: isOn)
         }
 	}

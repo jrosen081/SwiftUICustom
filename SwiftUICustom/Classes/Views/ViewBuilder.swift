@@ -78,15 +78,3 @@ public struct ViewBuilder {
         return TupleView(value: views)
     }
 }
-
-extension TupleView : View, _BuildingBlock {
-    
-	public var body: ForEach<Int, Int, _BuildingBlockRepresentable> {
-        let expanded = self.expanded()
-        return ForEach(Array(0..<expanded.count)) { index in
-            let buildingBLock = expanded[index]
-            _BuildingBlockRepresentable(buildingBlock: buildingBLock)
-        }
-	}
-}
-

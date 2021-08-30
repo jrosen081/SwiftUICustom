@@ -18,6 +18,7 @@ struct TabViewExample: View {
     @State var totalOptions = ["fake"]
     @State var isRising = true
     @State var shouldAdd = false
+    @State var color = Color.red
     @Environment(\.openUrl) var openUrl
     var body: some View {
         TabView {
@@ -29,6 +30,9 @@ struct TabViewExample: View {
                     Text("My option")
                 }
             VStack {
+                if #available(iOS 14, *) {
+                    ColorPicker("My color", selection: $color, supportsOpacity: true)
+                }
                 ForEach(totalOptions) { name in
                     Text(name).onTapGesture {
                         if isRising && totalOptions.count > 10 {

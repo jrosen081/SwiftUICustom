@@ -120,10 +120,12 @@ public extension Scene {
             return SceneSequence(count: 1, sceneGetter: {_,node,_   in (AnyScene(scene: self), node) })
         } else {
             let childNode = domNode.childNodes.first ?? makeNode(parentNode: domNode, body: body, delegate: delegate)
+            childNode.environment = domNode.environment
             let childSequence = _StateNode(view: self, node: domNode).body._asSequence(domNode: childNode, delegate: delegate)
             return SceneSequence(count: childSequence.count) { index, node, delegate in
                 let body = _StateNode(view: self, node: node).body
                 let newNode = node.childNodes.first ?? makeNode(parentNode: node, body: body, delegate: delegate)
+                newNode.environment = node.environment
                 return childSequence.sceneGetter(index, newNode, delegate)
             }
         }
@@ -172,7 +174,7 @@ public extension Scene {
 @available(iOS 13.0, *)
 class InternalSceneDelegate: NSObject, UIWindowSceneDelegate {
     var window: UIWindow?
-    let domNode = DOMNode(environment: EnvironmentValues(), viewController: nil, buildingBlock: EmptyView())
+    let domNode = DOMNode(environment: globalDOMNode.environment, viewController: nil, buildingBlock: EmptyView())
     var activityType: NSUserActivity?
     var scene: AnyScene? {
         sceneGetter
@@ -187,9 +189,28 @@ class InternalSceneDelegate: NSObject, UIWindowSceneDelegate {
         self.activityType = connectionOptions.userActivities.first
         let window = UIWindow(windowScene: windowScene)
         self.window = window
+        domNode.environment.scenePhase = .active
         window.rootViewController = AnyScene._startScene(delegate: self, self: swiftScene, domNode: domNode)
         domNode.viewController = window.rootViewController
+        domNode.uiView = window.rootViewController?.view
         window.makeKeyAndVisible()
     }
     
+    func redrawScene(environment: EnvironmentValues, scene: AnyScene) {
+        let newEnvironment = environment.withUpdates { $0.scenePhase = self.window?.windowScene?.activationState.toSwiftUIStatus ?? .background }
+        domNode.environment = newEnvironment
+        domNode.redraw(animation: nil)
+    }
+    
+}
+
+@available(iOS 13, *)
+private extension UIScene.ActivationState {
+    var toSwiftUIStatus: ScenePhase {
+        switch self {
+        case .foregroundActive: return .active
+        case .background: return .background
+        default: return .inactive
+        }
+    }
 }

@@ -26,14 +26,14 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
         var newEnvironment = environment
 		switch self.actualContent {
 		case .first(let view):
-            let newNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: view)
+            let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: view)
             newEnvironment.currentStateNode = newNode
 			underlyingView = view._toUIView(enclosingController: enclosingController, environment: newEnvironment)
             newNode.uiView = underlyingView
             environment.currentStateNode.addChild(node: newNode, index: 0)
 			conditionalContainer.isTrue = true
 		case .second(let view):
-            let newNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: view)
+            let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: enclosingController, buildingBlock: view)
             newEnvironment.currentStateNode = newNode
             underlyingView = view._toUIView(enclosingController: enclosingController, environment: newEnvironment)
             newNode.uiView = underlyingView
@@ -58,7 +58,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			return
 		case (.first(let first), false):
 			conditional.isTrue = true
-            let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: first)
+            let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: controller, buildingBlock: first)
             newEnvironment.currentStateNode = newNode
             var newValue = first._toUIView(enclosingController: controller, environment: newEnvironment)
             environment.currentStateNode.childNodes[0] = newNode
@@ -86,7 +86,7 @@ public struct ConditionalContent<TrueContent: View, FalseContent: View>: View {
 			}
 		case(.second(let second), true):
 			conditional.isTrue = false
-            let newNode = DOMNode(environment: environment, viewController: controller, buildingBlock: second)
+            let newNode = type(of: environment.currentStateNode).makeNode(environment: environment, viewController: controller, buildingBlock: second)
             newEnvironment.currentStateNode = newNode
             var newValue = second._toUIView(enclosingController: controller, environment: newEnvironment)
             environment.currentStateNode.childNodes[0] = newNode

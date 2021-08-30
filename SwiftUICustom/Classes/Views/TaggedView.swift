@@ -27,6 +27,10 @@ public struct TaggedView<Tag: Hashable, Content: View>: View, Taggable {
     public func _hash(into hasher: inout Hasher) {
         tag.hash(into: &hasher)
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 protocol Taggable {

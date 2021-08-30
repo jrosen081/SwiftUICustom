@@ -17,7 +17,7 @@ struct Location<Value> {
         }
         
         nonmutating set {
-            node.update(value: newValue, index: index)
+            node.update(value: newValue, index: index, shouldRedraw: true)
         }
     }
 }

@@ -25,9 +25,8 @@ public struct VStack<Content: View>: View {
 	
     public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         let view = viewCreator
-        let buildingBlocks = view.expanded()
         let stackView = SwiftUIStackView(arrangedSubviews: [], buildingBlocks: [])
-        stackView.diff(buildingBlocks: buildingBlocks, controller: enclosingController, environment: environment)
+        stackView.diff(body: view, controller: enclosingController, environment: environment)
         stackView.alignment = self.alignment.stackViewAlignment
         stackView.spacing = self.spacing
         stackView.axis = .vertical
@@ -38,6 +37,6 @@ public struct VStack<Content: View>: View {
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         let viewProtocol = viewCreator
         guard let stackView = view as? SwiftUIStackView else { return }
-        stackView.diff(buildingBlocks: viewProtocol.expanded(), controller: controller, environment: environment)
+        stackView.diff(body: viewProtocol, controller: controller, environment: environment)
     }
 }

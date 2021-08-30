@@ -22,7 +22,7 @@ public struct ScrollView<Content: View>: View {
 		let scrollView = SwiftUIScrollView(frame: .zero)
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
         environment.currentStateNode.buildingBlock = self.viewBuilder
-		let scrollableView = self.viewBuilder._toUIView(enclosingController: enclosingController, environment: environment).asTopLevelView()
+		let scrollableView = self.viewBuilder._toUIView(enclosingController: enclosingController, environment: environment)
         environment.currentStateNode.uiView = scrollableView
 		scrollView.addSubview(scrollableView)
 		NSLayoutConstraint.activate([
@@ -37,6 +37,10 @@ public struct ScrollView<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		self.viewBuilder._redraw(view: view.subviews[0], controller: controller, environment: environment)
 	}
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1) {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)}
+    }
 }
 
 class SwiftUIScrollView: UIScrollView {

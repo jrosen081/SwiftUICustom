@@ -8,74 +8,90 @@
 import Foundation
 
 public struct NavigationLink<Content: View, Destination: View>: View {
+    @State private var internalIsActive = false
+    @Environment(\.self) var environment
 	let destination: Destination
 	let content: Content
+    let isActive: Binding<Bool>?
     
-	public init(destination: Destination, content:  () -> Content) {
+    private var isActiveWrapper: Bool {
+        get {
+            self.isActive?.wrappedValue ?? internalIsActive
+        }
+        nonmutating set {
+            if let active = self.isActive {
+                active.wrappedValue = newValue
+            } else {
+                internalIsActive = newValue
+            }
+        }
+       
+    }
+    
+    public init(destination: Destination, isActive: Binding<Bool>? = nil, content:  () -> Content) {
 		self.destination = destination
 		self.content = content()
+        self.isActive = isActive
 	}
-	
-	public var body: Self {
-		return self
-	}
-	
-	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
-		var newEnvironment = environment
-        weak var controller: UIViewController? = enclosingController
-        let contentDOMNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: self.content)
-        newEnvironment.currentStateNode = contentDOMNode
-        environment.currentStateNode.addChild(node: contentDOMNode, index: 0)
-        let newDomNode = DOMNode(environment: environment, viewController: nil, buildingBlock: self.destination)
-        environment.currentStateNode.addChild(node: newDomNode, index: 1)
-        let contentView = self.content._toUIView(enclosingController: enclosingController, environment: newEnvironment)
-        environment.currentStateNode.uiView = contentView
-        let pushViewController = {
-            let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: newDomNode)
-            newDomNode.viewController = internalController
-            controller?.navigationController?.pushViewController(internalController, animated: true)
+    
+    public init<V: Equatable>(tag: V, selection: Binding<V?>, destination: () -> Destination, content:  () -> Content) {
+        let isActive = Binding<Bool> {
+            tag == selection.wrappedValue
+        } set: { value in
+            if value {
+                selection.wrappedValue = tag
+            } else {
+                selection.wrappedValue = nil
+            }
         }
-        
-        environment.currentStateNode.buildingBlock = self.content
-        if let cell = environment.cell {
-            cell.accessoryType = .disclosureIndicator
-            cell.onClick = pushViewController
+        self = NavigationLink(destination: destination(), isActive: isActive, content: content)
+    }
+	
+	public var body: OnChangeView<Bool, OnAppearView<Button<Content>>> {
+        Button(action: pushViewController) {
+            self.content
+        }
+        .onAppear(updateViewForState)
+        .onChange(of: self.isActiveWrapper) { active in
+            updateViewForState()
+        }
+	}
+    
+    private func pushViewController() {
+        guard let controller = environment.currentStateNode.viewController else { return }
+        let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: getNewControllerDOMNode())
+        internalController.onDeallocate = {
+            self.isActiveWrapper = false
+        }
+        controller.navigationController?.pushViewController(internalController, animated: true)
+        if !self.isActiveWrapper {
+            self.isActiveWrapper = true
+        }
+    }
+    
+    private func updateViewForState() {
+        environment.cell?.accessoryType = .disclosureIndicator
+        environment.cell?.onClick = pushViewController
+        if isActiveWrapper, getNewControllerDOMNode().viewController == nil {
+            pushViewController()
+        } else if !isActiveWrapper,
+                  let controller = getNewControllerDOMNode().viewController,
+                  let index = controller.navigationController?.index(of: controller),
+                  let allControllers = controller.navigationController?.viewControllers {
+            controller.navigationController?.popToViewController(allControllers[max(0, index - 1)], animated: true)
+        }
+    }
+    
+    
+    private func getNewControllerDOMNode() -> DOMNode {
+        if environment.currentStateNode.values.count == 2 {
+            let contentDOMNode = DOMNode(environment: environment, viewController: nil, buildingBlock: self.destination)
+            environment.currentStateNode.values.append(contentDOMNode)
+            return contentDOMNode
         } else {
-            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
+            return environment.currentStateNode.values[2] as! DOMNode
         }
-        let cell = NavigationButtonLink(view: contentView, environment: newEnvironment, onClick: pushViewController)
-        cell.isUserInteractionEnabled = environment.cell == nil
-        return cell
-	}
-	
-	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
-        weak var usableController: UIViewController? = controller
-		var newEnvironment = environment
-        newEnvironment.currentStateNode = environment.currentStateNode.childNodes[0]
-        if let cell = environment.cell {
-            cell.accessoryType = .disclosureIndicator
-        } else {
-            newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? .systemBlue
-
-        }
-        self.content._redraw(view: view.subviews[0], controller: controller, environment: newEnvironment)
-		guard let navigationButton = view as? NavigationButtonLink else { return }
-        navigationButton.onClick = {
-            let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: environment.currentStateNode.childNodes[1])
-            usableController?.navigationController?.pushViewController(internalController, animated: true)
-        }
-        
-        environment.cell?.onClick = navigationButton.onClick
-        
-        if let navController = controller.navigationController,
-           let index = navController.index(of: controller),
-           navController.viewControllers.count > index + 1,
-           let controller = navController.viewControllers[index + 1] as? SwiftUIInternalController<Destination> {
-            var newEnvironment = environment
-            newEnvironment.currentStateNode = controller.domNode
-            self.destination._redraw(view: controller.view.subviews[0], controller: controller, environment: newEnvironment)
-        }
-	}
+    }
 }
 
 class NavigationButtonLink: ButtonView {

@@ -68,7 +68,7 @@ public struct GroupBox<Label, Content>: View where Label : View, Content : View 
                 }
                 configuration.content
             }.padding()
-            .background(colorScheme == .dark ? Color.darkGray  : Color.lightGray)
+            .background(colorScheme == .dark ? Color(uiColor: .darkGray) : Color(uiColor: .lightGray))
             .clipShape(RoundedRectangle(cornerRadius: 5))
         }
     }
