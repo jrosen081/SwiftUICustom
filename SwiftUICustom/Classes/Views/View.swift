@@ -158,7 +158,6 @@ extension View {
     public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
         if self._isBase {
             return _ViewSequence(count: 1, viewGetter: {_, node in
-                precondition(currentNode === node)
                 return (_BuildingBlockRepresentable(buildingBlock: self), node)
                 
             })
@@ -172,8 +171,6 @@ extension View {
             }
             let childSequence = body._makeSequence(currentNode: childNode)
             return _ViewSequence(count: childSequence.count) { index, node in
-                precondition(node === currentNode)
-                precondition(childNode === node.node(at: 0)!)
                 let newNode = node.childNodes[0]
                 newNode.environment = currentNode.environment
                 return childSequence.viewGetter(index, newNode)

@@ -34,14 +34,12 @@ public struct SecondScreen: View {
 					.onAppear {
 						print("Achieved")
 					}.padding()
-				Spacer()
 				Button(action: {
                     self.stateObject.value -= 1
                     self.otherCount += 1
 					self.count += 1
 					self.isShowing = true
 				}, content: { Text("Nope") }).padding()
-				Spacer()
 				NavigationLink(destination: ThirdView()) {
 					Text("On to the next one")
 				}.padding()

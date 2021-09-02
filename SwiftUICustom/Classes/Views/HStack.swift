@@ -91,12 +91,18 @@ class SwiftUIStackView: UIStackView {
 		actualViews.forEach {
 			self.addArrangedSubview($0)
 		}
-        self.distribution = .fillProportionally
+        self.distribution = .equalCentering
     }
 	
 	required init(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
+    
+    override var axis: NSLayoutConstraint.Axis {
+        didSet {
+            setContentCompressionResistancePriority(.defaultHigh, for: axis == .horizontal ? .vertical : .horizontal)
+        }
+    }
 }
 
 extension Array {
