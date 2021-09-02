@@ -28,6 +28,10 @@ public struct OnAppearView<Content: View>: View {
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         self.view._redraw(view: view, controller: controller, environment: environment)
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension View {

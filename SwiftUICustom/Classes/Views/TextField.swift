@@ -22,6 +22,10 @@ public struct TextField<Label: View>: View {
             TextFieldRepresentable(text: binding, isSecure: isSecure)
         }
 	}
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension TextField {

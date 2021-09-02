@@ -16,6 +16,10 @@ public struct OnDisappearView<V: View>: View {
             view.onDisappear = onDisappear
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension View {

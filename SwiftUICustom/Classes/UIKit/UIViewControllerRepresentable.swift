@@ -46,6 +46,11 @@ public extension UIViewControllerRepresentable {
         self.updateUIViewController(view.controller, context: Context(environment: environment, coordinator: view.coordinator))
     }
     
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
+
+    
     static func dismantleViewController(_ uiViewController: Self.UIViewControllerType) { }
 }
 

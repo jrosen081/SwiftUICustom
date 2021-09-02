@@ -12,6 +12,7 @@ public struct ForEach<Element, ID: Hashable, Content: View>: View {
 	let elements: [Element]
 	let mapper: (Element) -> ID
 	let contentMapper: (Element, ID) -> TaggedView<ID, Content>
+    @Environment(\.currentStateNode) var currentStateNode
 	
 	public init(_ elements: [Element], id: @escaping (Element) -> ID, @ViewBuilder _ contentMapper: @escaping (Element) -> Content) {
 		self.elements = elements
@@ -40,7 +41,7 @@ public struct ForEach<Element, ID: Hashable, Content: View>: View {
 	
 	public var body: VStack<TupleView<([_BuildingBlock])>> {
         VStack {
-            self.expanded()
+            expanded()
         }
 	}
     

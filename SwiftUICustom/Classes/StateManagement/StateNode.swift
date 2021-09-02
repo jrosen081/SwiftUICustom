@@ -9,6 +9,7 @@ protocol Updater {
 }
 
 public class DOMNode: NSObject, Updater {
+    weak var parent: DOMNode?
     weak var internalUIView: UIView? {
         didSet {
             self.shouldRestartValue = false
@@ -79,6 +80,7 @@ public class DOMNode: NSObject, Updater {
         } else {
             self.childNodes[index] = node
         }
+        node.parent = self
     }
     
     func node(at index: Int) -> DOMNode? {

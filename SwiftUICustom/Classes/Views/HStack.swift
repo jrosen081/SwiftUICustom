@@ -48,7 +48,9 @@ class SwiftUIStackView: UIStackView {
     
     func diff(body: _BuildingBlock, controller: UIViewController, environment: EnvironmentValues) {
         let bodySequence = body._makeSequence(currentNode: environment.currentStateNode)
-        let buildingBlockAndNodes = (0..<bodySequence.count).map { bodySequence.viewGetter($0, environment.currentStateNode) }
+        let buildingBlockAndNodes = (0..<bodySequence.count).map {
+            bodySequence.viewGetter($0, environment.currentStateNode)
+        }
         let buildingBlocks = buildingBlockAndNodes.map(\.0)
         let newChildren = buildingBlockAndNodes.map(\.1)
         let currentNode = environment.currentStateNode
@@ -60,12 +62,12 @@ class SwiftUIStackView: UIStackView {
                                               newChildren[$0.1]) }
         allDeletions.forEach { $0.1.removeFromSuperview() }
         let allAdditions = diffResults.additions.map { (index: Int) -> (Int, UIView, _BuildingBlock, DOMNode) in
-            let domNode = newChildren[index]
+            let (swiftUIView, domNode) = buildingBlockAndNodes[index]
             var newEnvironment = environment
             newEnvironment.currentStateNode = domNode
-            let view = buildingBlocks[index]._toUIView(enclosingController: controller, environment: newEnvironment)
+            let view = swiftUIView.buildingBlock._toUIView(enclosingController: controller, environment: newEnvironment)
             domNode.uiView = view
-            return (index, view, buildingBlocks[index], domNode)
+            return (index, view, swiftUIView, domNode)
         }
         let operationsToPerform = (allAdditions + moving).sorted(by: { $0.0 < $1.0 })
         operationsToPerform.forEach { (indexToInsert, uiView, buildingBlock, node) in

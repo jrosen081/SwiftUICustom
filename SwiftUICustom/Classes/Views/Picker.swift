@@ -24,6 +24,10 @@ public struct Picker<Label, SelectionValue, Content>: View where Label : View, S
     public var body: _BuildingBlockRepresentable {
         pickerStyle._makePickerView(picker: self)
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 struct UIPickerRepresentable<Content: View, SelectionValue: Hashable>: UIViewRepresentable {

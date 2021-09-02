@@ -21,6 +21,10 @@ public struct ShadowView<Content: View>: View {
             view.layer.shadowOpacity = 1
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension View {

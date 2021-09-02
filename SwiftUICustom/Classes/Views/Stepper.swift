@@ -30,6 +30,10 @@ public struct Stepper<Label>: View where Label : View {
             _StepperView(binding: doubleBinding, range: range)
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public struct _StepperView: UIViewRepresentable {

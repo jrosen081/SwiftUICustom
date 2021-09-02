@@ -92,6 +92,10 @@ public struct NavigationLink<Content: View, Destination: View>: View {
             return environment.currentStateNode.values[2] as! DOMNode
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 class NavigationButtonLink: ButtonView {

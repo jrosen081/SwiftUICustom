@@ -44,6 +44,11 @@ extension UIViewRepresentable {
 		guard let view = internalView as? SwiftUIViewRepresentable<Self>, let actualView = view.subviews[0] as? Self.UIViewType else { return }
         _StateNode(view: self, node: environment.currentStateNode).updatedValue().updateUIView(actualView, context: UIViewRepresentableContext(coordinatorHolder: view.getCoordinator, environment: environment))
 	}
+    
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 internal class SwiftUIViewRepresentable<Representable: UIViewRepresentable>: SwiftUIView {

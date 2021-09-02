@@ -42,6 +42,10 @@ public struct ContextMenu<Content: View, Menu: View>: View {
         }
     }
     
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
+    
     private var menuItems: [UIMenuElement] {
         menu.menuItems(selected: false, domNode: currentNode)
     }
@@ -64,8 +68,8 @@ private protocol MenuItemAccessable {
 @available(iOS 14, *)
 extension Menu: MenuItemAccessable {
     func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
-        guard let title = self.label as? Text else { return nil }
-        return UIMenu(title: title.text, image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: selected, domNode: domNode))
+        guard let title = label.textValue else { return nil }
+        return UIMenu(title: title, image: label.imageValue, identifier: nil, options: [], children: self.menuItems.menuItems(selected: selected, domNode: domNode))
     }
 }
 

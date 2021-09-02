@@ -41,6 +41,10 @@ public struct NavigationView<Body: View>: View {
         actualController.environment = environment
         self.viewBuilder._redraw(view: actualController.view.subviews[0], controller: actualController, environment: environment)
 	}
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 class InternalNavigationController: UINavigationController {

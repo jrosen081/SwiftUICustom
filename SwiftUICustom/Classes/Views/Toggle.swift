@@ -26,6 +26,10 @@ public struct Toggle<Label: View>: View {
             SwitchRepresentable(isOn: isOn)
         }
 	}
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public struct SwitchRepresentable: UIViewRepresentable {

@@ -35,6 +35,9 @@ public struct Slider<Label, ValueLabel>: View where Label : View, ValueLabel : V
         }
 	}
 
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 extension Binding where T: BinaryFloatingPoint {

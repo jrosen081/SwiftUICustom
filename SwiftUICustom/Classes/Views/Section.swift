@@ -70,4 +70,8 @@ public struct Section<Parent: View, Content: View, Footer: View>: View, SectionP
     func buildingBlocks(topNode: DOMNode) -> [(_BuildingBlock, DOMNode)] {
         self.content._makeSequence(currentNode: topNode).expanded(node: topNode)
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }

@@ -72,6 +72,10 @@ public struct GroupBox<Label, Content>: View where Label : View, Content : View 
             .clipShape(RoundedRectangle(cornerRadius: 5))
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 

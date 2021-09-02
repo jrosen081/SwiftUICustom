@@ -157,15 +157,20 @@ extension View {
     
     public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
         if self._isBase {
-            return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+            return _ViewSequence(count: 1, viewGetter: {_, node in
+                precondition(currentNode === node)
+                return (_BuildingBlockRepresentable(buildingBlock: self), node)
+                
+            })
         } else {
-            let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment, viewController: currentNode.viewController, buildingBlock: self)
+            let body = _StateNode(view: self, node: currentNode).body
+            let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment, viewController: currentNode.viewController, buildingBlock: body)
             childNode.environment = currentNode.environment
             currentNode.addChild(node: childNode, index: 0)
             childNode.onViewChange = {[weak currentNode] view in
                 currentNode?.uiView = view
             }
-            let childSequence = _StateNode(view: self, node: currentNode).body._makeSequence(currentNode: childNode)
+            let childSequence = body._makeSequence(currentNode: childNode)
             return _ViewSequence(count: childSequence.count) { index, node in
                 precondition(node === currentNode)
                 precondition(childNode === node.node(at: 0)!)

@@ -37,6 +37,11 @@ public extension Shape {
 	func fill() -> FilledView<Self> {
 		return FilledView(shape: self)
 	}
+    
+    func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
+
 }
 
 extension Path: Shape {

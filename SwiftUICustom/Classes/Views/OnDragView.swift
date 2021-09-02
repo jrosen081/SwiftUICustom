@@ -24,6 +24,10 @@ public struct OnDragView<Content: View>: View {
             previewView.setupFullConstraints(previewView, view.subviews[0], usingGreaterThan: true)
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
 }
 
 public extension View {

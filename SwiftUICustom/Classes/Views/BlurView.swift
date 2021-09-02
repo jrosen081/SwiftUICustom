@@ -22,4 +22,9 @@ public struct BlurView<Content: View>: View {
             blurView.setupFullConstraints(blurView, blurEffectsView)
         }
     }
+    
+    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+    }
+
 }

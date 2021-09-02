@@ -52,9 +52,9 @@ public struct TupleView<T>{
 
 extension TupleView : View, _BuildingBlock {
     public var body: ForEach<Int, Int, _BuildingBlockRepresentable> {
-        let expanded = self._makeSequence(currentNode: currentNode)
-        return ForEach(Array(0..<expanded.count)) { index in
-            expanded.viewGetter(index, currentNode).0
+        let blocks = toBuildingBlocks()
+        return ForEach(Array(0..<blocks.count)) { index in
+            _BuildingBlockRepresentable(buildingBlock: blocks[index])
         }
     }
     
