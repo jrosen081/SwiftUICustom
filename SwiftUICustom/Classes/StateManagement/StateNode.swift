@@ -32,7 +32,11 @@ public class DOMNode: NSObject, Updater {
         }
     }
     
-    var shouldRestartValue: Bool = true
+    var shouldRestartValue: Bool = true {
+        didSet {
+            onRedrawChange?(shouldRestartValue)
+        }
+    }
     var values: [Any] = []
     var environment: EnvironmentValues
     weak var viewController: UIViewController?
@@ -40,6 +44,7 @@ public class DOMNode: NSObject, Updater {
     var childNodes: [DOMNode] = []
     
     var onViewChange: ((UIView?) -> Void)?
+    var onRedrawChange: ((Bool) -> Void)?
     
     init(environment: EnvironmentValues, viewController: UIViewController?, buildingBlock: _BuildingBlock) {
         self.environment = environment
@@ -67,6 +72,7 @@ public class DOMNode: NSObject, Updater {
         } else {
             self.values[index] = value
         }
+        self.shouldRestartValue = false
         guard shouldRedraw else { return }
         RunLoopInteractor.shared.add(operation: { [weak self] animation in
             print("Updating node \(ObjectIdentifier(self!)) with updated value \(value)")
@@ -90,6 +96,9 @@ public class DOMNode: NSObject, Updater {
     
     func redraw(animation: Animation?) {
         guard let controller = self.viewController, let uiview = self.uiView else {
+            if !shouldRestartValue, let parent = self.parent {
+                parent.redraw(animation: animation)
+            }
             return
         }
         var newEnvironment = self.environment

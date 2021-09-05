@@ -50,6 +50,9 @@ struct ThirdView: View {
                     ForEach(Array(0..<15)) {_ in
                         Text("My section").padding()
                     }
+                    NavigationLink(destination: Text("test"), content: {
+                        Text("Please")
+                    })
                 }
 				Text("My name is Jack").padding()
 				Button(action: {print("Hi")}, content: { Text("Test this") }).padding()

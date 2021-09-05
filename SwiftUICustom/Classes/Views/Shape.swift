@@ -110,6 +110,10 @@ public struct FilledView<ShapeGeneric: Shape>: View {
 internal class ShapeSwiftUIView<ShapeGeneric: Shape>: SwiftUIView {
 	var isFilled: Bool = false
     
+    override var intrinsicContentSize: CGSize {
+        UIView.layoutFittingExpandedSize
+    }
+    
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         if self.isFilled {
             return super.point(inside: point, with: event)

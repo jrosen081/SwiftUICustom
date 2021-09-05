@@ -16,7 +16,10 @@ protocol SectionProtocol {
 struct UngroupedSection: SectionProtocol {
     let buildingBlocks: [(_BuildingBlock, DOMNode)]
     func buildingBlocks(topNode: DOMNode) -> [(_BuildingBlock, DOMNode)] {
-        buildingBlocks
+        return buildingBlocks.flatMap { block, node -> [(_BuildingBlock, DOMNode)] in
+            let sequence = block._makeSequence(currentNode: node).expanded(node: node)
+            return sequence
+        }
     }
     let headerView: _BuildingBlock? = nil
     let footerView: _BuildingBlock? = nil

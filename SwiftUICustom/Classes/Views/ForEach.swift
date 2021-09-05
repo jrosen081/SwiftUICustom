@@ -64,7 +64,11 @@ public struct ForEach<Element, ID: Hashable, Content: View>: View {
             currentNode.values.append(0)
         }
         currentNode.values[0] = all
-        let allSequences = all.map { $0.buildingBlock._makeSequence(currentNode: $0) }
+        let allSequences = all.map { node -> _ViewSequence in
+            node.environment = node.environment.withUpdates { $0.currentStateNode = node }
+            return node.buildingBlock._makeSequence(currentNode: node)
+            
+        }
         return _ViewSequence(count: allSequences.map(\.count).reduce(0, +)) { index, node in
             let nodeValues = node.values[0] as! [DOMNode]
             var newIndex = index

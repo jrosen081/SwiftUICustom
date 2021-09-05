@@ -59,7 +59,9 @@ public struct NavigationLink<Content: View, Destination: View>: View {
     
     private func pushViewController() {
         guard let controller = environment.currentStateNode.viewController else { return }
-        let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: getNewControllerDOMNode())
+        let node = getNewControllerDOMNode()
+        let internalController = SwiftUIInternalController(swiftUIView: self.destination, environment: environment, domNode: node)
+        node.viewController = internalController
         internalController.onDeallocate = {
             self.isActiveWrapper = false
         }
@@ -84,18 +86,18 @@ public struct NavigationLink<Content: View, Destination: View>: View {
     
     
     private func getNewControllerDOMNode() -> DOMNode {
-        if environment.currentStateNode.values.count == 2 {
-            let contentDOMNode = DOMNode(environment: environment, viewController: nil, buildingBlock: self.destination)
-            environment.currentStateNode.values.append(contentDOMNode)
-            return contentDOMNode
+        if environment.currentStateNode.values.count == 3, let domNode = environment.currentStateNode.values[2] as? DOMNode, domNode.viewController != nil {
+            return domNode
         } else {
-            return environment.currentStateNode.values[2] as! DOMNode
+            let contentDOMNode = DOMNode(environment: environment, viewController: nil, buildingBlock: self.destination)
+            environment.currentStateNode.update(value: contentDOMNode, index: 2, shouldRedraw: false)
+            return contentDOMNode
         }
     }
     
-    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
-        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
-    }
+//    public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
+//        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+//    }
 }
 
 class NavigationButtonLink: ButtonView {

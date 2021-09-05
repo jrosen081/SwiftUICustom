@@ -37,7 +37,10 @@ public struct EnvironmentUpdatingView<Content: View>: View {
         let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment.withUpdates(updates), viewController: currentNode.viewController, buildingBlock: self.content)
         currentNode.addChild(node: childNode, index: 0)
         childNode.environment = currentNode.environment.withUpdates(updates)
-        return self.content._makeSequence(currentNode: childNode)
+        let childSequence = self.content._makeSequence(currentNode: childNode)
+        return _ViewSequence(count: childSequence.count, viewGetter: { index, node in
+            childSequence.viewGetter(index, node.childNodes[0])
+        })
         
     }
 }

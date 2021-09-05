@@ -68,7 +68,7 @@ extension TupleView : View, _BuildingBlock {
                 childNode = type(of: domNode).makeNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: view)
                 domNode.addChild(node: childNode, index: offset)
             }
-            childNode.environment = domNode.environment
+            childNode.environment = domNode.environment.withUpdates { $0.currentStateNode = childNode }
             return view._makeSequence(currentNode: childNode)
         }
         return _ViewSequence(count: allViewSequences.map(\.count).reduce(0, +)) { index, node in

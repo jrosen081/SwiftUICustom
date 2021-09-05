@@ -164,15 +164,19 @@ extension View {
         } else {
             let body = _StateNode(view: self, node: currentNode).body
             let childNode = currentNode.childNodes.first ?? type(of: currentNode).makeNode(environment: currentNode.environment, viewController: currentNode.viewController, buildingBlock: body)
-            childNode.environment = currentNode.environment
+            childNode.environment = currentNode.environment.withUpdates { $0.currentStateNode = childNode }
             currentNode.addChild(node: childNode, index: 0)
             childNode.onViewChange = {[weak currentNode] view in
                 currentNode?.uiView = view
             }
+            childNode.onRedrawChange = {[weak currentNode] shouldRestart in
+                currentNode?.shouldRestartValue = shouldRestart
+            }
             let childSequence = body._makeSequence(currentNode: childNode)
             return _ViewSequence(count: childSequence.count) { index, node in
+                precondition(node === currentNode, "\(type(of: self))")
                 let newNode = node.childNodes[0]
-                newNode.environment = currentNode.environment
+                newNode.environment = currentNode.environment.withUpdates { $0.currentStateNode = newNode }
                 return childSequence.viewGetter(index, newNode)
             }
         }

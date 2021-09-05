@@ -72,12 +72,13 @@ public struct TextFieldRepresentable: UIViewRepresentable {
     }
     
     private func updateFocus(context: Context, textField: SwiftUITextField) {
-        if context.environment.isForcedFocus, !textField.isFirstResponder {
+        textField.onFirstResponderChange = context.environment.onFocusChange
+        guard let forcedFocus = context.environment.isForcedFocus else { return }
+        if forcedFocus, !textField.isFirstResponder {
             textField.becomeFirstResponder()
-        } else if !context.environment.isForcedFocus, textField.isFirstResponder {
+        } else if !forcedFocus, textField.isFirstResponder {
             textField.endEditing(true)
         }
-        textField.onFirstResponderChange = context.environment.onFocusChange
     }
 }
 

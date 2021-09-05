@@ -19,9 +19,9 @@ public struct OnAppearView<Content: View>: View {
         environment.currentStateNode.buildingBlock = self.view
 		let view = self.view._toUIView(enclosingController: enclosingController, environment: environment)
         environment.currentStateNode.uiView = view
-        DispatchQueue.main.async {
+//        DispatchQueue.main.async {
             onAppear()
-        }
+//        }
 		return view
 	}
     

@@ -60,11 +60,11 @@ public struct FocusState<Value>: DynamicProperty {
 }
 
 struct IsForcedFocusedKey: EnvironmentKey {
-    static var defaultValue: Bool = false
+    static var defaultValue: Bool? = nil
 }
 
 extension EnvironmentValues {
-    var isForcedFocus: Bool {
+    var isForcedFocus: Bool? {
         get {
             self[IsForcedFocusedKey.self]
         }

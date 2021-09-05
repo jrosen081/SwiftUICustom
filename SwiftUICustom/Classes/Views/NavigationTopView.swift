@@ -18,9 +18,6 @@ public struct NavigationTopView<Content: View>: View {
 	
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
 		enclosingController.navigationItem.title = self.title
-		if let navigationController = enclosingController.navigationController, let index = navigationController.viewControllers.firstIndex(of: enclosingController) {
-            enclosingController.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
-		}
         environment.currentStateNode.buildingBlock = self.content
 		let view = self.content._toUIView(enclosingController: enclosingController, environment: environment)
         environment.currentStateNode.uiView = view
@@ -29,14 +26,12 @@ public struct NavigationTopView<Content: View>: View {
     
     public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
         controller.navigationItem.title = self.title
-        if let navigationController = controller.navigationController, let index = navigationController.viewControllers.firstIndex(of: controller) {
-            controller.navigationItem.largeTitleDisplayMode = index == 0 && self.prefersLarge ? .automatic : .never
-        }
         self.content._redraw(view: view, controller: controller, environment: environment)
     }
     
     public func _makeSequence(currentNode: DOMNode) -> _ViewSequence {
-        return _ViewSequence(count: 1, viewGetter: {_, node in (_BuildingBlockRepresentable(buildingBlock: self), node)})
+        currentNode.viewController?.navigationItem.title = self.title
+        return self.content._makeSequence(currentNode: currentNode)
     }
 }
 

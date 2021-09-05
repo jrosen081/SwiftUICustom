@@ -32,6 +32,7 @@ public struct TabView<Selection: Hashable, Content: View>: View {
             let controller = SwiftUIInternalController.init(swiftUIView: view.0, environment: view.1.environment, domNode: view.1)
             controller.environment = environment
             environment.currentStateNode.addChild(node: controller.domNode, index: index)
+            controller.loadViewIfNeeded()
             return controller
         }
         enclosingController.addChild(tabBarController)
