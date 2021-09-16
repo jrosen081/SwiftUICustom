@@ -7,14 +7,26 @@
 
 import Foundation
 
+public struct ButtonRole: Equatable {
+    private enum Roles: Int {
+        case destructive, cancel
+    }
+    private let role: Roles
+    
+    public static let destructive = ButtonRole(role: .destructive)
+    public static let cancel = ButtonRole(role: .cancel)
+}
+
 public struct Button<ButtonContent: View>: View {
 	let content: ButtonContent
+    let role: ButtonRole?
 	let onClick: () -> ()
     var updateControl: (ButtonView) -> Void = {_ in }
 	
-	public init(action: @escaping () -> (), @ViewBuilder content: () -> ButtonContent) {
+    public init(role: ButtonRole? = nil, action: @escaping () -> (), @ViewBuilder content: () -> ButtonContent) {
 		self.content = content()
 		self.onClick = action
+        self.role = role
 	}
 	public var body: Self {
         return self
@@ -52,17 +64,11 @@ public struct Button<ButtonContent: View>: View {
 	}
 }
 
-protocol MenuCreator {
-    @available(iOS 13, *)
-    var menu: UIContextMenuConfiguration? { get }
-}
-
 class ButtonView: UIButton {
 	var view: UIView
 	var onClick: () -> ()
 	var inList: Bool = false
 	var alphaToChangeTo: CGFloat = 0.3
-    var menuCreator: MenuCreator?
 	
 	init(view: UIView, onClick: @escaping () -> ()) {
 		self.view = view

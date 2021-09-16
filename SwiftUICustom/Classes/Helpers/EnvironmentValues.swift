@@ -61,7 +61,7 @@ public struct EnvironmentValues {
     
     var pickerStyle: PickerStyle = DefaultPickerStyle()
     
-    var inList = false
+    var tableView: SwiftUITableView?
     
     var textFieldStyle: TextFieldStyle = DefaultTextFieldStyle()
     

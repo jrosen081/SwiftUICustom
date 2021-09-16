@@ -29,6 +29,7 @@ struct ThirdView: View {
 	@State var isOn: Bool = true
     @State var forJoe: Bool = true
     @State var secure: String = ""
+    @State var checkThis = Array(0..<15)
     @FocusState private var isOnText: Bool
 
 	var body: some View {
@@ -38,6 +39,18 @@ struct ThirdView: View {
                 HStack {
                     Toggle(isOn: $forJoe) {
                         Text("This one is for Joe and is a really long thing")
+                    }.swipeActions {
+                        Button(role: .destructive, action: {
+                            forJoe = false
+                        }, content: {
+                            Label("Switch toggle off", systemImage: "trash")
+                        })
+                    }.swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        Button {
+                            print("leading")
+                        } content: {
+                            Text("Test leading")
+                        }
                     }
                 }.contextMenu {
                     Button(action: {
@@ -65,8 +78,12 @@ struct ThirdView: View {
 				if isOn {
 					Text("The switch is on")
 				}
-                ForEach(Array(0..<15)) {_ in
+                ForEach(checkThis) {_ in
                     CheckThis()
+                }.onDelete {
+                    checkThis.remove(atOffsets: $0)
+                }.onMove {
+                    checkThis.move(fromOffsets: $0, toOffset: $1)
                 }
                 Label("My name", systemImage: "person").onTapGesture {
                     self.isOnText.toggle()

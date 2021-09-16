@@ -31,7 +31,7 @@ public class SwiftUIInternalController<Content: View>: UIViewController {
 	
 	var actualEnvironment: EnvironmentValues {
 		var newEnvironment = environment
-        newEnvironment.inList = false
+        newEnvironment.tableView = nil
         newEnvironment.cell = nil
 		return newEnvironment
 	}

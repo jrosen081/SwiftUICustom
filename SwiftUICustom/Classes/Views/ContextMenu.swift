@@ -47,56 +47,80 @@ public struct ContextMenu<Content: View, Menu: View>: View {
     }
     
     private var menuItems: [UIMenuElement] {
-        menu.menuItems(selected: false, domNode: currentNode)
+        menu.menuItems(selected: false, domNode: currentNode).map(\.toMenuElement)
     }
 }
 
-@available(iOS 13, *)
 extension View {
-    func menuItems(selected: Bool, domNode: DOMNode) -> [UIMenuElement] {
+    func menuItems(selected: Bool, domNode: DOMNode) -> [MenuItem] {
         let expanding = self._makeSequence(currentNode: domNode).expanded(node: domNode).map(\.0.buildingBlock)
-        return expanding.compactMap { $0 as? MenuItemAccessable & _BuildingBlock }.compactMap { $0.toItem(selected: selected, domNode: DOMNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: $0)) }
+        return expanding.compactMap { $0 as? MenuItemAccessable & _BuildingBlock }.compactMap { $0.toItem(selected: selected, domNode: DOMNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: $0))}
 
     }
 }
 
-@available(iOS 13, *)
 private protocol MenuItemAccessable {
-    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement?
+    func toItem(selected: Bool, domNode: DOMNode) -> MenuItem?
+}
+
+indirect enum MenuItem {
+    case menu(title: String, image: UIImage?, children: [MenuItem], inline: Bool)
+    case action(title: String, image: UIImage?, selected: Bool, onClick: () -> Void, role: ButtonRole?)
+    
+    var title: String {
+        switch self {
+        case let .action(title, _, _, _, _):
+            return title
+        case let .menu(title,_, _, _):
+            return title
+        }
+    }
+    
+    var image: UIImage? {
+        switch self {
+        case let .action(_, image, _, _, _):
+            return image
+        case let .menu(_, image, _, _):
+            return image
+        }
+    }
+
+    
+    @available(iOS 13, *)
+    var toMenuElement: UIMenuElement {
+        switch self {
+        case let .action(title, imaage, selected, onClick, role): return UIAction(title: title, image: imaage, identifier: nil, discoverabilityTitle: nil, attributes: role == .destructive ? .destructive : [], state: selected ? .on : .off, handler: {_ in onClick() })
+        case let .menu(title, image, children, inline): return UIMenu(title: title, image: image, identifier: nil, options: inline ? .displayInline : [], children: children.map(\.toMenuElement))
+        }
+    }
 }
 
 @available(iOS 14, *)
 extension Menu: MenuItemAccessable {
-    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+    func toItem(selected: Bool, domNode: DOMNode) -> MenuItem? {
         guard let title = label.textValue else { return nil }
-        return UIMenu(title: title, image: label.imageValue, identifier: nil, options: [], children: self.menuItems.menuItems(selected: selected, domNode: domNode))
+        return .menu(title: title, image: label.imageValue, children: self.menuItems.menuItems(selected: selected, domNode: domNode), inline: false)
     }
 }
 
-@available(iOS 13, *)
 extension Button: MenuItemAccessable {
-    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+    func toItem(selected: Bool, domNode: DOMNode) -> MenuItem? {
         let items = self.content._makeSequence(currentNode: domNode).expanded(node: domNode).map(\.0)
         guard let title = items.compactMap(\.text).first else { return nil }
         let image = items.compactMap(\.image).first
-        let action = UIAction(title: title, image: image, identifier: nil, discoverabilityTitle: nil, attributes: [], state: selected ? .on : .off) { _ in
-            self.onClick()
-        }
-        return action
+        return .action(title: title, image: image, selected: selected, onClick: onClick, role: self.role)
     }
 }
 
-@available(iOS 13, *)
 extension Section: MenuItemAccessable {
-    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
-        return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: self.content.menuItems(selected: selected, domNode: domNode))
+    func toItem(selected: Bool, domNode: DOMNode) -> MenuItem? {
+        return .menu(title: "", image: nil, children: self.content.menuItems(selected: selected, domNode: domNode), inline: true)
 
     }
 }
 
-@available(iOS 13, *)
 extension Picker: MenuItemAccessable {
-    func toItem(selected: Bool, domNode: DOMNode) -> UIMenuElement? {
+    func toItem(selected: Bool, domNode: DOMNode) -> MenuItem? {
         let allOptions = self.content
             ._makeSequence(currentNode: domNode)
             .expanded(node: domNode)
@@ -106,12 +130,12 @@ extension Picker: MenuItemAccessable {
             let isSelected = $0.taggedValue == AnyHashable(self.selectionValue.wrappedValue)
             guard let item = $0.toItem(selected: isSelected, domNode: DOMNode(environment: domNode.environment, viewController: domNode.viewController, buildingBlock: $0)) else { return nil }
             return (item, isSelected, $0.taggedValue)
-        }.map { (element: UIMenuElement, selected: Bool, tag: AnyHashable) in
-            UIAction(title: element.title, image: element.image, identifier: nil, discoverabilityTitle: nil, attributes: [], state: selected ? .on : .off) { _ in
+        }.map { (element: MenuItem, selected: Bool, tag: AnyHashable) in
+            return MenuItem.action(title: element.title, image: element.image, selected: selected, onClick: {
                 self.selectionValue.wrappedValue = tag.base as! SelectionValue
-            }
+            }, role: nil)
         }
-        return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: allPickerOptions)
+        return .menu(title: "", image: nil, children: allPickerOptions, inline: true)
     }
 }
 

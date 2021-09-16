@@ -23,7 +23,7 @@ public struct Menu<Label: View, MenuItems: View>: View {
             label
         })
         button.updateControl = { control in
-            control.menu = UIMenu(title: "", image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: false, domNode: node))
+            control.menu = UIMenu(title: "", image: nil, identifier: nil, options: [], children: self.menuItems.menuItems(selected: false, domNode: node).map(\.toMenuElement))
             control.showsMenuAsPrimaryAction = true
         }
         return button

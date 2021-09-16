@@ -21,17 +21,16 @@ public struct List<Content: View>: View {
 	public func _toUIView(enclosingController: UIViewController, environment: EnvironmentValues) -> UIView {
         environment.currentStateNode.buildingBlock = self.viewCreator
 		var newEnvironment: EnvironmentValues = environment
-        newEnvironment.inList = true
 		newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
-        let sectionNode = DOMNode(environment: environment, viewController: enclosingController, buildingBlock: EmptyView())
-        let tableView = SwiftUITableView(style: environment.listStyle._tableViewStyle,
+        let sectionNode = DOMNode(environment: newEnvironment, viewController: enclosingController, buildingBlock: EmptyView())
+        let tableView = SwiftUITableView(style: newEnvironment.listStyle._tableViewStyle,
                                          buildingBlocks: self.viewCreator._makeSequence(currentNode: environment.currentStateNode)
                                             .expanded(node: environment.currentStateNode).toSections(),
-                                         environment: environment,
+                                         environment: newEnvironment,
                                          controller: enclosingController)
         tableView.sectionCreationNode = sectionNode
         tableView.viewController = enclosingController
-        tableView.environment = newEnvironment
+        tableView.environment = newEnvironment.withUpdates { $0.tableView = tableView }
         
 		return tableView
 	}
@@ -39,7 +38,7 @@ public struct List<Content: View>: View {
 	public func _redraw(view: UIView, controller: UIViewController, environment: EnvironmentValues) {
 		if let tableView = view as? SwiftUITableView {
 			var newEnvironment: EnvironmentValues = environment
-            newEnvironment.inList = true
+            newEnvironment.tableView = tableView
 			newEnvironment.foregroundColor = newEnvironment.foregroundColor ?? newEnvironment.defaultForegroundColor
 			let view = self.viewCreator
             tableView.environment = environment
@@ -156,6 +155,7 @@ class SwiftUITableView: UITableView {
     
 	var buildingBlocks: [SectionProtocol]
     var sectionCreationNode: DOMNode!
+    var draggingFunctions: [DOMNode: (IndexSet, Int) -> Void] = [:]
     
     fileprivate var sectionNodes = [DOMNode]()
 	    
@@ -167,7 +167,7 @@ class SwiftUITableView: UITableView {
     
     var actualEnvironment: EnvironmentValues {
         return environment.withUpdates({
-            $0.inList = true
+            $0.tableView = self
             $0.refreshAction = nil
         })
     }
@@ -214,6 +214,7 @@ class SwiftUITableView: UITableView {
                         environment.cell = cell
                         let (swiftUIView, node) = self.buildingBlocks[row.section].buildingBlocks(topNode: self.sectionNodes[row.section])[row.row]
                         environment.currentStateNode = node
+                        environment.tableView = self
                         swiftUIView._redraw(view: view, controller: controller, environment: environment)
                     }
                 }
@@ -228,6 +229,8 @@ class SwiftUITableView: UITableView {
 		self.translatesAutoresizingMaskIntoConstraints = false
 		self.dataSource = self
 		self.delegate = self
+        self.dragDelegate = self
+        self.dropDelegate = self
 		self.estimatedRowHeight = 85.0
 		self.rowHeight = UITableView.automaticDimension
 		self.register(SwiftUITableViewCell.self, forCellReuseIdentifier: "SwiftUI")
@@ -299,6 +302,9 @@ extension SwiftUITableView: UITableViewDataSource {
         cell.view = nil
         cell.menuItems = nil
         cell.onClick = nil
+        cell.leadingConfiguration = nil
+        cell.trailingConfiguration = nil
+        cell.nodeIndexPair = nil
     }
     
     func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
@@ -334,6 +340,16 @@ extension SwiftUITableView: UITableViewDelegate {
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
     
+    func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return nil }
+        return cell.leadingConfiguration
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return nil }
+        return cell.trailingConfiguration
+    }
+    
     @available(iOS 13.0, *)
     func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
         guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell,
@@ -342,6 +358,49 @@ extension SwiftUITableView: UITableViewDelegate {
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             return UIMenu(title: "", image: nil, identifier: nil, options: .displayInline, children: menuItems)
         }
+    }
+}
+
+extension SwiftUITableView: UITableViewDragDelegate {
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return [] }
+        guard let (node, index) = cell.nodeIndexPair else { return [] }
+        let item = UIDragItem(itemProvider: NSItemProvider())
+        item.localObject = (node, index)
+        return [item]
+    }
+    
+    func tableView(_ tableView: UITableView, itemsForAddingTo session: UIDragSession, at indexPath: IndexPath, point: CGPoint) -> [UIDragItem] {
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return [] }
+        guard let (node, index) = cell.nodeIndexPair else { return [] }
+        let allNodes = session.items.compactMap(\.localObject).compactMap { $0 as? (DOMNode, Int) }
+        guard allNodes.contains(where:  { $0.0 === node }) else { return [] }
+        let item = UIDragItem(itemProvider: NSItemProvider())
+        item.localObject = (node, index)
+        return [item]
+
+    }
+}
+
+extension SwiftUITableView: UITableViewDropDelegate {
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        guard let indexPath = coordinator.destinationIndexPath else { return }
+        let items = coordinator.items.map(\.dragItem).compactMap(\.localObject).compactMap { $0 as? (DOMNode, Int) }
+        let indexes = items.map(\.1)
+        let indexSet = IndexSet(indexes)
+        guard let domNode = items.map(\.0).first, let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell else { return }
+        guard let (node, index) = cell.nodeIndexPair else { return }
+        guard node === domNode else { return }
+        self.draggingFunctions[domNode]?(indexSet, index)
+    }
+    
+    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
+        guard let indexPath = destinationIndexPath else { return UITableViewDropProposal(operation: .cancel) }
+        guard let (dropNode, _) = session.localDragSession?.items.compactMap(\.localObject).compactMap({ $0 as? (DOMNode, Int)}).first else { return UITableViewDropProposal(operation: .cancel)}
+        guard let cell = tableView.cellForRow(at: indexPath) as? SwiftUITableViewCell, let (cellNode, _) = cell.nodeIndexPair, cellNode === dropNode else {
+            return UITableViewDropProposal(operation: .cancel)
+        }
+        return UITableViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
     }
 }
 
@@ -354,6 +413,12 @@ class SwiftUITableViewCell: UITableViewCell {
     var onClick: (() -> ())? = nil
     
     var menuItems: [Any]? = nil
+    
+    var leadingConfiguration: UISwipeActionsConfiguration? = nil
+    var trailingConfiguration: UISwipeActionsConfiguration? = nil
+    
+    var nodeIndexPair: (DOMNode, Int)? = nil
+    
 	
 	weak var view: UIView? {
 		didSet {
